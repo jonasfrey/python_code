@@ -65,3 +65,18 @@ b = [3]
 
 print(a)
 print(b)
+
+
+class Limb: 
+    def __init__(self, x,y):
+        self.x = x
+        self.y = y
+limb = Limb(0,0)
+
+b = tuple(limb)
+
+
+limb.x = 22
+
+print(limb.x)
+print(b.x)
