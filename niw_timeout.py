@@ -2,7 +2,7 @@ import sys
 import sys, tty, termios
 from select import select
 
-timeout = 0.5
+timeout = 1
 print ("Enter something:")
 rlist, _, _ = select([sys.stdin], [], [], timeout)
 if rlist:
