@@ -146,11 +146,11 @@ class Game:
 
         self.snake.set_position_detect_collision()
         # detect border collision 
-        print("self.snake.position.string")
-        print(self.snake.position.string)
+        # print("self.snake.position.string")
+        # print(self.snake.position.string)
 
-        print("self.border_pixels_for_collision_detection")
-        print(self.border_pixels_for_collision_detection)
+        # print("self.border_pixels_for_collision_detection")
+        # print(self.border_pixels_for_collision_detection)
         if self.snake.position.string in self.border_pixels_for_collision_detection:
             print("collidet with wall")
             exit(0)
@@ -175,18 +175,21 @@ class Game:
                 #print(value.string)
                 self.canvas.addPixel(value.x, value.y, self.utf_8_border)
 
-        # if self.food is not None:
-        #     food_eaten = self.food.check_collision_with_snake(self.snake)
+        print(self.food)
+        if self.food is not None:
+            self.canvas.addPixel(self.food.position.x%self.canvas.width, self.food.position.y%self.canvas.height, self.food.utf_8)
 
-        #     if(food_eaten):
-        #         print("food eaten")
-        #         time.sleep(1)
-        #         self.food = None
-        #         food = Food(self.canvas, self.snake)
-        #         limb = Position(0,0)
-        #         self.snake.limbs.append(limb)
-            
-        #     self.canvas.addPixel(food.x%self.canvas.width, food.y%self.canvas.height, food.utf_8)
+            food_eaten = self.food.check_collision_with_snake(self.snake)
+
+            if(food_eaten):
+                # print("food eaten")
+                # time.sleep(1)
+                self.food = None
+                self.snake.add_limb()
+                self.food = Food(self.canvas, self.snake)
+                #print("food eaten limb added")
+
+        
 
 
         self.canvas.draw()
@@ -270,34 +273,37 @@ class Snake:
         #self.utf_8_tail = "◌"
         self.utf_8_tail = "🌕"
         self.position = Position(1,1)
-        self.float_position = self.Position(1,1)
+        self.float_position = Position(1,1)
         self.limbs = [self.position]
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
         self.counter = 0
         
     def pos_x_direction_up(self):
-        self.pos_x_direction = "snake.float_pos_x.x"
-        self.pos_y_direction = "snake.float_pos_x.y-1* snake.speed"
+        self.pos_x_direction = "snake.float_position.x"
+        self.pos_y_direction = "snake.float_position.y-1* snake.speed"
 
     def pos_x_direction_down(self):
-        self.pos_x_direction = "snake.float_pos_x.x"
-        self.pos_y_direction = "snake.float_pos_x.y+1* snake.speed"
+        self.pos_x_direction = "snake.float_position.x"
+        self.pos_y_direction = "snake.float_position.y+1* snake.speed"
     
     def pos_x_direction_right(self):
-        self.pos_x_direction = "snake.float_pos_x.x+1* snake.speed"
-        self.pos_y_direction = "snake.float_pos_x.y"
+        self.pos_x_direction = "snake.float_position.x+1* snake.speed"
+        self.pos_y_direction = "snake.float_position.y"
     
     def pos_x_direction_left(self):
-        self.pos_x_direction = "snake.float_pos_x.x-1* snake.speed"
-        self.pos_y_direction = "snake.float_pos_x.y"
+        self.pos_x_direction = "snake.float_position.x-1* snake.speed"
+        self.pos_y_direction = "snake.float_position.y"
 
     def set_position_detect_collision(self):
         new_pos_x = eval(self.pos_x_direction, {"snake": self})
         new_pos_y = eval(self.pos_y_direction, {"snake": self})
-        self.float_pos_x = new_pos_x
-        self.float_pos_y = new_pos_y
+        
+        self.float_position.x = new_pos_x
+        self.float_position.y = new_pos_y
+
         new_pos_x = int(new_pos_x)
         new_pos_y = int(new_pos_y)
+        
         #if new_pos_x != self.limbs[0].x | new_pos_y != self.limbs[0].y:
         new_limbs = []
         for key, value in enumerate(self.limbs):
@@ -313,23 +319,41 @@ class Snake:
         self.position = new_pos_limb
         self.limbs = new_limbs
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
-        self.detect_collision()
-
-
-    def detect_collision(self):
-        
-        multiple_limbs_on_same_position_exist = len(self.limbs_for_collision_detection) != len(set(self.limbs_for_collision_detection))
-        if multiple_limbs_on_same_position_exist:
+        if self.self_collision():
             print("Snake self collision, game over!")
             exit(0)
 
+    def self_collision(self):
+        try:
+            index_of_first_limb = self.limbs_for_collision_detection.index( self.limbs[0].string, 2)
+            print(index_of_first_limb)
+        except:
+            print("no collision :)")
+        
+        
+        #multiple_limbs_on_same_position_exist = len(self.limbs_for_collision_detection) != len(set(self.limbs_for_collision_detection))
+        #return multiple_limbs_on_same_position_exist
+
+
+    def add_limb(self):
+        # count = 0
+        # limb = Position(self.limbs[-1].x + count, self.limbs[-1].y + count)
+        # marged_limbs_for_collision_detection = self.limbs_for_collision_detection + [limb.string]
+
+        # while limb.string in marged_limbs_for_collision_detection:
+        #     count = count + 1
+        #     limb = Position(self.limbs[-1].x + count, self.limbs[-1].y + count)
+        #     marged_limbs_for_collision_detection = self.limbs_for_collision_detection + [limb.string]
+
+        self.limbs.append(Position(1111, 1111))
+
 class Food:
     def __init__(self, canvas, snake):
-        self.position = Position(random.randint(0, canvas.width), random.randint(0, canvas.height))
+        self.position = Position(random.randint(1, canvas.width-1), random.randint(1, canvas.height-1))
         self.utf_8 = "🍎"
         
-        while self.check_collision_with_snake(snake) | self.position.x == canvas.width | self.position.x == 0 | self.position.y == canvas.height | self.position.y == 0:
-            self.position = Position(random.randint(0, canvas.width), random.randint(0, canvas.height))
+        while self.check_collision_with_snake(snake):
+            self.position = Position(random.randint(1, canvas.width-1), random.randint(1, canvas.height-1))
 
 
     def check_collision_with_snake(self, snake):
