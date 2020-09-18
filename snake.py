@@ -34,6 +34,11 @@ class Game:
         self.over = False
         self.message = ""
         self.food = None
+        self.white_pixel = "🌕"
+        self.black_pixel = "🌑"
+        self.utf_8_border = "💀"
+        self.detect_canvas_size = False
+        self.border_collision = True
         self.snake = None
         self.canvas = None
         self.ts_now = time.time()
@@ -45,27 +50,48 @@ class Game:
 
 
     def setup(self):
-        max_height = 200
-        for value in range(0, max_height):
-            val = max_height - value
-            output = val
-            if(val % 5 == 0):
-                output = "--- " + str(val)
-            
-            print(output)
+        if self.detect_canvas_size:
+            max_height = 200
+            for value in range(0, max_height):
+                val = max_height - value
+                output = self.white_pixel
+                if(val % 5 == 0):
+                    output = self.black_pixel
+                
+                print(output)
 
-        height = input("How many lines do you see ?:")
+            height = input("How many full groups of 4 yellow + 1 black moons do you see ?:")
+            height = height * 4
 
-        max_width = 200
-        output_str = ""
-        for value in range(0, max_width): 
-            output_str += " " + str(value)
-        print(output_str)
+            max_width = 200
+            output_str = ""
+            for value in range(0, max_width): 
+                if(value % 5 == 0):
+                    output_str += self.black_pixel
+                else:
+                    output_str += self.white_pixel
 
-        width = input("when does the line break ?")
-        width = (width-10) * 3 + (10*2)
+            print(output_str)
 
+            width = input("after how many groups of 4 yellow + 1 black moons does the line break ?:")
+            width = width * 4
+        else:
+            width = 20
+            height = 20
+        
         self.canvas = Canvas(width, height)
+        self.border_pixels = []
+
+        for value in range(0, width-1):
+            self.border_pixels.append(Position(value, 0))
+            self.border_pixels.append(Position(value, height-1))
+        for value in range(0, height-1):
+            self.border_pixels.append(Position(0, value))
+            self.border_pixels.append(Position(width-1, value))
+
+        self.border_pixels_for_collision_detection = list(map(lambda v: v.string, self.border_pixels))
+
+
         self.snake = Snake()
         self.food = Food(self.canvas,self.snake)
         self.repeat()
@@ -118,7 +144,17 @@ class Game:
         self.canvas.clear()
 
 
-        self.snake.set_position()
+        self.snake.set_position_detect_collision()
+        # detect border collision 
+        print("self.snake.position.string")
+        print(self.snake.position.string)
+
+        print("self.border_pixels_for_collision_detection")
+        print(self.border_pixels_for_collision_detection)
+        if self.snake.position.string in self.border_pixels_for_collision_detection:
+            print("collidet with wall")
+            exit(0)
+
         # # self.snake.pos_x += 1
 
         for key, value in enumerate(self.snake.limbs):
@@ -133,7 +169,11 @@ class Game:
 
             self.canvas.addPixel(value.x%self.canvas.width, value.y%self.canvas.height, self.snake_utf_8_symbol)
         
-        
+        # draw border 
+        if self.border_collision:
+            for value in self.border_pixels:
+                #print(value.string)
+                self.canvas.addPixel(value.x, value.y, self.utf_8_border)
 
         # if self.food is not None:
         #     food_eaten = self.food.check_collision_with_snake(self.snake)
@@ -219,38 +259,37 @@ class Position:
 
 class Snake:
     def __init__(self):
-        self.pos_x = 0
-        self.pos_y = 0
-        self.pos_x_direction = "snake.pos_x"
-        self.pos_y_direction = "snake.pos_y"
-        self.speed = 0.5;
+        self.pos_x_direction = "snake.position.x"
+        self.pos_y_direction = "snake.position.y"
+        self.speed = 0.5
         #self.utf_8_head = "◈"
         self.utf_8_head = "🌝"
         #self.utf_8_body = "○"
         self.utf_8_body = "🌕"
         #self.utf_8_tail = "◌"
         self.utf_8_tail = "🌕"
-        self.limbs = [Position(0,0)]
+        self.position = Position(1,1)
+        self.limbs = [self.position]
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
         self.counter = 0
         
     def pos_x_direction_up(self):
-        self.pos_x_direction = "snake.pos_x"
-        self.pos_y_direction = "snake.pos_y-1* snake.speed"
+        self.pos_x_direction = "snake.position.x"
+        self.pos_y_direction = "snake.position.y-1* snake.speed"
 
     def pos_x_direction_down(self):
-        self.pos_x_direction = "snake.pos_x"
-        self.pos_y_direction = "snake.pos_y+1* snake.speed"
+        self.pos_x_direction = "snake.position.x"
+        self.pos_y_direction = "snake.position.y+1* snake.speed"
     
     def pos_x_direction_right(self):
-        self.pos_x_direction = "snake.pos_x+1* snake.speed"
-        self.pos_y_direction = "snake.pos_y"
+        self.pos_x_direction = "snake.position.x+1* snake.speed"
+        self.pos_y_direction = "snake.position.y"
     
     def pos_x_direction_left(self):
-        self.pos_x_direction = "snake.pos_x-1* snake.speed"
-        self.pos_y_direction = "snake.pos_y"
+        self.pos_x_direction = "snake.position.x-1* snake.speed"
+        self.pos_y_direction = "snake.position.y"
 
-    def set_position(self):
+    def set_position_detect_collision(self):
         new_pos_x = eval(self.pos_x_direction, {"snake": self})
         new_pos_y = eval(self.pos_y_direction, {"snake": self})
         #if new_pos_x != self.limbs[0].x | new_pos_y != self.limbs[0].y:
@@ -265,10 +304,7 @@ class Snake:
         
         new_pos_limb = Position(new_pos_x, new_pos_y)
         new_limbs.insert(0, new_pos_limb)
-
-
-        self.pos_x = new_pos_x
-        self.pos_y = new_pos_y
+        self.position = new_pos_limb
         self.limbs = new_limbs
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
         self.detect_collision()
