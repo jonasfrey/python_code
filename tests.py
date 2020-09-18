@@ -67,16 +67,33 @@ print(a)
 print(b)
 
 
-class Limb: 
-    def __init__(self, x,y):
-        self.x = x
-        self.y = y
-limb = Limb(0,0)
-
-b = tuple(limb)
 
 
-limb.x = 22
+class Object: 
+    def __init__(self,integer,string,flt):
+        self.integer = integer
+        self.string = string
+        self.flt = float 
+    def __eq__(self, other) : 
+        return self.__dict__ == other.__dict__
 
-print(limb.x)
-print(b.x)
+number_array = [-1,-2,-3,1,2,3,45,6,6,5,4,3,11,22,33]
+object_array = [Object(1,"test", 1.1), Object(1,"test", 1.1), Object(2,"test", 1.1), Object(3,"test3", 1.1), Object(4,"test4", 4.1)]
+
+
+has_duplicates = len(number_array) != len(set(number_array))
+object_array_mapped_string = list(map(lambda v: v.string, object_array))
+# set() removes duplicates from array, a duplicate is only one if it is the exact same instance of an object
+# not if only the values of each property matches
+object_array_mapped_string_has_duplicates = len(object_array_mapped_string) != len(set(object_array_mapped_string))
+
+objects_are_same = object_array[0].__eq__(object_array[1])
+
+less_than_zero = list(filter(lambda val: val < 0, number_array))
+
+print(has_duplicates)
+print(objects_are_same)
+print(less_than_zero)
+print(object_array_mapped_string_has_duplicates)
+
+# Output: [-5, -4, -3, -2, -1]
