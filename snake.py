@@ -261,6 +261,7 @@ class Snake:
     def __init__(self):
         self.pos_x_direction = "snake.position.x"
         self.pos_y_direction = "snake.position.y"
+
         self.speed = 0.5
         #self.utf_8_head = "◈"
         self.utf_8_head = "🌝"
@@ -269,29 +270,34 @@ class Snake:
         #self.utf_8_tail = "◌"
         self.utf_8_tail = "🌕"
         self.position = Position(1,1)
+        self.float_position = self.Position(1,1)
         self.limbs = [self.position]
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
         self.counter = 0
         
     def pos_x_direction_up(self):
-        self.pos_x_direction = "snake.position.x"
-        self.pos_y_direction = "snake.position.y-1* snake.speed"
+        self.pos_x_direction = "snake.float_pos_x.x"
+        self.pos_y_direction = "snake.float_pos_x.y-1* snake.speed"
 
     def pos_x_direction_down(self):
-        self.pos_x_direction = "snake.position.x"
-        self.pos_y_direction = "snake.position.y+1* snake.speed"
+        self.pos_x_direction = "snake.float_pos_x.x"
+        self.pos_y_direction = "snake.float_pos_x.y+1* snake.speed"
     
     def pos_x_direction_right(self):
-        self.pos_x_direction = "snake.position.x+1* snake.speed"
-        self.pos_y_direction = "snake.position.y"
+        self.pos_x_direction = "snake.float_pos_x.x+1* snake.speed"
+        self.pos_y_direction = "snake.float_pos_x.y"
     
     def pos_x_direction_left(self):
-        self.pos_x_direction = "snake.position.x-1* snake.speed"
-        self.pos_y_direction = "snake.position.y"
+        self.pos_x_direction = "snake.float_pos_x.x-1* snake.speed"
+        self.pos_y_direction = "snake.float_pos_x.y"
 
     def set_position_detect_collision(self):
         new_pos_x = eval(self.pos_x_direction, {"snake": self})
         new_pos_y = eval(self.pos_y_direction, {"snake": self})
+        self.float_pos_x = new_pos_x
+        self.float_pos_y = new_pos_y
+        new_pos_x = int(new_pos_x)
+        new_pos_y = int(new_pos_y)
         #if new_pos_x != self.limbs[0].x | new_pos_y != self.limbs[0].y:
         new_limbs = []
         for key, value in enumerate(self.limbs):
