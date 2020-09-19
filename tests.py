@@ -97,3 +97,10 @@ print(less_than_zero)
 print(object_array_mapped_string_has_duplicates)
 
 # Output: [-5, -4, -3, -2, -1]
+
+
+def func_name_called_by_string():
+    print("i was called")
+
+
+locals()["func_name_called_by_string"]()
