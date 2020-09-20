@@ -104,3 +104,30 @@ def func_name_called_by_string():
 
 
 locals()["func_name_called_by_string"]()
+
+
+
+
+# # RuntimeError: maximum recursion depth exceeded while calling a Python object, python doesnt like recursive functions... so just use a while loop 
+
+# # bad
+# def repeat():
+#     # do stuff... 
+#     # do stuff... 
+#     # maybe time.sleep(ms*10**-3)
+#     # recursive call
+#     repeat()
+
+# # good
+# def repeat():
+#     while True
+#         # do stuff... 
+#         # do stuff... 
+#         # maybe time.sleep(ms*10**-3)
+#         # while loop will be executed again by itself
+
+
+
+obj = {"test": "asdf"}
+
+print(obj.test)

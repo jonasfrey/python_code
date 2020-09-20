@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
-import sys, tty, termios, time, random
+import sys, tty, termios, time, random, json
 from select import select
 
 
@@ -28,15 +28,59 @@ def deep_slice_copy(array):
             new_array.append(val)
     return new_array
 
+
+class Character_set():
+    def __init__(self):
+        self.game_white_pixel = "." 
+        self.game_black_pixel = " " 
+        self.canvas_white_pixel = "." 
+        self.canvas_black_pixel = " " 
+        self.game_utf_8_border = "#" 
+        self.snake_utf_8_head = "O"
+        self.snake_utf_8_body = "o"
+        self.snake_utf_8_tail = "9"
+        self.food_powerup_mushroom = "Ͳ"
+        self.food_powerup_slow = "◷"
+        self.food_powerup_portal = "α"
+        self.food_powerup_brick = "#"
+        self.food_powerup_fast = "☇"
+        self.food_powerup_tornado = "?"
+        self.food_default = "♕"
+    def __getitem__(self, item):
+        return getattr(self, item)
+        
+
+character_set_classical = Character_set()
+
+
+character_set_emojis = Character_set()
+character_set_emojis.game_white_pixel = "🌕" 
+character_set_emojis.game_black_pixel = "🌑" 
+character_set_emojis.canvas_white_pixel = "🌕" 
+character_set_emojis.canvas_black_pixel = "🌑" 
+character_set_emojis.game_utf_8_border = "🧱" 
+character_set_emojis.snake_utf_8_head = "🌝"
+character_set_emojis.snake_utf_8_body = "🌕"
+character_set_emojis.snake_utf_8_tail = "🌕"
+character_set_emojis.food_powerup_mushroom = "🍄"
+character_set_emojis.food_powerup_slow = ["🐢", "🐌"]
+character_set_emojis.food_powerup_portal = "🌀"
+character_set_emojis.food_powerup_brick = "🧱"
+character_set_emojis.food_powerup_fast = "💨"
+character_set_emojis.food_powerup_tornado = "💫"
+character_set_emojis.food_default = ["🍎", "🍏"]
+
+character_set = character_set_classical
+
 class Game:
     def __init__(self):
         self.running = False
         self.over = False
         self.message = ""
         self.food = []
-        self.white_pixel = "🌕"
-        self.black_pixel = "🌑"
-        self.utf_8_border = "💀"
+        self.white_pixel = character_set.game_white_pixel
+        self.black_pixel = character_set.game_black_pixel
+        self.utf_8_border = character_set.game_utf_8_border
         self.detect_canvas_size = False
         self.border_collision = True
         self.snake = None
@@ -46,11 +90,15 @@ class Game:
         self.ts_delta_limit = 30
         self.t = 0
         self.next_random_item_ts = 0
-
+        self.last_pressed_char = ""
         self.setup()
 
 
+
+
+
     def setup(self):
+
         if self.detect_canvas_size:
             max_height = 200
             for value in range(0, max_height):
@@ -83,7 +131,7 @@ class Game:
         self.canvas = Canvas(width, height)
         self.border_pixels = []
 
-        for value in range(0, width-1):
+        for value in range(0, width):
             self.border_pixels.append(Position(value, 0))
             self.border_pixels.append(Position(value, height-1))
         for value in range(0, height-1):
@@ -97,8 +145,9 @@ class Game:
         self.snake = Snake()
         self.food.append(Food(self, self.canvas, self.snake, "default"))
         self.food.append(Food(self, self.canvas, self.snake, "powerup_slow"))
+        self.food.append(Food(self, self.canvas, self.snake, "powerup_portal"))
+        self.running = True
         self.repeat()
-
 
     def check_and_add_random_item(self):
 
@@ -108,109 +157,105 @@ class Game:
             if(len(self.food) < len(food.types) ):
                 self.food.append(food)
 
+    
     def repeat(self):
+        while self.running:
+
+            char = getch(self.ts_delta_limit*10**-3)
+
+            if (char == "p"):
+                #print("Stop!")
+                exit(0)
+
+            if (char == "a"):
+                self.snake.pos_x_direction_left()
         
-        # ts_now = time.time()
-        # ts_delta = ts_now - ts_then
-        # print(ts_now)
-        # if ts_delta > ts_delta_limit :
-        #     print("ts_delta is bigger tha ts_delta_limit")
-        #     #ts_then = ts_now
-        #time.sleep()
-        char = getch(self.ts_delta_limit*10**-3)
-            
-        if (char == "p"):
-            #print("Stop!")
-            exit(0)
-    
-        if (char == "a"):
-            self.snake.pos_x_direction_left()
-            #print("Left pressed")
-
-    
-        elif (char == "d"):
-            self.snake.pos_x_direction_right()
-            #print("Right pressed")
-
-    
-        elif (char == "w"):
-            self.snake.pos_x_direction_up()
-            #print("Up pressed")
-
+            elif (char == "d"):
+                self.snake.pos_x_direction_right()
         
-        elif (char == "s"):
-            self.snake.pos_x_direction_down()
-            #print("Down pressed")
-
-        elif(char == "l"):
-            self.snake.limbs.append(Position(0, 0))
-
-        #print("rendering stuff")
-        # print(counter)
-        self.canvas.counter += 1
-        self.t = self.canvas.counter
-        self.canvas.clear()
-
-        print(self.snake.limbs_for_collision_detection)
-
-        self.snake.set_position_detect_collision(self.t)
-        self.snake.call_power_ups(self)
-
-        if self.snake.position.string in self.border_pixels_for_collision_detection:
-            print("collidet with wall")
-            exit(0)
-
-        # # self.snake.pos_x += 1
-
-        for key, value in enumerate(self.snake.limbs):
-            if(key == 0):
-                self.snake_utf_8_symbol = self.snake.utf_8_head
+            elif (char == "w"):
+                self.snake.pos_x_direction_up()
             
-            if(key > 0 & (len(self.snake.limbs) > 2)):
-                self.snake_utf_8_symbol = self.snake.utf_8_body
-            
-            if((key == (len(self.snake.limbs)-1)) & (len(self.snake.limbs) > 1)):
-                self.snake_utf_8_symbol = self.snake.utf_8_tail
+            elif (char == "s"):
+                self.snake.pos_x_direction_down()
 
-            self.canvas.addPixel(value.x%self.canvas.width, value.y%self.canvas.height, self.snake_utf_8_symbol)
+            elif(char == "l"):
+                self.snake.limbs.append(Position(0, 0))
+
+            self.last_pressed_char = char
+
+            #print("rendering stuff")
+            # print(counter)
+            self.canvas.counter += 1
+            self.t = self.canvas.counter
+            self.canvas.clear()
+
+            #print(self.snake.limbs_for_collision_detection)
+
+            self.snake.set_position_detect_collision(self.t)
+            self.snake.call_power_ups(self)
+
+            if self.border_collision:
+                if self.snake.position.string in self.border_pixels_for_collision_detection:
+                    print("collidet with wall")
+                    exit(0)
+
+            # # self.snake.pos_x += 1
+
+            for key, value in enumerate(self.snake.limbs):
+                if(key == 0):
+                    self.snake_utf_8_symbol = self.snake.utf_8_head
+                
+                if(key > 0 & (len(self.snake.limbs) > 2)):
+                    self.snake_utf_8_symbol = self.snake.utf_8_body
+                
+                if((key == (len(self.snake.limbs)-1)) & (len(self.snake.limbs) > 1)):
+                    self.snake_utf_8_symbol = self.snake.utf_8_tail
+
+                self.canvas.addPixel(value.x%self.canvas.width, value.y%self.canvas.height, self.snake_utf_8_symbol)
+            
+            # draw border 
+            if self.border_collision:
+                for value in self.border_pixels:
+                    #print(value.string)
+                    self.canvas.addPixel(value.x, value.y, self.utf_8_border)
+
+
+            for value in self.food:
+                
+                if len(filter(lambda val: val.type_name == value.type_name, self.food)) > value.co_existance_limit:
+                    value.destroy(self)
+
+                self.canvas.addPixel(value.position.x%self.canvas.width, value.position.y%self.canvas.height, value.utf_8)
+                
+                if value.repeat_function is not None:
+                    value.repeat_function(value, self)
+
+                food_eaten = value.check_collision_with_snake(self.snake)
+
+                if(food_eaten):
+                    getattr(value, 'pickup_' + value.type_name)(self)
+
+                value.live_count += 1
+                if value.time_to_live is not None:
+                    if value.live_count > value.time_to_live:
+                        value.destroy(self) 
+
+            #     self.canvas.addPixel(self.food.position.x%self.canvas.width, self.food.position.y%self.canvas.height, self.food.utf_8)
+
+            #     food_eaten = self.food.check_collision_with_snake(self.snake)
+
+            #     if(food_eaten):
+            #         getattr(self.food, 'pickup_' + self.food.type_name)(self)
+
+            self.check_and_add_random_item()
+
+
+            self.canvas.draw()
+
+            # print("self.food.position.string")
+            # print(self.food.position.string)
         
-        # draw border 
-        if self.border_collision:
-            for value in self.border_pixels:
-                #print(value.string)
-                self.canvas.addPixel(value.x, value.y, self.utf_8_border)
-
-
-        for value in self.food:
-            self.canvas.addPixel(value.position.x%self.canvas.width, value.position.y%self.canvas.height, value.utf_8)
-            
-            food_eaten = value.check_collision_with_snake(self.snake)
-
-            if(food_eaten):
-                getattr(value, 'pickup_' + value.type_name)(self)
-
-            value.live_count += 1
-
-            if (value.type_name != "default") & (value.live_count > value.time_to_live):
-                value.destroy(self) 
-
-        #     self.canvas.addPixel(self.food.position.x%self.canvas.width, self.food.position.y%self.canvas.height, self.food.utf_8)
-
-        #     food_eaten = self.food.check_collision_with_snake(self.snake)
-
-        #     if(food_eaten):
-        #         getattr(self.food, 'pickup_' + self.food.type_name)(self)
-
-        self.check_and_add_random_item()
-
-
-        self.canvas.draw()
-
-        # print("self.food.position.string")
-        # print(self.food.position.string)
-        
-        self.repeat()
-
 
 
 
@@ -221,9 +266,8 @@ class Canvas:
         self.width = width
         self.height = height
         self.output = ""
-        self.white_pixel = "　"
-        self.white_pixel = "🌑"
-        self.black_pixel = "•"
+        self.white_pixel = character_set.canvas_white_pixel
+        self.black_pixel = character_set.canvas_black_pixel
         self.pixel_matrix = []
         self.clear_pixel_matrix = []
         self.counter = 0
@@ -290,35 +334,47 @@ class Snake:
         self.speed = 5
         self.speed_max = 10
         #self.utf_8_head = "◈"
-        self.utf_8_head = "🌝"
+        self.utf_8_head = character_set.snake_utf_8_head
         #self.utf_8_body = "○"
-        self.utf_8_body = "🌕"
+        self.utf_8_body = character_set.snake_utf_8_body
         #self.utf_8_tail = "◌"
-        self.utf_8_tail = "🌕"
+        self.utf_8_tail = character_set.snake_utf_8_tail
         self.position = Position(1,1)
         self.limbs = [self.position]
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
         self.counter = 0
+        self.direction = ""
         
     def pos_x_direction_up(self):
+        if (self.direction == "down") & (len(self.limbs) > 2):
+            return 
         self.pos_x_direction = "snake.position.x"
         self.pos_y_direction = "snake.position.y - 1"
-
+        self.direction = "up"
+        
     def pos_x_direction_down(self):
+        if (self.direction == "up") & (len(self.limbs) > 2):
+            return 
         self.pos_x_direction = "snake.position.x"
         self.pos_y_direction = "snake.position.y + 1"
-    
+        self.direction = "down"
+            
     def pos_x_direction_right(self):
+        if (self.direction == "left") & (len(self.limbs) > 2):
+            return 
         self.pos_x_direction = "snake.position.x + 1"
         self.pos_y_direction = "snake.position.y"
-    
+        self.direction = "right"
+            
     def pos_x_direction_left(self):
+        if (self.direction == "right") & (len(self.limbs) > 2):
+            return 
         self.pos_x_direction = "snake.position.x - 1"
         self.pos_y_direction = "snake.position.y"
-
+        self.direction = "left"
+        
     def set_position_detect_collision(self, t):
-        print("snake.speed")
-        print(self.speed)
+
         self.speed_modulo = self.speed_max - self.speed
         if int(t % self.speed_modulo) != 0:
             return 
@@ -387,36 +443,41 @@ class Food:
         self.live_count = 0
         self.type_name = type_name
         self.time_to_live = None
-        self.types = ["powerup_mushroom", "powerup_slow", "default"]
-
+        self.types = ["powerup_mushroom", "powerup_slow", "powerup_portal", "powerup_brick", "powerup_fast" , "powerup_tornado","default"]
+        self.co_existance_limit = 1
+        self.repeat_function = None
+        self.time_to_live = 200
+        
         if self.type_name == "random":
             random_choice = self.types[:]
             random_choice.remove("default")
             self.type_name = random.choice(random_choice)
-            #prevent having multiple food of same type_name
-            # double_power_up = False
-            # for value in random_choice:
-            #     if len(filter(lambda val: val.type_name == self.type_name, game.food)) > 0:
-            #         double_power_up = True
-            
-            # if double_power_up:
-            #     self.type_name = "default"
 
+        character = character_set["food_" + self.type_name]
+
+        if(isinstance(character, list)):
+            self.utf_8 = random.choice(character)
+        else:
+            self.utf_8 = character
 
         if self.type_name == "default":
-            self.utf_8 = "🍎"
+            self.time_to_live = None
 
-        if self.type_name == "powerup_mushroom":
-            self.utf_8 = "🍄"
-            self.time_to_live = 200
+        if self.type_name == "powerup_portal": 
 
-        if self.type_name == "powerup_slow":
-            self.utf_8 = random.choice(["🐢", "🦥", "🐌"])
-            self.time_to_live = 200
+            self.co_existance_limit = 2
+            
+            def repeat_function(self, game):
+
+                foods_type_powerup_portal = filter(lambda val: val.type_name == "powerup_portal", game.food)
+                
+                if len(foods_type_powerup_portal) == 1:  
+                    game.food.append(self.__class__(game, game.canvas, game.snake, "powerup_portal"))
+
+            self.repeat_function = repeat_function
 
             
         self.position = Position(random.randint(1, canvas.width-2), random.randint(1, canvas.height-2))
-
 
 
         if (self.position.x ==  0  | self.position.y == 0):
@@ -424,12 +485,41 @@ class Food:
 
         while self.check_collision_with_snake(snake) | self.check_collision_with_other_food(game):
             self.position = Position(random.randint(1, canvas.width-2), random.randint(1, canvas.height-2))
+    
+
+
 
     def pickup_default(self, game):
         self.destroy(game)
         game.snake.add_limb()
         game.food.append(self.__class__(game, game.canvas, game.snake, "default"))
-    
+
+    def pickup_powerup_brick(self, game):
+        def func(self, game):
+            
+            game.border_collision = False
+
+            self.live_count += 1
+
+            if self.live_count > self.time_to_live:
+                game.border_collision = True
+                game.snake.power_ups.remove(self)
+
+        power_up = Power_up(func, 200)
+        game.snake.power_ups.append(power_up)
+
+        self.destroy(game)
+
+    def pickup_powerup_portal(self, game):
+        self.destroy(game)
+
+        foods_type_powerup_portal = filter(lambda val: val.type_name == "powerup_portal", game.food)
+        other_food_type_powerup_portal = foods_type_powerup_portal[0]
+
+        game.snake.position.x = other_food_type_powerup_portal.position.x
+        game.snake.position.y = other_food_type_powerup_portal.position.y
+        other_food_type_powerup_portal.destroy(game)
+
     def pickup_powerup_mushroom(self, game):
         self.destroy(game)
         game.snake.add_limb()
@@ -444,7 +534,7 @@ class Food:
     def pickup_powerup_slow(self, game):
         
         def func(self, game):
-            print("self should be powerup")
+            
             if self.live_count == 0:
                 self.snake_speed_cached = game.snake.speed
 
@@ -458,6 +548,34 @@ class Food:
         game.snake.power_ups.append(power_up)
 
         self.destroy(game)
+    
+    def pickup_powerup_tornado(self, game):
+        directions = ["up", "down", "left", "right"]
+        directions.remove(game.snake.direction)
+        direction = random.choice(directions)
+
+        getattr(game.snake, 'pos_x_direction_' + direction)()
+        self.destroy(game)
+
+    def pickup_powerup_fast(self, game):
+        
+        def func(self, game):
+            
+            if self.live_count == 0:
+                self.snake_speed_cached = game.snake.speed
+
+            game.snake.speed = 8
+            self.live_count += 1
+            if self.live_count > self.time_to_live:
+                game.snake.speed = self.snake_speed_cached
+                game.snake.power_ups.remove(self)
+
+        power_up = Power_up(func, 30)
+        game.snake.power_ups.append(power_up)
+
+        self.destroy(game)
+    
+    
 
 
     def destroy(self, game):
