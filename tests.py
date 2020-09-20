@@ -128,6 +128,40 @@ locals()["func_name_called_by_string"]()
 
 
 
-obj = {"test": "asdf"}
+# obj = {"test": "asdf"}
 
-print(obj.test)
+# print(obj.test)
+
+
+
+asdf = "asdf"
+b = asdf 
+
+asdf = "lol"
+
+print(asdf)
+print(b)
+
+class Test:
+    def __init__(self):
+        self.prop = "test"
+
+asdf = Test()
+b = asdf
+
+asdf.prop = "lol=?"
+
+print(asdf.prop)
+print(b.prop)
+
+asdf = Test()
+b = Test()
+
+b.prop = asdf.prop
+
+asdf.prop = "lol=?"
+
+print(asdf.prop)
+print(b.prop)
+
+

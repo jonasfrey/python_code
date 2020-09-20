@@ -31,9 +31,10 @@ def deep_slice_copy(array):
 
 class Character_set():
     def __init__(self):
-        self.game_white_pixel = "." 
+        self.name = "classical"
+        self.game_white_pixel = " " 
         self.game_black_pixel = " " 
-        self.canvas_white_pixel = "." 
+        self.canvas_white_pixel = " " 
         self.canvas_black_pixel = " " 
         self.game_utf_8_border = "#" 
         self.snake_utf_8_head = "O"
@@ -44,33 +45,41 @@ class Character_set():
         self.food_powerup_portal = "α"
         self.food_powerup_brick = "#"
         self.food_powerup_fast = "☇"
-        self.food_powerup_tornado = "?"
-        self.food_default = "♕"
+        self.food_powerup_character_set = "?"
+        self.food_powerup_tornado = "X"
+        self.food_default = "@"
     def __getitem__(self, item):
-        return getattr(self, item)
+        character = getattr(self, item)
+        if(isinstance(character, list)):
+            return random.choice(character)
+        else:
+            return character
         
 
 character_set_classical = Character_set()
 
 
 character_set_emojis = Character_set()
-character_set_emojis.game_white_pixel = "🌕" 
+character_set_emojis.name = "emojis" 
+character_set_emojis.game_white_pixel = "🌑" 
 character_set_emojis.game_black_pixel = "🌑" 
-character_set_emojis.canvas_white_pixel = "🌕" 
+character_set_emojis.canvas_white_pixel = "🌑" 
 character_set_emojis.canvas_black_pixel = "🌑" 
 character_set_emojis.game_utf_8_border = "🧱" 
 character_set_emojis.snake_utf_8_head = "🌝"
 character_set_emojis.snake_utf_8_body = "🌕"
 character_set_emojis.snake_utf_8_tail = "🌕"
 character_set_emojis.food_powerup_mushroom = "🍄"
-character_set_emojis.food_powerup_slow = ["🐢", "🐌"]
+character_set_emojis.food_powerup_slow = "🐢"
 character_set_emojis.food_powerup_portal = "🌀"
 character_set_emojis.food_powerup_brick = "🧱"
 character_set_emojis.food_powerup_fast = "💨"
 character_set_emojis.food_powerup_tornado = "💫"
-character_set_emojis.food_default = ["🍎", "🍏"]
+character_set_emojis.food_powerup_character_set = "💱"
+character_set_emojis.food_default = "🍏"
 
-character_set = character_set_classical
+character_sets = [character_set_classical, character_set_emojis]
+character_set = character_set_emojis
 
 class Game:
     def __init__(self):
@@ -78,9 +87,12 @@ class Game:
         self.over = False
         self.message = ""
         self.food = []
-        self.white_pixel = character_set.game_white_pixel
-        self.black_pixel = character_set.game_black_pixel
-        self.utf_8_border = character_set.game_utf_8_border
+        self.character_set_property_name_white_pixel = "game_white_pixel"
+        self.character_set_property_name_black_pixel = "game_black_pixel"
+        self.character_set_property_name_utf_8_border = "game_utf_8_border"
+        self.white_pixel = character_set[self.character_set_property_name_white_pixel]
+        self.black_pixel = character_set[self.character_set_property_name_black_pixel]
+        self.utf_8_border = character_set[self.character_set_property_name_utf_8_border]
         self.detect_canvas_size = False
         self.border_collision = True
         self.snake = None
@@ -92,8 +104,6 @@ class Game:
         self.next_random_item_ts = 0
         self.last_pressed_char = ""
         self.setup()
-
-
 
 
 
@@ -143,9 +153,10 @@ class Game:
 
         self.next_random_item_ts = random.randint(0, 200)
         self.snake = Snake()
-        self.food.append(Food(self, self.canvas, self.snake, "default"))
-        self.food.append(Food(self, self.canvas, self.snake, "powerup_slow"))
-        self.food.append(Food(self, self.canvas, self.snake, "powerup_portal"))
+        food = Food(self, self.canvas, self.snake, "default")
+        for value in food.types:
+            self.food.append(Food(self, self.canvas, self.snake, value))
+            
         self.running = True
         self.repeat()
 
@@ -159,6 +170,7 @@ class Game:
 
     
     def repeat(self):
+        global character_set
         while self.running:
 
             char = getch(self.ts_delta_limit*10**-3)
@@ -180,6 +192,11 @@ class Game:
                 self.snake.pos_x_direction_down()
 
             elif(char == "l"):
+                if character_set == character_set_classical:
+                    character_set = character_set_emojis
+                else: 
+                    character_set = character_set_classical
+                
                 self.snake.limbs.append(Position(0, 0))
 
             self.last_pressed_char = char
@@ -204,21 +221,21 @@ class Game:
 
             for key, value in enumerate(self.snake.limbs):
                 if(key == 0):
-                    self.snake_utf_8_symbol = self.snake.utf_8_head
+                    snake_utf_8_symbol = character_set[self.snake.character_set_property_name_utf_8_head]
                 
                 if(key > 0 & (len(self.snake.limbs) > 2)):
-                    self.snake_utf_8_symbol = self.snake.utf_8_body
+                    snake_utf_8_symbol = character_set[self.snake.character_set_property_name_utf_8_body]
                 
                 if((key == (len(self.snake.limbs)-1)) & (len(self.snake.limbs) > 1)):
-                    self.snake_utf_8_symbol = self.snake.utf_8_tail
+                    snake_utf_8_symbol = character_set[self.snake.character_set_property_name_utf_8_tail]
 
-                self.canvas.addPixel(value.x%self.canvas.width, value.y%self.canvas.height, self.snake_utf_8_symbol)
+                self.canvas.addPixel(value.x%self.canvas.width, value.y%self.canvas.height, snake_utf_8_symbol)
             
             # draw border 
             if self.border_collision:
                 for value in self.border_pixels:
                     #print(value.string)
-                    self.canvas.addPixel(value.x, value.y, self.utf_8_border)
+                    self.canvas.addPixel(value.x, value.y, character_set[self.character_set_property_name_utf_8_border])
 
 
             for value in self.food:
@@ -226,7 +243,7 @@ class Game:
                 if len(filter(lambda val: val.type_name == value.type_name, self.food)) > value.co_existance_limit:
                     value.destroy(self)
 
-                self.canvas.addPixel(value.position.x%self.canvas.width, value.position.y%self.canvas.height, value.utf_8)
+                self.canvas.addPixel(value.position.x%self.canvas.width, value.position.y%self.canvas.height, character_set[value.character_set_property_name_utf_8] )
                 
                 if value.repeat_function is not None:
                     value.repeat_function(value, self)
@@ -266,11 +283,13 @@ class Canvas:
         self.width = width
         self.height = height
         self.output = ""
-        self.white_pixel = character_set.canvas_white_pixel
-        self.black_pixel = character_set.canvas_black_pixel
         self.pixel_matrix = []
         self.clear_pixel_matrix = []
         self.counter = 0
+        self.character_set_property_name_white_pixel = "canvas_white_pixel"
+        self.character_set_property_name_black_pixel = "canvas_black_pixel"
+        self.white_pixel = character_set[self.character_set_property_name_white_pixel]
+        self.black_pixel = character_set[self.character_set_property_name_black_pixel]
         
         self.pixel_matrix = self.get_cleared_matrix()
 
@@ -288,8 +307,8 @@ class Canvas:
         #print("clearing")
         self.pixel_matrix = self.get_cleared_matrix()
 
-        for x in range(0, self.height):
-            print("\n")
+        # for x in range(0, self.height):
+        #     print("\n")
 
     def addPixel(self, x,y, string):
         x = int(x)
@@ -301,13 +320,14 @@ class Canvas:
 
 
     def draw(self):
+        global character_set
         self.output = ""
         for value in self.pixel_matrix:
             for value in value:
                 if isinstance(value, str):
                     self.output += value
                 else:
-                    self.output += self.white_pixel
+                    self.output += character_set[self.character_set_property_name_white_pixel]
             self.output +="\n"
 
         print(self.output)
@@ -333,12 +353,13 @@ class Snake:
         self.power_ups = []
         self.speed = 5
         self.speed_max = 10
-        #self.utf_8_head = "◈"
-        self.utf_8_head = character_set.snake_utf_8_head
-        #self.utf_8_body = "○"
-        self.utf_8_body = character_set.snake_utf_8_body
-        #self.utf_8_tail = "◌"
-        self.utf_8_tail = character_set.snake_utf_8_tail
+        self.character_set_property_name_utf_8_head = "snake_utf_8_head"
+        self.character_set_property_name_utf_8_body = "snake_utf_8_body"
+        self.character_set_property_name_utf_8_tail = "snake_utf_8_tail"
+        self.utf_8_head = character_set[self.character_set_property_name_utf_8_head]
+        self.utf_8_body = character_set[self.character_set_property_name_utf_8_body]
+        self.utf_8_tail = character_set[self.character_set_property_name_utf_8_tail]
+        
         self.position = Position(1,1)
         self.limbs = [self.position]
         self.limbs_for_collision_detection = list(map(lambda v: v.string, self.limbs))
@@ -443,7 +464,7 @@ class Food:
         self.live_count = 0
         self.type_name = type_name
         self.time_to_live = None
-        self.types = ["powerup_mushroom", "powerup_slow", "powerup_portal", "powerup_brick", "powerup_fast" , "powerup_tornado","default"]
+        self.types = ["powerup_mushroom", "powerup_slow", "powerup_portal", "powerup_brick", "powerup_fast" , "powerup_tornado", "powerup_character_set", "default"]
         self.co_existance_limit = 1
         self.repeat_function = None
         self.time_to_live = 200
@@ -453,12 +474,9 @@ class Food:
             random_choice.remove("default")
             self.type_name = random.choice(random_choice)
 
-        character = character_set["food_" + self.type_name]
+        self.character_set_property_name_utf_8 = "food_" + self.type_name
+        self.utf_8 = character_set[self.character_set_property_name_utf_8]
 
-        if(isinstance(character, list)):
-            self.utf_8 = random.choice(character)
-        else:
-            self.utf_8 = character
 
         if self.type_name == "default":
             self.time_to_live = None
@@ -493,6 +511,7 @@ class Food:
         self.destroy(game)
         game.snake.add_limb()
         game.food.append(self.__class__(game, game.canvas, game.snake, "default"))
+    
 
     def pickup_powerup_brick(self, game):
         def func(self, game):
@@ -542,6 +561,28 @@ class Food:
             self.live_count += 1
             if self.live_count > self.time_to_live:
                 game.snake.speed = self.snake_speed_cached
+                game.snake.power_ups.remove(self)
+
+        power_up = Power_up(func, 100)
+        game.snake.power_ups.append(power_up)
+
+        self.destroy(game)
+
+    def pickup_powerup_character_set(self, game):
+        
+        def func(self, game):
+            global character_set
+            if self.live_count == 0:
+                self.character_set_cached = character_set
+            if self.live_count == 1:
+                if character_set == character_set_classical:
+                    character_set = character_set_emojis
+                else: 
+                    character_set = character_set_classical
+
+            self.live_count += 1
+            if self.live_count > self.time_to_live:
+                character_set = self.character_set_cached
                 game.snake.power_ups.remove(self)
 
         power_up = Power_up(func, 100)
