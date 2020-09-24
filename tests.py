@@ -165,3 +165,148 @@ print(asdf.prop)
 print(b.prop)
 
 
+# Python program to illustrate destructor 
+class Can_i_self_destroy_me: 
+  
+    # Initializing 
+    def __init__(self): 
+        print('Employee created.') 
+  
+    def self_destroy(self):
+        self.__del__()
+    # Deleting (Calling destructor) 
+    def __del__(self): 
+        del self
+        print('Destructor called, Employee deleted.') 
+  
+can_i_self_destroy_me = Can_i_self_destroy_me() 
+del can_i_self_destroy_me 
+
+can_i_self_destroy_me = Can_i_self_destroy_me() 
+can_i_self_destroy_me.self_destroy()
+can_i_self_destroy_me.self_destroy()
+can_i_self_destroy_me.self_destroy()
+can_i_self_destroy_me.self_destroy()
+
+print(can_i_self_destroy_me)
+print("can_i_self_destroy_me still here ?=e")
+print(can_i_self_destroy_me)
+
+can_i_self_destroy_me.self_destroy()  
+
+can_i_self_destroy_me.prop = "test321"
+print(can_i_self_destroy_me.prop)
+
+can_i_self_destroy_me_arr = []
+
+can_i_self_destroy_me_arr.append(can_i_self_destroy_me)
+import gc
+gc.collect()
+print(can_i_self_destroy_me_arr)
+del can_i_self_destroy_me
+
+print(can_i_self_destroy_me_arr[0])
+
+
+print("####")
+
+# Python program to illustrate destructor 
+class Parent_class: 
+  
+    # Initializing 
+    def __init__(self,name):
+        self.name = name 
+        self.child_class = Child_class("childname")
+
+# Python program to illustrate destructor 
+class Child_class: 
+  
+    # Initializing 
+    def __init__(self,name):
+        self.name = name
+
+    def find_parents(self):
+        return gc.get_referrers(self)
+
+pc = Parent_class("Father Baba")
+
+print("parent class")
+print(pc)
+
+
+new_ref = pc.child_class
+
+print(pc.child_class.find_parents())
+
+
+print("###")
+
+class Instance_count:
+    _counter = 0
+    _counter_name = []
+
+    
+    def __init__(self, name):
+        self.name = name
+        self.__class__._counter += 1
+        self.__class__._counter_name.append(name)
+        _instance_counter_with_name_string = "_instance_counter_with_name_"+name
+        
+        if(hasattr(self.__class__, _instance_counter_with_name_string) == False):
+            _instance_counter_with_name_value = 0
+        else: 
+            _instance_counter_with_name_value = getattr(self.__class__, _instance_counter_with_name_string)
+        setattr(self.__class__,_instance_counter_with_name_string , _instance_counter_with_name_value+1)
+        
+        self.id = self.__class__._counter
+
+    def get_instance_count(self): 
+        print("i was instanciated so many times")
+        print(self.__class__._counter)
+
+        #print("i with the name " + self.name + "  was instanciated so many times")
+        #print(filter(lambda val: val.name == self.name, self.__class__._counter_name))
+
+        print("instances with name" + self.name)
+        print(getattr(self.__class__, "_instance_counter_with_name_" + self.name))
+
+
+
+
+
+
+
+i1 = Instance_count("u")
+i2 = Instance_count("u")
+i3 = Instance_count("a")
+i4 = Instance_count("a")
+i5 = Instance_count("a")
+i6 = Instance_count("i")
+i7 = Instance_count("e")
+
+# del i3
+
+# print(i1.get_instance_count())
+# print(i3)
+
+print("###")
+
+class Demo():
+    def __init__(self, name):
+        self.name = name
+
+var1 = Demo("var1")
+var2 = Demo("var2")
+
+vars_in_arr = [var1, var2]
+
+print(vars_in_arr)
+
+var1.name = "var1_changed"
+
+print(vars_in_arr[0].name)
+
+print(gc.get_referrers(var1))
+
+print(vars_in_arr[0].name)
+

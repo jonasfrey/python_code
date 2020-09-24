@@ -135,8 +135,8 @@ class Game:
             width = input("after how many groups of 4 yellow + 1 black moons does the line break ?:")
             width = width * 4
         else:
-            width = 20
-            height = 20
+            width = 15
+            height = 15
         
         self.canvas = Canvas(width, height)
         self.border_pixels = []
