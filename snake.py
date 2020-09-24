@@ -237,10 +237,11 @@ class Game:
                     #print(value.string)
                     self.canvas.addPixel(value.x, value.y, character_set[self.character_set_property_name_utf_8_border])
 
-
+            print(self.food)
+            exit
             for value in self.food:
                 
-                if len(filter(lambda val: val.type_name == value.type_name, self.food)) > value.co_existance_limit:
+                if len(list(filter(lambda val: val.type_name == value.type_name, self.food))) > value.co_existance_limit:
                     value.destroy(self)
 
                 self.canvas.addPixel(value.position.x%self.canvas.width, value.position.y%self.canvas.height, character_set[value.character_set_property_name_utf_8] )
@@ -487,7 +488,7 @@ class Food:
             
             def repeat_function(self, game):
 
-                foods_type_powerup_portal = filter(lambda val: val.type_name == "powerup_portal", game.food)
+                foods_type_powerup_portal = list(filter(lambda val: val.type_name == "powerup_portal", game.food))
                 
                 if len(foods_type_powerup_portal) == 1:  
                     game.food.append(self.__class__(game, game.canvas, game.snake, "powerup_portal"))
@@ -532,7 +533,7 @@ class Food:
     def pickup_powerup_portal(self, game):
         self.destroy(game)
 
-        foods_type_powerup_portal = filter(lambda val: val.type_name == "powerup_portal", game.food)
+        foods_type_powerup_portal = list(filter(lambda val: val.type_name == "powerup_portal", game.food))
         other_food_type_powerup_portal = foods_type_powerup_portal[0]
 
         game.snake.position.x = other_food_type_powerup_portal.position.x
