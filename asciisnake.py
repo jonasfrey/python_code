@@ -1,5 +1,5 @@
-from os import system, name 
-from time import sleep 
+import os
+import time  
 import random
 import gc 
 import keyboard
@@ -76,40 +76,41 @@ class Game:
         #self.c.render_test()
         game_self = self
         def o1_render_fun(self):
-            if(self.direction == "right"): 
-                x_summand = + 1*self.speed
+            if(self.object_group.direction == "right"): 
+                x_summand = + 1*self.object_group.speed
                 y_summand = 0
-            if(self.direction == "left"): 
-                x_summand = - 1*self.speed
+            if(self.object_group.direction == "left"): 
+                x_summand = - 1*self.object_group.speed
                 y_summand = 0
-            if(self.direction == "up"): 
+            if(self.object_group.direction == "up"): 
                 x_summand = 0
-                y_summand = - 1*self.speed
-            if(self.direction == "down"): 
+                y_summand = - 1*self.object_group.speed
+            if(self.object_group.direction == "down"): 
                 x_summand = 0
-                y_summand = + 1*self.speed
+                y_summand = + 1*self.object_group.speed
 
-            if(int(self.rendered_count*self.speed) % 3 == 0): self.ascii_character = "🌎"
-            if(int(self.rendered_count*self.speed) % 3 == 1): self.ascii_character = "🌍"
-            if(int(self.rendered_count*self.speed) % 3 == 2): self.ascii_character = "🌏"
+            if(int(self.rendered_count*self.object_group.speed) % 3 == 0): self.ascii_character = "🌎"
+            if(int(self.rendered_count*self.object_group.speed) % 3 == 1): self.ascii_character = "🌍"
+            if(int(self.rendered_count*self.object_group.speed) % 3 == 2): self.ascii_character = "🌏"
 
-            if(int(self.rendered_count*self.speed) % 3 == 0): self.ascii_character = "🙈"
-            if(int(self.rendered_count*self.speed) % 3 == 1): self.ascii_character = "🙉"
-            if(int(self.rendered_count*self.speed) % 3 == 2): self.ascii_character = "🙊"
+            if(int(self.rendered_count*self.object_group.speed) % 3 == 0): self.ascii_character = "🙈"
+            if(int(self.rendered_count*self.object_group.speed) % 3 == 1): self.ascii_character = "🙉"
+            if(int(self.rendered_count*self.object_group.speed) % 3 == 2): self.ascii_character = "🙊"
 
             self.point_3d.x = (self.point_3d.x + x_summand) % game_self.c.width
             self.point_3d.y = (self.point_3d.y + y_summand) % game_self.c.width
 
-        #group object
-        self.snake = ObjectGroup("snake")
-        def add_limb(self)
-            limb_object = Object(Point_3D(0,0,0), "snake_utf_8_head", 1, 0, 0,  None, None)
-            self.children_objects.add(limb_object)
+
+        self.snake = ObjectGroup(self, Point_3D(0, 0, 0), "snake", 1, 0, 0,lambda *args: None, lambda *args: None)
+        self.snake.direction = "right"
+        self.snake.speed = 0.5
+        self.snake.add_child_object(Point_3D(0, 0, 0), "snake_utf_8_head", 1, 0, 0,o1_render_fun, lambda *args: None )
+
 
         # actual objects
-        self.o1 = Object(Point_3D(0,0,0), "snake_utf_8_head", 1, 0, 0,  o1_render_fun, lambda a : 1+1)
-        self.o1.speed = 0.1
-        self.o1.direction = "right"
+        # self.o1 = Object(Point_3D(0,0,0), "snake_utf_8_head", 1, 0, 0,  o1_render_fun, lambda a : 1+1)
+        # self.o1.speed = 0.1
+        # self.o1.direction = "right"
 
     def render(self): 
         
@@ -117,12 +118,20 @@ class Game:
 
         for obj in gc.get_objects():
             if isinstance(obj, Object):
+                # code for Object and ObjectGroup, destroy after rendered_count_limit reached, call callbacks etc
                 obj.rendered_count = obj.rendered_count+1
                 if(obj.rendered_count > obj.rendered_count_limit & obj.rendered_count_limit != 0):
                     del obj
                     continue
 
                 obj.render_function(obj)
+
+                #continue if ObejctGroup 
+                if isinstance(obj, ObjectGroup):
+                    continue
+
+                # todo , detect collision, call callback on self.group_object.collision_function() (emit colision to 'parent')
+
                 if(hasattr(self.ascii_map_active, obj.name) == False):
                     ascii_string = self.ascii_map_active.fallback
                 else:
@@ -150,15 +159,11 @@ class Point_3D:
         self.y = y
         self.z = z
 
-class ObjectGroup():
-    def __init__(self, name, children_objects = None):
-        self.name = name
-        self.children_objects = children_objects
 
 class Object: 
-    def __init__(self, object_group,  point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
+    def __init__(self, object_group, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
         # 'parent' object
-        self.object_group = object_group, 
+        self.object_group = object_group
         #  point
         self.point_3d = point_3d
         # snake, item, enemy... 
@@ -173,6 +178,15 @@ class Object:
         self.render_function = render_function
         # a callback which is getting exectued when the object collides with other objects
         self.collision_function = collision_function
+
+class ObjectGroup(Object):
+    def __init__(self, object_group, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
+        Object.__init__(self, object_group, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function)
+        self.child_objects = []
+
+    def add_child_object(self, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
+        self.child_objects.append(Object(self, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function))
+
 
 class Canvas: 
     def __init__(self, width, height):
@@ -197,33 +211,27 @@ class Canvas:
         self.ascii_pixel_array =  [black_pixel] * (self.width*self.height)
     
     def render(self):
-        self.clear_terminal()
         render_string = ""
         for key, val in enumerate(self.ascii_pixel_array):
-            key = key + 1
-            if key % self.width == 0:
+            if (key+1) % self.width == 0:
                 render_string += val
                 render_string += "\n"
             else:
                 render_string += val
         
+        time.sleep(0.016) # 1000(ms)/60(fps) => 0.016 ms sleep
+        self.clear_terminal()
         print(render_string)
-        sleep(0.016)
 
     # define our clear function 
     def clear_terminal(self): 
-    
-        # for windows 
-        if name == 'nt': 
-            _ = system('cls') 
-    
-        # for mac and linux(here, os.name is 'posix') 
-        else: 
-            _ = system('clear') 
+        #print("\n".join([""]*100))
+        #print(chr(27) + "[2J")
+        os.system('cls' if os.name == 'nt' else 'clear')
 
     def render_test(self):
 
-        foo = ["🐶"
+        foo1 = ["🐶"
         ,"🐱"
         ,"🐭"
         ,"🐹"
@@ -307,7 +315,6 @@ class Canvas:
         ,"🐇"
         ,"🐁"
         ,"🐀"
-        ,"🐿"
         ,"🐾"
         ,"🐉"
         ,"🐲"
@@ -359,18 +366,9 @@ class Canvas:
         ,"💥"
         ,"🌤"
         ,"⛅️"
-        ,"🌥"
-        ,"🌦"
         ,"🌈"
-        ,"🌧"
-        ,"⛈"
-        ,"🌩"
-        ,"🌨"
         ,"⛄️"
-        ,"🌬"
         ,"💨"
-        ,"🌪"
-        ,"🌫"
         ,"🌊"
         ,"💧"
         ,"💦"
@@ -378,13 +376,14 @@ class Canvas:
         ,"🦔"
         ,"🦕"]
 
-        
+        foo = ["{", "*", "1", "$", "#", "%", "%", "¢", "@"]
+        foo = foo1
+        foo = ["🦔", "🦔"]
+
         for val in range(0, self.width*self.height):
-            self.clear_terminal()
             #self.ascii_pixel_array[val] = random.choice(foo)
             self.ascii_pixel_array[val] = foo[val%(len(foo)-1)]
             self.render()
-            sleep(0.001)
 
 
 
@@ -392,6 +391,9 @@ game = Game()
 
 def background():
     game.start()
+    print("start")
+    #c = Canvas(22, 22)
+    #c.render_test()
 
 def foreground():
     # init listeners 
@@ -408,17 +410,16 @@ def foreground():
     #         setattr(game.o1, "direction" , "left")
     #     if keyboard.read_key() == "d":
     #         setattr(game.o1, "direction" , "right")
+    keyboard.on_press_key("v", lambda _:game.end())
 
-    keyboard.on_press_key("w", lambda _:setattr(game.o1, "direction" , "up"))
-    keyboard.on_press_key("s", lambda _:setattr(game.o1, "direction" , "down"))
-    keyboard.on_press_key("a", lambda _:setattr(game.o1, "direction" , "left"))
-    keyboard.on_press_key("d", lambda _:setattr(game.o1, "direction" , "right"))
+
+    keyboard.on_press_key("w", lambda _:setattr(game.snake, "direction" , "up"))
+    keyboard.on_press_key("s", lambda _:setattr(game.snake, "direction" , "down"))
+    keyboard.on_press_key("a", lambda _:setattr(game.snake, "direction" , "left"))
+    keyboard.on_press_key("d", lambda _:setattr(game.snake, "direction" , "right"))
 
 
     keyboard.on_press_key("m", lambda _:setattr(game, "ascii_map_active" , game.ascii_map_oldschool))
-
-
-
     # What you want to run in the foreground
 
 b = threading.Thread(name='background', target=background)
