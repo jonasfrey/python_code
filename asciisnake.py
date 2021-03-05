@@ -6,67 +6,45 @@ import keyboard
 import threading
 
 class Ascii_Map:
-    def __init__(self,
-        name = "emojis",
-        game_white_pixel = "🌑",
-        game_black_pixel = "🌑",
-        canvas_white_pixel = "🌑",
-        canvas_black_pixel = "🌑",
-        game_utf_8_border = "🧱",
-        snake_utf_8_head = "🌝",
-        snake_utf_8_body = "🌕",
-        snake_utf_8_tail = "🌕",
-        food_powerup_mushroom = "🍄",
-        food_powerup_slow = "🐢",
-        food_powerup_portal = "🌀",
-        food_powerup_brick = "🧱",
-        food_powerup_fast = "💨",
-        food_powerup_tornado = "💫",
-        food_powerup_character_set = "💱",
-        food_default = "🍏",
-        fallback = "🌑",
-    ):
-        self.name = name
-        self.game_white_pixel = game_white_pixel
-        self.game_black_pixel = game_black_pixel
-        self.canvas_white_pixel = canvas_white_pixel
-        self.canvas_black_pixel = canvas_black_pixel
-        self.game_utf_8_border = game_utf_8_border
-        self.snake_utf_8_head = snake_utf_8_head
-        self.snake_utf_8_body = snake_utf_8_body
-        self.snake_utf_8_tail = snake_utf_8_tail
-        self.food_powerup_mushroom = food_powerup_mushroom
-        self.food_powerup_slow = food_powerup_slow
-        self.food_powerup_portal = food_powerup_portal
-        self.food_powerup_brick = food_powerup_brick
-        self.food_powerup_fast = food_powerup_fast
-        self.food_powerup_tornado = food_powerup_tornado
-        self.food_powerup_character_set = food_powerup_character_set
-        self.food_default = food_default
-        self.fallback = fallback
+    def __init__(self):
+        self.names                       = ["emojis", "classic"]
+        self.name = "emojis"
+        self.game_black_pixel            = ["🌑", " " ]
+        self.game_utf_8_border           = ["🧱", "#" ]
+        self.snake_utf_8_head            = ["🌝", "O" ]
+        self.snake_utf_8_head            = ["🌝", "O" ]
+        self.snake_utf_8_body            = ["🌕", "o" ]
+        self.snake_utf_8_tail            = ["🌕", "9" ]
+        self.food_powerup_mushroom       = ["🍄", "Ͳ" ]
+        self.food_powerup_slow           = ["🐢", "◷" ]
+        self.food_powerup_portal         = ["🌀", "α" ]
+        self.food_powerup_brick          = ["🧱", "#" ]
+        self.food_powerup_fast           = ["💨", "☇" ]
+        self.food_powerup_tornado        = ["💫", "?" ]
+        self.food_powerup_character_set  = ["💱", "X" ]
+        self.food_default                = ["🍏", "@" ]
+
+        self.eye                         = ["🥘", "¬" ]
+        self.mouth                       = ["👄", "o" ]
+        self.food_default                = ["🍏", "@" ]
+        self.fallback                    = ["🌑", " " ]
+    
+
+    """
+    @param prop_name string 
+    """
+    def get_string_by_prop_name(self, prop_name):
+        index = self.names.index(self.name)
+
+        if(hasattr(self, prop_name) == False):
+            ascii_string = self.fallback[index]
+        else:
+            ascii_string = getattr(self, prop_name)[index]
+
+        return ascii_string
 
 class Game: 
     def __init__(self):
-        self.ascii_map_emojis = Ascii_Map()
-        self.ascii_map_oldschool = Ascii_Map()
-        self.ascii_map_oldschool.name = "oldschool"
-        self.ascii_map_oldschool.game_white_pixel = " " 
-        self.ascii_map_oldschool.game_black_pixel = " " 
-        self.ascii_map_oldschool.canvas_white_pixel = " " 
-        self.ascii_map_oldschool.canvas_black_pixel = " " 
-        self.ascii_map_oldschool.game_utf_8_border = "#" 
-        self.ascii_map_oldschool.snake_utf_8_head = "O"
-        self.ascii_map_oldschool.snake_utf_8_body = "o"
-        self.ascii_map_oldschool.snake_utf_8_tail = "9"
-        self.ascii_map_oldschool.food_powerup_mushroom = "Ͳ"
-        self.ascii_map_oldschool.food_powerup_slow = "◷"
-        self.ascii_map_oldschool.food_powerup_portal = "α"
-        self.ascii_map_oldschool.food_powerup_brick = "#"
-        self.ascii_map_oldschool.food_powerup_fast = "☇"
-        self.ascii_map_oldschool.food_powerup_character_set = "?"
-        self.ascii_map_oldschool.food_powerup_tornado = "X"
-        self.ascii_map_oldschool.food_default = "@"
-        self.ascii_map_oldschool.fallback = " "
 
         if self.is_sudo() != True:
             print("run with sudo ")    
@@ -75,7 +53,7 @@ class Game:
         self.running = False
         self.render_id = 0
 
-        self.ascii_map_active = self.ascii_map_emojis
+        self.ascii_map = Ascii_Map()
 
         self.c = Canvas(22, 22)
         #self.c.render_test()
@@ -155,6 +133,37 @@ class Game:
 
         self.snake.add_limb = add_limb
 
+        def weird_face_walk(self):
+            if((game_self.render_id * self.speed) % 1 != 0):
+                return False
+            self.point_3d.x = (self.point_3d.x + 1) % game_self.c.width
+            self.point_3d.y = (self.point_3d.y + 0) % game_self.c.width
+            print(self.point_3d.x)
+
+        self.weird_face = ObjectGroup(self)
+        self.weird_face.render_function = weird_face_walk
+
+        self.weird_face.name = "weird_face"
+        #add custom props
+        self.weird_face.direction = "right"
+        self.weird_face.speed = 0.2
+
+        weird_face_eye_left = Object(self.weird_face)
+        weird_face_eye_left.name = "eye"
+        weird_face_eye_left.point_3d = Point_3D(0,0,0) #relative to parent_class_instance position
+        self.weird_face.child_objects.append(weird_face_eye_left)
+
+        weird_face_mouth = Object(self.weird_face)
+        weird_face_mouth.name = "mouth"
+        weird_face_mouth.point_3d = Point_3D(1,0,0) #relative to parent_class_instance position
+        self.weird_face.child_objects.append(weird_face_mouth)
+
+        weird_face_eye_right = Object(self.weird_face)
+        weird_face_eye_right.name = "eye"
+        weird_face_eye_right.point_3d = Point_3D(2,0,0) #relative to parent_class_instance position
+        self.weird_face.child_objects.append(weird_face_eye_right)
+
+
 
 
     def is_sudo(self): 
@@ -174,7 +183,7 @@ class Game:
     def render(self): 
         self.render_id += 1
         
-        self.c.clear_ascii_pixel_array(self.ascii_map_active.game_black_pixel)
+        self.c.clear_ascii_pixel_array(self.ascii_map.get_string_by_prop_name("game_black_pixel"))
 
         for obj in gc.get_objects():
             if isinstance(obj, Object):
@@ -210,16 +219,15 @@ class Game:
                         if(obj.collision_function != None):
                             obj.collision_function(obj,obj.collision_with)
 
+                # will search for ascii symbol in map or if not found return fallback 
+                ascii_string = self.ascii_map.get_string_by_prop_name(obj.name)
 
-                if(hasattr(self.ascii_map_active, obj.name) == False):
-                    ascii_string = self.ascii_map_active.fallback
-                else:
-                    ascii_string = getattr(self.ascii_map_active, obj.name)
-
+                #ascii_string  can be overwritten by having the property ascii character
                 if(hasattr(obj, "ascii_character")):
                     ascii_string = getattr(obj, "ascii_character")
                 
-                self.c.draw_ascii(obj.point_3d.x, obj.point_3d.y, ascii_string)
+                #draw relative to parent
+                self.c.draw_ascii(obj.parent_class_instance.point_3d.x + obj.point_3d.x, obj.parent_class_instance.point_3d.y + obj.point_3d.y, ascii_string)
 
 
     def end(self):
@@ -269,7 +277,7 @@ class Object:
 class ObjectGroup(Object):
     def __init__(self, parent_class_instance):
         Object.__init__(self, parent_class_instance)
-        self.child_objects = []
+        self.child_objects = []        
 
 
 class Canvas: 
@@ -315,152 +323,9 @@ class Canvas:
 
     def render_test(self):
 
-        foo1 = ["🐶"
-        ,"🐱"
-        ,"🐭"
-        ,"🐹"
-        ,"🐰"
-        ,"🦊"
-        ,"🐻"
-        ,"🐼"
-        ,"🐨"
-        ,"🐯"
-        ,"🦁"
-        ,"🐮"
-        ,"🐷"
-        ,"🐽"
-        ,"🐸"
-        ,"🐵"
-        ,"🙈"
-        ,"🙉"
-        ,"🙊"
-        ,"🐒"
-        ,"🐔"
-        ,"🐧"
-        ,"🐦"
-        ,"🐤"
-        ,"🐣"
-        ,"🐥"
-        ,"🦆"
-        ,"🦅"
-        ,"🦉"
-        ,"🦇"
-        ,"🐺"
-        ,"🐗"
-        ,"🐴"
-        ,"🦄"
-        ,"🐝"
-        ,"🐛"
-        ,"🦋"
-        ,"🐌"
-        ,"🐚"
-        ,"🐞"
-        ,"🐜"
-        ,"🕷"
-        ,"🕸"
-        ,"🐢"
-        ,"🐍"
-        ,"🦎"
-        ,"🦂"
-        ,"🦀"
-        ,"🦑"
-        ,"🐙"
-        ,"🦐"
-        ,"🐠"
-        ,"🐟"
-        ,"🐡"
-        ,"🐬"
-        ,"🦈"
-        ,"🐳"
-        ,"🐋"
-        ,"🐊"
-        ,"🐆"
-        ,"🐅"
-        ,"🐃"
-        ,"🐂"
-        ,"🐄"
-        ,"🦌"
-        ,"🐪"
-        ,"🐫"
-        ,"🐘"
-        ,"🦏"
-        ,"🦍"
-        ,"🐎"
-        ,"🐖"
-        ,"🐐"
-        ,"🐏"
-        ,"🐑"
-        ,"🐕"
-        ,"🐩"
-        ,"🐈"
-        ,"🐓"
-        ,"🦃"
-        ,"🕊"
-        ,"🐇"
-        ,"🐁"
-        ,"🐀"
-        ,"🐾"
-        ,"🐉"
-        ,"🐲"
-        ,"🌵"
-        ,"🎄"
-        ,"🌲"
-        ,"🌳"
-        ,"🌴"
-        ,"🌱"
-        ,"🌿"
-        ,"🍀"
-        ,"🎍"
-        ,"🎋"
-        ,"🍃"
-        ,"🍂"
-        ,"🍁"
-        ,"🍄"
-        ,"🌾"
-        ,"💐"
-        ,"🌷"
-        ,"🌹"
-        ,"🥀"
-        ,"🌻"
-        ,"🌼"
-        ,"🌸"
-        ,"🌺"
-        ,"🌎"
-        ,"🌍"
-        ,"🌏"
-        ,"🌕"
-        ,"🌖"
-        ,"🌗"
-        ,"🌘"
-        ,"🌑"
-        ,"🌒"
-        ,"🌓"
-        ,"🌔"
-        ,"🌚"
-        ,"🌝"
-        ,"🌞"
-        ,"🌛"
-        ,"🌜"
-        ,"🌙"
-        ,"💫"
-        ,"⭐️"
-        ,"🌟"
-        ,"✨"
-        ,"🔥"
-        ,"💥"
-        ,"🌤"
-        ,"⛅️"
-        ,"🌈"
-        ,"⛄️"
-        ,"💨"
-        ,"🌊"
-        ,"💧"
-        ,"💦"
-        ,"🦓"
-        ,"🦔"
-        ,"🦕"]
+        foo1 = ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐚","🐞","🐜","🕷","🕸","🐢","🐍","🦎","🦂","🦀","🦑","🐙","🦐","🐠","🐟","🐡","🐬","🦈","🐳","🐋","🐊","🐆","🐅","🐃","🐂","🐄","🦌","🐪","🐫","🐘","🦏","🦍","🐎","🐖","🐐","🐏","🐑","🐕","🐩","🐈","🐓","🦃","🕊","🐇","🐁","🐀","🐾","🐉","🐲","🌵","🎄","🌲","🌳","🌴","🌱","🌿","🍀","🎍","🎋","🍃","🍂","🍁","🍄","🌾","💐","🌷","🌹","🥀","🌻","🌼","🌸","🌺","🌎","🌍","🌏","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌚","🌝","🌞","🌛","🌜","🌙","💫","⭐️","🌟","✨","🔥","💥","🌤","⛅️","🌈","⛄️","💨","🌊","💧","💦","🦓","🦔","🦕"]
 
-        foo = ["{", "*", "1", "$", "#", "%", "%", "¢", "@"]
+        foo = ["1", "$", "#", "%", "%", "¢", "@"]
         foo = foo1
         foo = ["🦔", "🦔"]
 
@@ -513,10 +378,11 @@ def foreground():
     keyboard.on_press_key("l", lambda _:add_limbs())
 
     def toggle_style(): 
-        if(game.ascii_map_active == game.ascii_map_oldschool):
-            setattr(game, "ascii_map_active" , game.ascii_map_emojis)
+        if(game.ascii_map.name == "emoji"):
+            setattr(game.ascii_map, "name" , "classic")
         else: 
-            setattr(game, "ascii_map_active" , game.ascii_map_oldschool)
+            setattr(game.ascii_map, "name" , "emoji")
+
 
     keyboard.on_press_key("m", lambda _:toggle_style())
     # What you want to run in the foreground
