@@ -4,13 +4,12 @@ import emoji
 os.system('cls' if os.name == 'nt' else 'clear')
 i = 0
 width = 100
-emojistr = "🦔"
-
+emojistr = "🐸"
 asciistr = "@"
 strstr = emojistr
 liststr = [" "] * width
 while i < 1000:
-    time.sleep(0.1)
+    time.sleep(0.01)
     os.system('cls' if os.name == 'nt' else 'clear')
     print(("".join(liststr)))
     i+= 1

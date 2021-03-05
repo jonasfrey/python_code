@@ -68,51 +68,111 @@ class Game:
         self.ascii_map_oldschool.food_default = "@"
         self.ascii_map_oldschool.fallback = " "
 
+        if self.is_sudo() != True:
+            print("run with sudo ")    
+            exit()
+        
         self.running = False
+        self.render_id = 0
 
         self.ascii_map_active = self.ascii_map_emojis
 
         self.c = Canvas(22, 22)
         #self.c.render_test()
+        
         game_self = self
+
         def o1_render_fun(self):
-            if(self.object_group.direction == "right"): 
-                x_summand = + 1*self.object_group.speed
+            #self.collidable = False
+            if((game_self.render_id * self.parent_class_instance.speed) % 1 != 0):
+                return False
+
+            #self.collidable = True
+            if(self.parent_class_instance.direction == "right"): 
+                x_summand = + 1
                 y_summand = 0
-            if(self.object_group.direction == "left"): 
-                x_summand = - 1*self.object_group.speed
+            if(self.parent_class_instance.direction == "left"): 
+                x_summand = - 1
                 y_summand = 0
-            if(self.object_group.direction == "up"): 
+            if(self.parent_class_instance.direction == "up"): 
                 x_summand = 0
-                y_summand = - 1*self.object_group.speed
-            if(self.object_group.direction == "down"): 
+                y_summand = - 1
+            if(self.parent_class_instance.direction == "down"): 
                 x_summand = 0
-                y_summand = + 1*self.object_group.speed
+                y_summand = + 1
 
-            if(int(self.rendered_count*self.object_group.speed) % 3 == 0): self.ascii_character = "🌎"
-            if(int(self.rendered_count*self.object_group.speed) % 3 == 1): self.ascii_character = "🌍"
-            if(int(self.rendered_count*self.object_group.speed) % 3 == 2): self.ascii_character = "🌏"
+            if(int(self.rendered_count) % 3 == 0): self.ascii_character = "🌎"
+            if(int(self.rendered_count) % 3 == 1): self.ascii_character = "🌍"
+            if(int(self.rendered_count) % 3 == 2): self.ascii_character = "🌏"
 
-            if(int(self.rendered_count*self.object_group.speed) % 3 == 0): self.ascii_character = "🙈"
-            if(int(self.rendered_count*self.object_group.speed) % 3 == 1): self.ascii_character = "🙉"
-            if(int(self.rendered_count*self.object_group.speed) % 3 == 2): self.ascii_character = "🙊"
+            if(int(self.rendered_count) % 3 == 0): self.ascii_character = "🙈"
+            if(int(self.rendered_count) % 3 == 1): self.ascii_character = "🙉"
+            if(int(self.rendered_count) % 3 == 2): self.ascii_character = "🙊"
 
+            child_objects_len = len(self.parent_class_instance.child_objects)
+
+            for key, val in enumerate(self.parent_class_instance.child_objects):
+                key = child_objects_len - (key+1)
+
+
+                val = self.parent_class_instance.child_objects[key]
+                if val.name == "snake_utf_8_head":
+                    continue
+
+                val_before_in_array = self.parent_class_instance.child_objects[key-1]
+
+                val.point_3d.x = val_before_in_array.point_3d.x
+                val.point_3d.y = val_before_in_array.point_3d.y
+
+        
             self.point_3d.x = (self.point_3d.x + x_summand) % game_self.c.width
             self.point_3d.y = (self.point_3d.y + y_summand) % game_self.c.width
 
+        def snake_head_collision_function(self,collision_with):
+            if(collision_with[0].name == "snake_utf_8_body"):
+                game_self.end()
+            if(collision_with[0].name == "food_default"):
+                self.parent_class_instance.add_limb(self.parent_class_instance)
 
-        self.snake = ObjectGroup(self, Point_3D(0, 0, 0), "snake", 1, 0, 0,lambda *args: None, lambda *args: None)
+
+        self.snake = ObjectGroup(self)
+        self.snake.name = "snake"
+        #add custom props
         self.snake.direction = "right"
-        self.snake.speed = 0.5
-        self.snake.add_child_object(Point_3D(0, 0, 0), "snake_utf_8_head", 1, 0, 0,o1_render_fun, lambda *args: None )
+        self.snake.speed = 0.2
+
+        snake_head = Object(self.snake)
+        snake_head.name = "snake_utf_8_head"
+        snake_head.render_function = o1_render_fun
+        snake_head.collision_function = snake_head_collision_function
+        snake_head.collidable = True
+        self.snake.child_objects.append(snake_head)
+
+        def add_limb(self):
+            snake_limb = Object(self)
+            snake_limb.name = "snake_utf_8_body"
+            self.child_objects.append(snake_limb)
+
+        self.snake.add_limb = add_limb
 
 
-        # actual objects
-        # self.o1 = Object(Point_3D(0,0,0), "snake_utf_8_head", 1, 0, 0,  o1_render_fun, lambda a : 1+1)
-        # self.o1.speed = 0.1
-        # self.o1.direction = "right"
+
+    def is_sudo(self): 
+        if os.name == 'nt': 
+            return True
+        else: 
+            return os.geteuid() == 0
+            # try:
+            #     os.rename('/etc/foo', '/etc/bar')
+            #     return True
+            # except IOError as e:
+            #     if (e[0] == errno.EPERM):
+            #         return True
+            #         sys.exit("You need root permissions to do this, laterz!")
+
 
     def render(self): 
+        self.render_id += 1
         
         self.c.clear_ascii_pixel_array(self.ascii_map_active.game_black_pixel)
 
@@ -123,14 +183,33 @@ class Game:
                 if(obj.rendered_count > obj.rendered_count_limit & obj.rendered_count_limit != 0):
                     del obj
                     continue
-
-                obj.render_function(obj)
+                
+                if(obj.render_function != None):
+                    obj.render_function(obj)
 
                 #continue if ObejctGroup 
                 if isinstance(obj, ObjectGroup):
                     continue
+                
 
-                # todo , detect collision, call callback on self.group_object.collision_function() (emit colision to 'parent')
+                if obj.collidable == True:
+                    obj.collision_with = []
+                    # todo , collision detection collisiondetection detect collision, call callback on self.group_object.collision_function() (emit colision to 'parent')
+                    for obj2 in gc.get_objects():
+                        if isinstance(obj2, ObjectGroup):
+                            continue
+
+                        if isinstance(obj2, Object):
+                            if obj2 == obj:
+                                continue
+                            if ((obj2.point_3d.x == obj.point_3d.x) & (obj2.point_3d.y == obj.point_3d.y)):
+                                obj.collision_with.append(obj2)
+
+                
+                    if(len(obj.collision_with) > 0):
+                        if(obj.collision_function != None):
+                            obj.collision_function(obj,obj.collision_with)
+
 
                 if(hasattr(self.ascii_map_active, obj.name) == False):
                     ascii_string = self.ascii_map_active.fallback
@@ -161,31 +240,36 @@ class Point_3D:
 
 
 class Object: 
-    def __init__(self, object_group, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
+    def __init__(self, parent_class_instance):
         # 'parent' object
-        self.object_group = object_group
+        self.parent_class_instance = parent_class_instance
         #  point
-        self.point_3d = point_3d
+        self.point_3d = Point_3D(0,0,0)
         # snake, item, enemy... 
-        self.name = name
+        self.name = "default"
         # defines how many with the same name can exists at the same time
-        self.co_existance_limit = co_existance_limit
+        self.co_existance_limit = 1
         # on every render this gets incremented
-        self.rendered_count = rendered_count
+        self.rendered_count = 0 # 
         # when the render_count has reached the render_count_limit, the object gets destroyed
-        self.rendered_count_limit = rendered_count_limit
+        self.rendered_count_limit = 0 # 0 infinity
+
+        # boolean wether object is collidable
+        self.collidable = False
+
         # a callback which is getting executed on every render 
-        self.render_function = render_function
+        #optional , by default None
+        self.render_function = None
+
         # a callback which is getting exectued when the object collides with other objects
-        self.collision_function = collision_function
+        #optional , by default None 
+        self.collision_function = None
+
 
 class ObjectGroup(Object):
-    def __init__(self, object_group, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
-        Object.__init__(self, object_group, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function)
+    def __init__(self, parent_class_instance):
+        Object.__init__(self, parent_class_instance)
         self.child_objects = []
-
-    def add_child_object(self, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function):
-        self.child_objects.append(Object(self, point_3d, name, co_existance_limit, rendered_count, rendered_count_limit, render_function, collision_function))
 
 
 class Canvas: 
@@ -418,8 +502,23 @@ def foreground():
     keyboard.on_press_key("a", lambda _:setattr(game.snake, "direction" , "left"))
     keyboard.on_press_key("d", lambda _:setattr(game.snake, "direction" , "right"))
 
+    def add_limbs():
+        game.snake.add_limb(game.snake)
+        game.snake.add_limb(game.snake)
+        game.snake.add_limb(game.snake)
+        game.snake.add_limb(game.snake)
+        game.snake.add_limb(game.snake)
 
-    keyboard.on_press_key("m", lambda _:setattr(game, "ascii_map_active" , game.ascii_map_oldschool))
+
+    keyboard.on_press_key("l", lambda _:add_limbs())
+
+    def toggle_style(): 
+        if(game.ascii_map_active == game.ascii_map_oldschool):
+            setattr(game, "ascii_map_active" , game.ascii_map_emojis)
+        else: 
+            setattr(game, "ascii_map_active" , game.ascii_map_oldschool)
+
+    keyboard.on_press_key("m", lambda _:toggle_style())
     # What you want to run in the foreground
 
 b = threading.Thread(name='background', target=background)
