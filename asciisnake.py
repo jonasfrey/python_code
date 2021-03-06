@@ -61,109 +61,128 @@ class Game:
         game_self = self
 
         def o1_render_fun(self):
-            #self.collidable = False
-            if((game_self.render_id * self.parent_class_instance.speed) % 1 != 0):
-                return False
-
+            snake_head = list(filter(lambda x: x.name == "snake_utf_8_head", self.child_objects))[0]
             #self.collidable = True
-            if(self.parent_class_instance.direction == "right"): 
+            if(self.direction == "right"): 
                 x_summand = + 1
                 y_summand = 0
-            if(self.parent_class_instance.direction == "left"): 
+            if(self.direction == "left"): 
                 x_summand = - 1
                 y_summand = 0
-            if(self.parent_class_instance.direction == "up"): 
+            if(self.direction == "up"): 
                 x_summand = 0
                 y_summand = - 1
-            if(self.parent_class_instance.direction == "down"): 
+            if(self.direction == "down"): 
                 x_summand = 0
                 y_summand = + 1
 
-            if(int(self.rendered_count) % 3 == 0): self.ascii_character = "🌎"
-            if(int(self.rendered_count) % 3 == 1): self.ascii_character = "🌍"
-            if(int(self.rendered_count) % 3 == 2): self.ascii_character = "🌏"
+            if(int(snake_head.rendered_count) % 3 == 0): snake_head.ascii_character = "🤣"
+            if(int(snake_head.rendered_count) % 3 == 1): snake_head.ascii_character = "🌝"
+            if(int(snake_head.rendered_count) % 3 == 2): snake_head.ascii_character = "🌚"
 
-            if(int(self.rendered_count) % 3 == 0): self.ascii_character = "🙈"
-            if(int(self.rendered_count) % 3 == 1): self.ascii_character = "🙉"
-            if(int(self.rendered_count) % 3 == 2): self.ascii_character = "🙊"
+            child_objects_len = len(self.child_objects)
 
-            child_objects_len = len(self.parent_class_instance.child_objects)
-
-            for key, val in enumerate(self.parent_class_instance.child_objects):
+            for key, val in enumerate(self.child_objects):
                 key = child_objects_len - (key+1)
 
-
-                val = self.parent_class_instance.child_objects[key]
+                val = self.child_objects[key]
                 if val.name == "snake_utf_8_head":
                     continue
 
-                val_before_in_array = self.parent_class_instance.child_objects[key-1]
+                val_before_in_array = self.child_objects[key-1]
 
                 val.point_3d.x = val_before_in_array.point_3d.x
                 val.point_3d.y = val_before_in_array.point_3d.y
-
         
-            self.point_3d.x = (self.point_3d.x + x_summand) % game_self.c.width
-            self.point_3d.y = (self.point_3d.y + y_summand) % game_self.c.width
+            snake_head.point_3d.x = (snake_head.point_3d.x + x_summand) % game_self.c.width
+            snake_head.point_3d.y = (snake_head.point_3d.y + y_summand) % game_self.c.width
 
         def snake_head_collision_function(self,collision_with):
+
             if(collision_with[0].name == "snake_utf_8_body"):
                 game_self.end()
+            
             if(collision_with[0].name == "food_default"):
+                random_position(collision_with[0])
                 self.parent_class_instance.add_limb(self.parent_class_instance)
-
 
         self.snake = ObjectGroup(self)
         self.snake.name = "snake"
+        self.snake.render_function = o1_render_fun
+        self.snake.point_3d.z = 2
         #add custom props
         self.snake.direction = "right"
-        self.snake.speed = 0.2
+        self.snake.speed = 0.2 # will be the speed render_function and collision_function will get called
 
         snake_head = Object(self.snake)
         snake_head.name = "snake_utf_8_head"
-        snake_head.render_function = o1_render_fun
+        snake_head.speed = 0.2
         snake_head.collision_function = snake_head_collision_function
         snake_head.collidable = True
+
         self.snake.child_objects.append(snake_head)
 
         def add_limb(self):
             snake_limb = Object(self)
+            last = self.child_objects[-1]            
+            snake_limb.point_3d.x = last.point_3d.x
+            snake_limb.point_3d.y = last.point_3d.y
             snake_limb.name = "snake_utf_8_body"
             self.child_objects.append(snake_limb)
 
         self.snake.add_limb = add_limb
+        self.snake.add_limb(self.snake)
+        
+        # def weird_face_walk(self):
+        #     if((game_self.render_id * self.speed) % 1 != 0):
+        #         return False
+        #     self.point_3d.x = (self.point_3d.x + 1) % game_self.c.width
+        #     self.point_3d.y = (self.point_3d.y + 0) % game_self.c.width
+        #     print(self.point_3d.x)
 
-        def weird_face_walk(self):
-            if((game_self.render_id * self.speed) % 1 != 0):
-                return False
-            self.point_3d.x = (self.point_3d.x + 1) % game_self.c.width
-            self.point_3d.y = (self.point_3d.y + 0) % game_self.c.width
-            print(self.point_3d.x)
+        # self.weird_face = ObjectGroup(self)
+        # self.weird_face.render_function = weird_face_walk
 
-        self.weird_face = ObjectGroup(self)
-        self.weird_face.render_function = weird_face_walk
+        # self.weird_face.name = "weird_face"
+        # #add custom props
+        # self.weird_face.direction = "right"
+        # self.weird_face.speed = 0.2
 
-        self.weird_face.name = "weird_face"
-        #add custom props
-        self.weird_face.direction = "right"
-        self.weird_face.speed = 0.2
+        # weird_face_eye_left = Object(self.weird_face)
+        # weird_face_eye_left.name = "eye"
+        # weird_face_eye_left.point_3d = Point_3D(0,0,0) #relative to parent_class_instance position
+        # self.weird_face.child_objects.append(weird_face_eye_left)
 
-        weird_face_eye_left = Object(self.weird_face)
-        weird_face_eye_left.name = "eye"
-        weird_face_eye_left.point_3d = Point_3D(0,0,0) #relative to parent_class_instance position
-        self.weird_face.child_objects.append(weird_face_eye_left)
+        # weird_face_mouth = Object(self.weird_face)
+        # weird_face_mouth.name = "mouth"
+        # weird_face_mouth.point_3d = Point_3D(1,0,0) #relative to parent_class_instance position
+        # self.weird_face.child_objects.append(weird_face_mouth)
 
-        weird_face_mouth = Object(self.weird_face)
-        weird_face_mouth.name = "mouth"
-        weird_face_mouth.point_3d = Point_3D(1,0,0) #relative to parent_class_instance position
-        self.weird_face.child_objects.append(weird_face_mouth)
+        # weird_face_eye_right = Object(self.weird_face)
+        # weird_face_eye_right.name = "eye"
+        # weird_face_eye_right.point_3d = Point_3D(2,0,0) #relative to parent_class_instance position
+        # self.weird_face.child_objects.append(weird_face_eye_right)
 
-        weird_face_eye_right = Object(self.weird_face)
-        weird_face_eye_right.name = "eye"
-        weird_face_eye_right.point_3d = Point_3D(2,0,0) #relative to parent_class_instance position
-        self.weird_face.child_objects.append(weird_face_eye_right)
+        def random_position(self):
+            self.point_3d.x = random.randint(0,game_self.c.width)
+            self.point_3d.y = random.randint(0,game_self.c.height)
 
 
+        self.food_group = ObjectGroup(self)
+        self.food_group.name = "food"
+
+        food = Object(self.food_group)
+        random_position(food)
+        food.name = "food_default"
+        self.food_group.child_objects.append(food)
+
+
+        def food_render_function(self):
+            if(self.rendered_count % 100 == 0):
+                self.random_position()
+
+
+        # food.render_function = food_render_function
 
 
     def is_sudo(self): 
@@ -183,41 +202,57 @@ class Game:
     def render(self): 
         self.render_id += 1
         
+        
         self.c.clear_ascii_pixel_array(self.ascii_map.get_string_by_prop_name("game_black_pixel"))
 
         for obj in gc.get_objects():
             if isinstance(obj, Object):
-                # code for Object and ObjectGroup, destroy after rendered_count_limit reached, call callbacks etc
-                obj.rendered_count = obj.rendered_count+1
-                if(obj.rendered_count > obj.rendered_count_limit & obj.rendered_count_limit != 0):
-                    del obj
-                    continue
-                
-                if(obj.render_function != None):
-                    obj.render_function(obj)
+                if hasattr(obj, "speed"):
+                    speed = obj.speed 
+
+                else: 
+                    speed = 1
+
+                #self.collidable = False
+
+                if((self.render_id * speed) % 1 == 0):
+
+                    # code for Object and ObjectGroup, destroy after rendered_count_limit reached, call callbacks etc
+                    obj.rendered_count = obj.rendered_count+1
+                    if(obj.rendered_count > obj.rendered_count_limit & obj.rendered_count_limit != 0):
+                        del obj
+                        continue
+                    
+                    if(obj.render_function != None):
+                        obj.render_function(obj)
+
+                    #continue if ObejctGroup 
+                    if isinstance(obj, ObjectGroup):
+                        continue
+                    
+
+                    if obj.collidable == True :
+                        obj.collision_with = []
+                        # todo , collision detection collisiondetection detect collision, call callback on self.group_object.collision_function() (emit colision to 'parent')
+                        for obj2 in gc.get_objects():
+                            if isinstance(obj2, ObjectGroup):
+                                continue
+
+                            if isinstance(obj2, Object):
+                                if obj2 == obj or obj2.rendered_count < 2: #ignore just spawned objects:
+                                    continue
+                                if ((obj2.point_3d.x == obj.point_3d.x) & (obj2.point_3d.y == obj.point_3d.y)):
+                                    obj.collision_with.append(obj2)
+
+                    
+                        if(len(obj.collision_with) > 0):
+                            if(obj.collision_function != None):
+                                obj.collision_function(obj,obj.collision_with)
+
 
                 #continue if ObejctGroup 
                 if isinstance(obj, ObjectGroup):
                     continue
-                
-
-                if obj.collidable == True:
-                    obj.collision_with = []
-                    # todo , collision detection collisiondetection detect collision, call callback on self.group_object.collision_function() (emit colision to 'parent')
-                    for obj2 in gc.get_objects():
-                        if isinstance(obj2, ObjectGroup):
-                            continue
-
-                        if isinstance(obj2, Object):
-                            if obj2 == obj:
-                                continue
-                            if ((obj2.point_3d.x == obj.point_3d.x) & (obj2.point_3d.y == obj.point_3d.y)):
-                                obj.collision_with.append(obj2)
-
-                
-                    if(len(obj.collision_with) > 0):
-                        if(obj.collision_function != None):
-                            obj.collision_function(obj,obj.collision_with)
 
                 # will search for ascii symbol in map or if not found return fallback 
                 ascii_string = self.ascii_map.get_string_by_prop_name(obj.name)
@@ -227,7 +262,7 @@ class Game:
                     ascii_string = getattr(obj, "ascii_character")
                 
                 #draw relative to parent
-                self.c.draw_ascii(obj.parent_class_instance.point_3d.x + obj.point_3d.x, obj.parent_class_instance.point_3d.y + obj.point_3d.y, ascii_string)
+                self.c.add_ascii(obj.parent_class_instance.point_3d.x + obj.point_3d.x, obj.parent_class_instance.point_3d.y + obj.point_3d.y, obj.point_3d.z, ascii_string)
 
 
     def end(self):
@@ -244,6 +279,8 @@ class Point_3D:
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
+        if z < 0 or z > 2:
+            raise Exception("z index must be -1 < z < 3") 
         self.z = z
 
 
@@ -252,7 +289,7 @@ class Object:
         # 'parent' object
         self.parent_class_instance = parent_class_instance
         #  point
-        self.point_3d = Point_3D(0,0,0)
+        self.point_3d = Point_3D(0,0,1)
         # snake, item, enemy... 
         self.name = "default"
         # defines how many with the same name can exists at the same time
@@ -285,6 +322,16 @@ class Canvas:
         self.width = width
         self.height = height
         self.ascii_pixel_array = [" "] * (self.width*self.height)
+        self.ascii_pixel_z_axis_arrays = [[],[],[]]
+
+        """
+        @param x int 
+        @param y int 
+        @param z int 
+        """
+    def add_ascii(self, x, y, z,  ascii):
+        array_index = self.get_array_index_by_x_y(x, y)
+        self.ascii_pixel_z_axis_arrays[z].append([x,y,ascii])
 
     def draw_ascii(self, x, y, ascii):
         array_index = self.get_array_index_by_x_y(x, y)
@@ -301,8 +348,15 @@ class Canvas:
 
     def clear_ascii_pixel_array(self, black_pixel = " "):
         self.ascii_pixel_array =  [black_pixel] * (self.width*self.height)
-    
+        self.ascii_pixel_z_axis_arrays = [[],[],[]]
+
+    def create_ascii_pixel_array(self):
+        for arr in self.ascii_pixel_z_axis_arrays:
+            for x_y_ascii in arr:
+                self.draw_ascii(x_y_ascii[0],x_y_ascii[1],x_y_ascii[2])
+
     def render(self):
+        self.create_ascii_pixel_array()
         render_string = ""
         for key, val in enumerate(self.ascii_pixel_array):
             if (key+1) % self.width == 0:
