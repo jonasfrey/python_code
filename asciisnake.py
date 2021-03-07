@@ -12,7 +12,7 @@ class Ascii_Map:
         self.name = "emojis"
         self.game_black_pixel            = ["🌑", " " ]
         self.game_utf_8_border           = ["🧱", "#" ]
-        self.snake_utf_8_head_1            = ["🌝", "O" ]
+        self.snake_utf_8_head            = ["🌝", "O" ]
         self.snake_utf_8_head_2           = ["🌝", "X" ]
         self.snake_utf_8_head_3           = ["🌝", "8" ]
         self.snake_utf_8_body            = ["🌕", "o" ]
@@ -22,6 +22,7 @@ class Ascii_Map:
         self.food_powerup_portal         = ["🌀", "α" ]
         self.food_powerup_brick          = ["🧱", "#" ]
         self.food_powerup_fast           = ["💨", "☇" ]
+        self.food_powerup_clown           = ["🤡", "%" ]
         self.food_nerf_garlic           = ["🧄", "Ç" ]
         self.food_powerup_tornado        = ["💫", "?" ]
         self.food_powerup_character_set  = ["💱", "X" ]
@@ -78,9 +79,9 @@ class Game:
                 x_summand = 0
                 y_summand = + 1
 
-            if(int(self.head.rendered_count) % 3 == 0): self.head.ascii_character = game_self.ascii_map.get_string_by_prop_name("snake_utf_8_head_1")
-            if(int(self.head.rendered_count) % 3 == 1): self.head.ascii_character = game_self.ascii_map.get_string_by_prop_name("snake_utf_8_head_2")
-            if(int(self.head.rendered_count) % 3 == 2): self.head.ascii_character = game_self.ascii_map.get_string_by_prop_name("snake_utf_8_head_3")
+            # if(int(self.head.rendered_count) % 3 == 0): self.head.ascii_character = game_self.ascii_map.get_string_by_prop_name("snake_utf_8_head_1")
+            # if(int(self.head.rendered_count) % 3 == 1): self.head.ascii_character = game_self.ascii_map.get_string_by_prop_name("snake_utf_8_head_2")
+            # if(int(self.head.rendered_count) % 3 == 2): self.head.ascii_character = game_self.ascii_map.get_string_by_prop_name("snake_utf_8_head_3")
 
             child_objects_len = len(self.child_objects)
 
@@ -163,6 +164,22 @@ class Game:
                     temp_render_function.rendered_count_limit = 20
 
                     self.temp_render_functions.append(temp_render_function)
+
+                if(collision_with[0].name == "food_powerup_clown"):
+                    def trf(self, obj):
+                        #obj.head.name = "food_powerup_clown"
+                        obj.head.ascii_character = obj.parent_class_instance.ascii_map.get_string_by_prop_name("food_powerup_clown")
+                    def trf_start(self, obj):
+                        return False
+                    def trf_end(self, obj):
+                        return False
+
+                    temp_render_function = Temp_Render_Function(trf)
+                    temp_render_function.render_function_firstcall = trf_start
+                    temp_render_function.render_function_lastcall = trf_end
+                    temp_render_function.rendered_count_limit = 20
+
+                    self.temp_render_functions.append(temp_render_function)
                     
                     
         self.snake = Object_Group(self)
@@ -194,6 +211,29 @@ class Game:
             self.child_objects.append(snake_limb)
 
         self.snake.add_limb = add_limb
+
+        # self.snake2 = Object_Group(self)
+        # self.snake2.name = "snake2"
+        # self.snake2.render_function = o1_render_fun
+        # self.snake2.collision_function = snake_collision_function
+        # self.snake2.speed = 0.2
+
+        # self.snake2.point_3d.z = 2
+        # #add custom props
+        # self.snake2.direction = "right"
+
+        # snake_head = Object(self.snake2)
+        # snake_head.name = "snake_utf_8_head"
+        # snake_head.point_3d.x = 10
+        # snake_head.point_3d.y = 10
+        # snake_head.collidable = True
+
+        # self.snake2.child_objects.append(snake_head)
+        # self.snake2.head = snake_head
+
+
+        # self.snake.add_limb = add_limb
+
 
         
         # def weird_face_walk(self):
@@ -234,10 +274,22 @@ class Game:
         def food_group_collision_function(self, obj ,collision_with):
             if(collision_with[0].name == "game_utf_8_border"):
                 random_position(obj)
-        
+
+        def food_group_render_function(self):
+            if game_self.render_id % random.randint(1,200) == 0: 
+
+                food = Object(self)
+                food.collidable = True
+                food.rendered_count_limit = 10
+                food.name = "food_powerup_clown"
+                random_position(food)
+                self.child_objects.append(food)
+
+
         self.food_group = Object_Group(self)
         self.food_group.name = "food"
         self.food_group.collision_function = food_group_collision_function
+        self.food_group.render_function = food_group_render_function
 
         food = Object(self.food_group)
         food.collidable = True
@@ -275,6 +327,14 @@ class Game:
         food.name = "food_powerup_fast"
         random_position(food)
         self.food_group.child_objects.append(food)
+
+    
+        food = Object(self.food_group)
+        food.collidable = True
+        food.name = "food_powerup_clown"
+        random_position(food)
+        self.food_group.child_objects.append(food)
+
 
         # def food_render_function(self):
         #     if(self.rendered_count % 100 == 0):
@@ -598,6 +658,12 @@ def foreground():
     keyboard.on_press_key("s", lambda _:setattr(game.snake, "direction" , "down"))
     keyboard.on_press_key("a", lambda _:setattr(game.snake, "direction" , "left"))
     keyboard.on_press_key("d", lambda _:setattr(game.snake, "direction" , "right"))
+
+
+    keyboard.on_press_key("up", lambda _:setattr(game.snake2, "direction" , "up"))
+    keyboard.on_press_key("down", lambda _:setattr(game.snake2, "direction" , "down"))
+    keyboard.on_press_key("left", lambda _:setattr(game.snake2, "direction" , "left"))
+    keyboard.on_press_key("right", lambda _:setattr(game.snake2, "direction" , "right"))
 
     def add_limbs():
         for i in range(5):
