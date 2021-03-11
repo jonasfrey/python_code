@@ -23,12 +23,15 @@ class Ascii_Map:
         self.food_powerup_brick          = ["🧱", "#" ]
         self.food_powerup_fast           = ["💨", "☇" ]
         self.food_powerup_clown           = ["🤡", "%" ]
-        self.food_nerf_garlic           = ["🧄", "Ç" ]
+        self.food_nerf_garlic           = ["❓", "Ç" ]
         self.food_powerup_tornado        = ["💫", "?" ]
         self.food_powerup_character_set  = ["💱", "X" ]
+        self.food_powerup_gun              =["🔫", "ö" ]
         self.food_default                = ["🍏", "@" ]
+        self.food_default                = ["🍏", "@" ]
+        
 
-        self.eye                         = ["🥘", "¬" ]
+        self.eye                         = ["🏐", "¬" ]
         self.mouth                       = ["👄", "o" ]
         self.food_default                = ["🍏", "@" ]
         self.fallback                    = ["🌑", " " ]
@@ -59,7 +62,7 @@ class Game:
 
         self.ascii_map = Ascii_Map()
 
-        self.c = Canvas(22, 22)
+        self.c = Canvas(33, 33)
         #self.c.render_test()
         
         game_self = self
@@ -109,11 +112,13 @@ class Game:
             if(obj == self.head):
 
                 if(collision_with[0].name == "snake_utf_8_body"):
+                    obj.game_over = True
                     if(self.add_limb_called_tmp_ignore_collisions == False):
                         game_self.end()
                         #game_self.end()
                 
                 if(collision_with[0].name == "game_utf_8_border"):
+                    obj.game_over = True
                     game_self.end()
                 
                 if(collision_with[0].name == "food_default"):
@@ -122,7 +127,7 @@ class Game:
                 
                 if(collision_with[0].name == "food_powerup_mushroom"):
                     random_position(collision_with[0])
-                    for i in range(5):
+                    for i in range(3):
                         self.add_limb(self)
 
                 if(collision_with[0].name == "food_nerf_garlic"):
@@ -137,20 +142,15 @@ class Game:
                 
                 if(collision_with[0].name == "food_powerup_portal"):
                     for o in Object._instances:
-                        print(o.name)
                         if o.name == "food_powerup_portal" and o != collision_with[0]:
                             self.head.point_3d.x = o.point_3d.x
                             self.head.point_3d.y = o.point_3d.y
-                            random_position(o)
-
-                    random_position(collision_with[0])
 
                 
                 if(collision_with[0].name == "food_powerup_fast"):
                     def snake_speedup(self, obj):
-                        obj.speed = 0.5
+                        obj.speed = 1
                         
-
                     def snake_speedup_first(self, obj):
                         if(hasattr(obj, "_cached_speed") == False):
                             obj._cached_speed = obj.speed
@@ -166,12 +166,21 @@ class Game:
                     self.temp_render_functions.append(temp_render_function)
 
                 if(collision_with[0].name == "food_powerup_clown"):
+                    for i in range(6):
+                        self.add_limb(self)
+
                     def trf(self, obj):
                         #obj.head.name = "food_powerup_clown"
+                        if(hasattr(obj.head, "_cached_ascii_character") == False):
+                            obj.head._cached_ascii_character = obj.parent_class_instance.ascii_map.get_string_by_prop_name(obj.head.name)
                         obj.head.ascii_character = obj.parent_class_instance.ascii_map.get_string_by_prop_name("food_powerup_clown")
+
                     def trf_start(self, obj):
                         return False
+
                     def trf_end(self, obj):
+                        obj.head._cached_ascii_character = obj.head.ascii_character
+                            
                         return False
 
                     temp_render_function = Temp_Render_Function(trf)
@@ -186,7 +195,7 @@ class Game:
         self.snake.name = "snake"
         self.snake.render_function = o1_render_fun
         self.snake.collision_function = snake_collision_function
-        self.snake.speed = 0.2
+        self.snake.speed = 0.4
 
         self.snake.point_3d.z = 2
         #add custom props
@@ -212,27 +221,26 @@ class Game:
 
         self.snake.add_limb = add_limb
 
-        # self.snake2 = Object_Group(self)
-        # self.snake2.name = "snake2"
-        # self.snake2.render_function = o1_render_fun
-        # self.snake2.collision_function = snake_collision_function
-        # self.snake2.speed = 0.2
+        # player2 two player twoplayer 2player player two
+        self.snake2 = Object_Group(self)
+        self.snake2.name = "snake2"
+        self.snake2.render_function = o1_render_fun
+        self.snake2.collision_function = snake_collision_function
+        self.snake2.speed = 0.2
 
-        # self.snake2.point_3d.z = 2
-        # #add custom props
-        # self.snake2.direction = "right"
+        self.snake2.point_3d.z = 2
+        #add custom props
+        self.snake2.direction = "right"
 
-        # snake_head = Object(self.snake2)
-        # snake_head.name = "snake_utf_8_head"
-        # snake_head.point_3d.x = 10
-        # snake_head.point_3d.y = 10
-        # snake_head.collidable = True
+        snake_head = Object(self.snake2)
+        snake_head.name = "snake_utf_8_head"
+        snake_head.point_3d.x = 10
+        snake_head.point_3d.y = 10
+        snake_head.collidable = True
 
-        # self.snake2.child_objects.append(snake_head)
-        # self.snake2.head = snake_head
-
-
-        # self.snake.add_limb = add_limb
+        self.snake2.child_objects.append(snake_head)
+        self.snake2.head = snake_head
+        self.snake2.add_limb = add_limb
 
 
         
@@ -274,6 +282,8 @@ class Game:
         def food_group_collision_function(self, obj ,collision_with):
             if(collision_with[0].name == "game_utf_8_border"):
                 random_position(obj)
+            if(collision_with[0].name == "snake_utf_8_head"):
+                random_position(obj)
 
         def food_group_render_function(self):
             if game_self.render_id % random.randint(1,200) == 0: 
@@ -301,6 +311,7 @@ class Game:
         food.collidable = True
         food.name = "food_powerup_mushroom"
         random_position(food)
+
         self.food_group.child_objects.append(food)
 
         food = Object(self.food_group)
@@ -334,6 +345,16 @@ class Game:
         food.name = "food_powerup_clown"
         random_position(food)
         self.food_group.child_objects.append(food)
+
+        def add_gun_shot(self):
+            food = Object(self.food_group)
+            food.collidable = True
+            food.name = "food_powerup_gun"
+            random_position(food)
+            self.food_group.child_objects.append(food)
+
+
+        self.food_group.add_gun_shot = add_gun_shot
 
 
         # def food_render_function(self):
@@ -440,7 +461,6 @@ class Game:
                 
 
                 if obj.collidable == True :
-                    obj.collision_with = []
                     # todo , collision detection collisiondetection detect collision, call callback on self.group_object.collision_function() (emit colision to 'parent')
                     for obj2 in gc.get_objects():
                         if isinstance(obj2, Object_Group):
@@ -482,6 +502,27 @@ class Game:
 
     def end(self):
         self.running = False
+        p1 = len(self.snake.child_objects)
+        p2 = len(self.snake2.child_objects)
+
+        if(len(list(filter(lambda x: x.name == "game_utf_8_border", self.snake.head.collision_with))) > 0):
+            print("player 2(arrow keys) wins")
+            print("player 1(wasd) collided with wall")
+    
+        if(len(list(filter(lambda x: x.name == "game_utf_8_border", self.snake2.head.collision_with))) > 0):
+            print("player 1(wasd) wins")
+            print("player 2(arrow keys) collided with wall")
+        
+        if(len(list(filter(lambda x: x.name == "snake_utf_8_body", self.snake.head.collision_with))) > 0):
+            print("player 2(arrow keys) wins")
+            print("player 1(wasd) collided with player 2 body")
+    
+        if(len(list(filter(lambda x: x.name == "snake_utf_8_body", self.snake2.head.collision_with))) > 0):
+            print("player 1(wasd) wins")
+            print("player 2(arrow keys) collided with player 1 body")
+            
+        exit()
+
 
     def start(self):
         self.running = True
@@ -542,6 +583,10 @@ class Object:
         # a callback which is getting exectued when the object collides with other objects
         #optional , by default None 
         self.collision_function = None
+
+        # other object this collided with will be appended here
+        self.collision_with = []
+
         
         self._instances.append(self)
 
@@ -603,7 +648,7 @@ class Canvas:
             else:
                 render_string += val
         
-        time.sleep(0.016) # 1000(ms)/60(fps) => 0.016 ms sleep
+        time.sleep(0.001) # 1000(ms)/60(fps) => 0.016 ms sleep
         self.clear_terminal()
         print(render_string)
 
@@ -611,8 +656,8 @@ class Canvas:
     def clear_terminal(self): 
         #print("\n".join([""]*100))
         #print(chr(27) + "[2J")
-        #os.system('cls' if os.name == 'nt' else 'clear')
-        print("".join(["\n"]*10))
+        os.system('cls' if os.name == 'nt' else 'clear')
+        #print("".join(["\n"]*10))
     def render_test(self):
 
         foo1 = ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐚","🐞","🐜","🕷","🕸","🐢","🐍","🦎","🦂","🦀","🦑","🐙","🦐","🐠","🐟","🐡","🐬","🦈","🐳","🐋","🐊","🐆","🐅","🐃","🐂","🐄","🦌","🐪","🐫","🐘","🦏","🦍","🐎","🐖","🐐","🐏","🐑","🐕","🐩","🐈","🐓","🦃","🕊","🐇","🐁","🐀","🐾","🐉","🐲","🌵","🎄","🌲","🌳","🌴","🌱","🌿","🍀","🎍","🎋","🍃","🍂","🍁","🍄","🌾","💐","🌷","🌹","🥀","🌻","🌼","🌸","🌺","🌎","🌍","🌏","🌕","🌖","🌗","🌘","🌑","🌒","🌓","🌔","🌚","🌝","🌞","🌛","🌜","🌙","💫","⭐️","🌟","✨","🔥","💥","🌤","⛅️","🌈","⛄️","💨","🌊","💧","💦","🦓","🦔","🦕"]
@@ -658,6 +703,9 @@ def foreground():
     keyboard.on_press_key("s", lambda _:setattr(game.snake, "direction" , "down"))
     keyboard.on_press_key("a", lambda _:setattr(game.snake, "direction" , "left"))
     keyboard.on_press_key("d", lambda _:setattr(game.snake, "direction" , "right"))
+
+    keyboard.on_press_key("space", lambda _:setattr(game.food_group.add_gun_shot, "direction" , "right"))
+
 
 
     keyboard.on_press_key("up", lambda _:setattr(game.snake2, "direction" , "up"))
