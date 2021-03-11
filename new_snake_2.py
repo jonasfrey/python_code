@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
-import time, tty, sys
+import sys, tty, termios, time, random, json, os
+from select import select
+
 
 class Character_set():
     def __init__(self):
@@ -43,7 +45,6 @@ class Canvas:
         self.black_pixel = character_set[self.character_set_property_name_black_pixel]
         
         self.pixel_matrix = self.get_cleared_matrix()
-
         #print(self.pixel_matrix)
 
     def get_cleared_matrix(self):
@@ -89,15 +90,37 @@ class Game:
         self.delta_ms = 0
         self.now_ms = 0
         self.then_ms = 0
-        self.fps = 60
+        self.fps = 100
         self.interval_ms = self.get_interval_ms()
         self.real_interval_ms = 0
         self.t = 0
+        self.pressed_key = None
+        self.o = {"x": 0, "y": 0, "c":'a'}
+    
+
 
         self.setup()
     
     def setup(self):
+        # rows, columns = os.popen('stty size', 'r').read().split()
+        # print(rows, columns)
+        # exit()
         self.canvas = Canvas(11,11)
+
+
+
+    def getch(self, timeout):                                                                                                                                          
+        fd = sys.stdin.fileno()                                                                                                                                   
+        old_settings = termios.tcgetattr(fd)                                                                                                                      
+        ch = None                                                                                                                                                 
+        try:                                                                                                                                                      
+            tty.setraw(fd)                                                                                                                                        
+            rlist, _, _ = select([sys.stdin], [], [], timeout)                                                                                                    
+            if len(rlist) > 0:                                                                                                                                    
+                ch = sys.stdin.read(1)                                                                                                                            
+        finally:                                                                                                                                                  
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)                                                                                                
+        return ch         
 
     def get_interval_ms(self):
         return 1000 / self.fps    
@@ -109,13 +132,21 @@ class Game:
         self.running = True
 
         while self.running:
-            self.now_ms = int(round(time.time() * 1000))
-            self.delta_ms = self.now_ms - self.then_ms
-            if self.delta_ms >= self.interval_ms:
-                self.t += 1
-                self.real_interval_ms = self.delta_ms 
-                self.render_frame()
-                self.then_ms = self.now_ms
+
+            self.pressed_key = self.getch(self.interval_ms * 10**-3)
+            
+            self.t += 1
+            self.real_interval_ms = self.interval_ms
+            self.render_frame()
+
+
+            # self.now_ms = int(round(time.time() * 1000))
+            # self.delta_ms = self.now_ms - self.then_ms
+            # if self.delta_ms >= self.interval_ms:
+            #     self.t += 1
+            #     self.real_interval_ms = self.delta_ms 
+            #     self.render_frame()
+            #     self.then_ms = self.now_ms
 
     def stop(self):
         self.running = False
@@ -125,12 +156,26 @@ class Game:
 
     def render_frame(self):
         print("rendering " + str(self.t) + " frame, current fps is:")
-        print(1000 / self.real_interval_ms)
+        print(1000 / self.real_interval_ms) 
+        print(self.pressed_key)
 
-        self.canvas.clear()
-        self.canvas.addPixel(0, self.canvas.height-1,"a")
+        if self.pressed_key == "w":
+            self.o["y"] = self.o["y"] - 1
+        if self.pressed_key == "s":
+            self.o["y"] = self.o["y"] + 1
+        if self.preessed_key == "a":
+            self.o["x"] = self.o["x"] - 1
+        if self.pressed_key == "d":
+            self.o["x"] = self.o["x"] + 1
+
+        #self.canvas.clear()
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        self.canvas.addPixel(self.o["x"]%self.canvas.width, self.o["y"]%self.canvas.height,self.o["c"])
         self.canvas.draw()
 
+        if self.pressed_key == "x":
+            self.stop()
 
 character_set = Character_set()
 game = Game()
