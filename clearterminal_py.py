@@ -4,7 +4,7 @@ import emoji
 os.system('cls' if os.name == 'nt' else 'clear')
 i = 0
 width = 100
-emojistr = "🦔"
+emojistr = "😐"
 
 asciistr = "@"
 strstr = emojistr
