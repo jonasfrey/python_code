@@ -3,6 +3,7 @@ from pygame.locals import *
 import pygame.freetype  # Import the freetype module.
 import time 
 import sys
+import os
 
 class Pygame_Printer: 
     def __init__(self):
@@ -10,7 +11,7 @@ class Pygame_Printer:
         self.clear_color = (33,33,33)
         self.font_color = (210, 210, 210)
         #the default notoColorEmoji must be overwritten somehow
-        self.size_factor = 33
+        self.size_factor = 25
         self.noto_font_size_which_cant_be_changed = 136
         self.size_dividend = self.noto_font_size_which_cant_be_changed / self.size_factor
         self.lines_array = []
@@ -21,7 +22,13 @@ class Pygame_Printer:
         #self.emoji_font = pygame.freetype.Font("OpenSansEmoji.ttf", self.size_factor)
         #self.emoji_font = pygame.freetype.Font("NotoColorEmoji.ttf")
         #self.emoji_font = pygame.freetype.Font("NotoColorEmoji_changed#2.ttf")
+        self.emoji_font = pygame.freetype.Font("NotoColorEmoji_WindowsCompatible.ttf")
         self.emoji_font = pygame.freetype.Font("NotoColorEmoji.ttf")
+        
+        #if windows 
+        if os.name == 'nt':
+            self.emoji_font = pygame.freetype.Font("seguiemj2.ttf", self.size_factor)
+
         #self.screen = pygame.display.set_mode((self.window_width, self.window_height))
 
         self.screen = pygame.display.set_mode((self.window_width, self.window_height),pygame.RESIZABLE)
@@ -54,8 +61,13 @@ class Pygame_Printer:
                 line_string = "".join(chars_array)
 
                 text_surface, rect = self.emoji_font.render(line_string, (210,210,210))
-                s2 = pygame.transform.scale(text_surface, ( int(text_surface.get_size()[0]/self.size_dividend), int(text_surface.get_size()[1]/self.size_dividend),))
-                self.screen.blit(s2, (0, y*(self.size_factor*1)))
+                if os.name != 'nt':
+                    text_surface = pygame.transform.scale(text_surface, ( int(text_surface.get_size()[0]/self.size_dividend), int(text_surface.get_size()[1]/self.size_dividend),))
+                    size_factor_new_line = 1
+                else: 
+                    size_factor_new_line = self.size_factor * 1
+
+                self.screen.blit(text_surface, (0, y*(size_factor_new_line)))
                 
                 #self.screen.blit(text_surface, (0, y*(self.size_factor*1)))
                 # x = 0
