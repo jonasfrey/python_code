@@ -5,6 +5,9 @@ import gc
 import keyboard
 import threading
 import json
+import pygame
+
+from pygame_printer import Pygame_Printer
 
 class Ascii_Map:
     def __init__(self):
@@ -61,6 +64,7 @@ class Game:
         self.render_id = 0
 
         self.ascii_map = Ascii_Map()
+        
 
         self.c = Canvas(33, 33)
         #self.c.render_test()
@@ -69,6 +73,18 @@ class Game:
 
         def o1_render_fun(self):
             #self.collidable = True
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        self.direction = "left"
+                    if event.key == pygame.K_RIGHT:
+                        self.direction = "right"
+                    if event.key == pygame.K_UP:
+                        self.direction = "up"
+                    if event.key == pygame.K_DOWN:
+                        self.direction = "down"
+
             if(self.direction == "right"): 
                 x_summand = + 1
                 y_summand = 0
@@ -234,8 +250,8 @@ class Game:
 
         snake_head = Object(self.snake2)
         snake_head.name = "snake_utf_8_head"
-        snake_head.point_3d.x = 10
-        snake_head.point_3d.y = 10
+        snake_head.point_3d.x = 2
+        snake_head.point_3d.y = 2
         snake_head.collidable = True
 
         self.snake2.child_objects.append(snake_head)
@@ -409,7 +425,8 @@ class Game:
     def render(self): 
         
         self.render_id += 1
-        print(self.render_id)
+        
+        print("asciisnake render_id: "+str(self.render_id))
 
         self.c.clear_ascii_pixel_array(self.ascii_map.get_string_by_prop_name("game_black_pixel"))
 
@@ -602,6 +619,7 @@ class Canvas:
         self.height = height
         self.ascii_pixel_array = [" "] * (self.width*self.height)
         self.ascii_pixel_z_axis_arrays = [[],[],[]]
+        self.pygame_printer = Pygame_Printer()
 
         """
         @param x int 
@@ -648,9 +666,12 @@ class Canvas:
             else:
                 render_string += val
         
-        time.sleep(0.001) # 1000(ms)/60(fps) => 0.016 ms sleep
-        self.clear_terminal()
-        print(render_string)
+        time.sleep(0.016) # 1000(ms)/60(fps) => 0.016 ms sleep
+        self.pygame_printer.print(render_string)
+        self.pygame_printer.clear()
+        
+        #self.clear_terminal()
+        #print(render_string)
 
     # define our clear function 
     def clear_terminal(self): 
@@ -674,65 +695,66 @@ class Canvas:
 
 
 game = Game()
+game.start()
 
-def background():
-    game.start()
-    print("start")
-    #c = Canvas(22, 22)
-    #c.render_test()
+# def background():
+#     game.start()
+#     print("start")
+#     #c = Canvas(22, 22)
+#     #c.render_test()
 
-def foreground():
-    # init listeners 
+# def foreground():
+#     # init listeners 
 
-    # while True:
-    #     if keyboard.read_key() == "p":
-    #         setattr(game.o1, "speed" , 0.5)        
-    #     if keyboard.read_key() == "w":
-    #         setattr(game.o1, "direction" , "up")
-    #         continue
-    #     if keyboard.read_key() == "s":
-    #         setattr(game.o1, "direction" , "down")
-    #     if keyboard.read_key() == "a":
-    #         setattr(game.o1, "direction" , "left")
-    #     if keyboard.read_key() == "d":
-    #         setattr(game.o1, "direction" , "right")
-    keyboard.on_press_key("v", lambda _:game.end())
-
-
-    keyboard.on_press_key("w", lambda _:setattr(game.snake, "direction" , "up"))
-    keyboard.on_press_key("s", lambda _:setattr(game.snake, "direction" , "down"))
-    keyboard.on_press_key("a", lambda _:setattr(game.snake, "direction" , "left"))
-    keyboard.on_press_key("d", lambda _:setattr(game.snake, "direction" , "right"))
-
-    keyboard.on_press_key("space", lambda _:setattr(game.food_group.add_gun_shot, "direction" , "right"))
+#     # while True:
+#     #     if keyboard.read_key() == "p":
+#     #         setattr(game.o1, "speed" , 0.5)        
+#     #     if keyboard.read_key() == "w":
+#     #         setattr(game.o1, "direction" , "up")
+#     #         continue
+#     #     if keyboard.read_key() == "s":
+#     #         setattr(game.o1, "direction" , "down")
+#     #     if keyboard.read_key() == "a":
+#     #         setattr(game.o1, "direction" , "left")
+#     #     if keyboard.read_key() == "d":
+#     #         setattr(game.o1, "direction" , "right")
+#     keyboard.on_press_key("v", lambda _:game.end())
 
 
+#     keyboard.on_press_key("w", lambda _:setattr(game.snake, "direction" , "up"))
+#     keyboard.on_press_key("s", lambda _:setattr(game.snake, "direction" , "down"))
+#     keyboard.on_press_key("a", lambda _:setattr(game.snake, "direction" , "left"))
+#     keyboard.on_press_key("d", lambda _:setattr(game.snake, "direction" , "right"))
 
-    keyboard.on_press_key("up", lambda _:setattr(game.snake2, "direction" , "up"))
-    keyboard.on_press_key("down", lambda _:setattr(game.snake2, "direction" , "down"))
-    keyboard.on_press_key("left", lambda _:setattr(game.snake2, "direction" , "left"))
-    keyboard.on_press_key("right", lambda _:setattr(game.snake2, "direction" , "right"))
-
-    def add_limbs():
-        for i in range(5):
-            game.snake.add_limb(game.snake)
-
-    keyboard.on_press_key("l", lambda _:add_limbs())
-
-    def toggle_style(): 
-        if(game.ascii_map.name == "emojis"):
-            setattr(game.ascii_map, "name" , "classic")
-        else: 
-            setattr(game.ascii_map, "name" , "emojis")
+#     keyboard.on_press_key("space", lambda _:setattr(game.food_group.add_gun_shot, "direction" , "right"))
 
 
-    keyboard.on_press_key("m", lambda _:toggle_style())
-    # What you want to run in the foreground
 
-b = threading.Thread(name='background', target=background)
-f = threading.Thread(name='foreground', target=foreground)
+#     keyboard.on_press_key("up", lambda _:setattr(game.snake2, "direction" , "up"))
+#     keyboard.on_press_key("down", lambda _:setattr(game.snake2, "direction" , "down"))
+#     keyboard.on_press_key("left", lambda _:setattr(game.snake2, "direction" , "left"))
+#     keyboard.on_press_key("right", lambda _:setattr(game.snake2, "direction" , "right"))
 
-b.start()
-f.start()
+#     def add_limbs():
+#         for i in range(5):
+#             game.snake.add_limb(game.snake)
+
+#     keyboard.on_press_key("l", lambda _:add_limbs())
+
+#     def toggle_style(): 
+#         if(game.ascii_map.name == "emojis"):
+#             setattr(game.ascii_map, "name" , "classic")
+#         else: 
+#             setattr(game.ascii_map, "name" , "emojis")
+
+
+#     keyboard.on_press_key("m", lambda _:toggle_style())
+#     # What you want to run in the foreground
+
+# b = threading.Thread(name='background', target=background)
+# f = threading.Thread(name='foreground', target=foreground)
+
+# b.start()
+# f.start()
 
 
