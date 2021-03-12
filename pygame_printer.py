@@ -31,7 +31,7 @@ class Pygame_Printer:
 
         #self.screen = pygame.display.set_mode((self.window_width, self.window_height))
 
-        self.screen = pygame.display.set_mode((self.window_width, self.window_height),pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode((self.window_width, self.window_height))
         self.scale = 0.5
 
         for event in pygame.event.get():
@@ -63,7 +63,7 @@ class Pygame_Printer:
                 text_surface, rect = self.emoji_font.render(line_string, (210,210,210))
                 if os.name != 'nt':
                     text_surface = pygame.transform.scale(text_surface, ( int(text_surface.get_size()[0]/self.size_dividend), int(text_surface.get_size()[1]/self.size_dividend),))
-                    size_factor_new_line = 1
+                    size_factor_new_line = self.size_factor * 1
                 else: 
                     size_factor_new_line = self.size_factor * 1
 
@@ -89,15 +89,20 @@ class Pygame_Printer:
 
 if len(sys.argv) > 1:
     pptr = Pygame_Printer()
-    lasdf = 5
+    lasdf = 16
     for value in range(0, 1000):
-        time.sleep(0.032)
-        string_list = list("⬛".join([""]*lasdf))
-        string_list[(value%lasdf-1)] = "🍇"
-        string_string = ''.join(string_list)
+        string = ""
+        lasdf = ((value+2) % 32) + 2
+        for val in range(0, lasdf):
+            #time.sleep(0.032)
+            string_list = list("⬛".join([""]*lasdf))
+            string_list[((value+val)%lasdf-1)] = "🍇"
+            string_string = ''.join(string_list)
+            string += "\n"+string_string
         #print(string_string)
+
         pptr.clear()
-        print(string_string)
-        pptr.print(string_string)
+        pptr.print(string)
+        print(string)
 
 
