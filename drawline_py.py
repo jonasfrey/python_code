@@ -1,5 +1,8 @@
 from drawille import Canvas
 from copy import copy
+import time
+import curses
+import os
 
 class Pixel: 
     def __init__(self, x, y, z ):
@@ -8,12 +11,14 @@ class Pixel:
         self.z = z
 
 class PixelIcon:
+    instances = []
     def __init__(self):
         self.width = None
         self.height = None
         self.pixels = []
         self.multiline_string = ""
-        print("please specify PixelIcon.width and .height if you dont use PixelIcon.generate_pixels_by_multiline_string" )
+        #print("please specify PixelIcon.width and .height if you dont use PixelIcon.generate_pixels_by_multiline_string" )
+        PixelIcon.instances.append(self)
 
     def add_pixel(self,x, y, z,  add_mirrored_x_pixel = False, add_mirrored_y_pixel = False, add_mirrored_z_pixel = False):
         #pixels = []
@@ -160,16 +165,16 @@ xxxxx
 xxx
 """)
 
-    x = PixelIcon()
-    x.generate_pixels_by_multiline_string(
+    x1 = PixelIcon()
+    x1.generate_pixels_by_multiline_string(
 """
 x x
  x 
 x x
 """)
 
-    x = PixelIcon()
-    x.generate_pixels_by_multiline_string(
+    x2 = PixelIcon()
+    x2.generate_pixels_by_multiline_string(
 """
 - - 
  - -
@@ -177,18 +182,97 @@ x x
  - -
 """)
 
-    x = PixelIcon()
-    x.generate_pixels_by_multiline_string(
+    x3 = PixelIcon()
+    x3.generate_pixels_by_multiline_string(
 """
 - -
 ---
  - 
 """)
 
+
+x4 = PixelIcon()
+x4.generate_pixels_by_multiline_string(
+"""
+-- 
+ --
+- -
+""")
+
+
+x5 = PixelIcon()
+x5.generate_pixels_by_multiline_string(
+"""
+xxxx
+x  x
+ xx 
+xxxx
+""")
+
+x6 = PixelIcon()
+x6.generate_pixels_by_multiline_string(
+"""
+  x
+ xx 
+xxx
+xxxx
+""")
+
+twotimestwo = PixelIcon()
+twotimestwo.generate_pixels_by_multiline_string(
+"""
+xx
+x 
+""")
+
+pi = x1
 c = Canvas()
-pi = x
 
-for px in pi.get_fractal_pixels(3):
-    c.set(px.x, px.y)
+# for px in pi.get_fractal_pixels(2):
+#     c.set(px.x, px.y)
+# print(c.frame())
 
-print(c.frame())
+# w = 100
+# for i in range(0, 1000):
+#     time.sleep(1)
+#     c.clear()
+#     print("".join(["\n"]*10))
+#     for px in pi.get_fractal_pixels(3):
+#         c.set((i%w)+px.x, px.y)
+#         print(c.frame())
+
+
+# stdscr = curses.initscr()
+# stdscr.refresh()
+
+# we have to create a border
+
+w = 100
+h = 100
+
+def c_set_border(w,h):
+    for x in range(0,w):
+        for y in range(0,h):
+            if x  == 0 or x == w-1 or y == 0 or y == h-1:
+                c.set(x, y) 
+
+
+for val in PixelIcon.instances:
+    #print(10-val.width)
+    for px in val.get_fractal_pixels(3):
+        c.set(px.x, px.y)
+
+# for i in range(0,7):
+#     # print("".join(["\n"]*20)) #''clear'' terminal
+#     print(i)
+#     # print(chr(27) + "[2J")
+#     c_set_border(100,100)
+#     for p in twotimestwo.get_fractal_pixels(i):
+#         c.set(p.x+i, p.y)
+#     # f = c.frame()+'\n'
+#     # stdscr.addstr(0, 0, f)
+#     # stdscr.refresh()
+#     time.sleep(0.1)
+#     print(c.frame())
+#     c.clear()
+#     # os.system('cls' if os.name == 'nt' else 'clear')
