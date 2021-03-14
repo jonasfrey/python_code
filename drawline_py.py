@@ -4,6 +4,10 @@ import time
 import curses
 import os
 
+
+import numpy as np
+from PIL import Image
+
 class Pixel: 
     def __init__(self, x, y, z ):
         self.x = x
@@ -46,7 +50,8 @@ class PixelIcon:
         z = 0
         for line in lines: 
             characters = list(line)
-            self.width = len(characters)
+            if(self.width == None or self.width == 0):
+                self.width = len(characters)
             x = 0
             for char in characters: 
                 if x > self.width - 1:
@@ -55,7 +60,7 @@ class PixelIcon:
                     self.add_pixel(x, y, z)  
                 x += 1
             y += 1
-        self.height = y
+        self.height = y-1
 
             
     def get_fractal_pixels(self, iterations=2):
@@ -71,7 +76,7 @@ class PixelIcon:
         for val in array:
             npixel_icon = PixelIcon()
             x_offset = self.width * val.x
-            y_offset = (self.height-1) * val.y
+            y_offset = (self.height) * val.y
             for val2 in self.pixels:
                 x = x_offset + (val2.x)
                 y = y_offset + (val2.y)
@@ -97,9 +102,10 @@ class PixelIcon:
 # pi.add_pixel(2,0,0)
 # pi.add_pixel(4,0,0)
 # pi.mirror_x()
-
+fractal_objects = []
 if True: 
     brick = PixelIcon()
+    fractal_objects.append(brick)
     brick.generate_pixels_by_multiline_string(
 """
 ooooooooo
@@ -127,27 +133,30 @@ ooooooooo
 
 
     xico = PixelIcon()
+    fractal_objects.append(xico)
     xico.generate_pixels_by_multiline_string(
 """
 o   o
- o o
-  o
- o o
+ o o 
+  o  
+ o o 
 o   o
 """)
 
 
     threetimesthree = PixelIcon()
+    fractal_objects.append(threetimesthree)
     threetimesthree.generate_pixels_by_multiline_string(
 """
 ---
-- - 
+- -
 ---
 """)
 
 
 
     tree = PixelIcon()
+    fractal_objects.append(tree)
     tree.generate_pixels_by_multiline_string(
 """
 x    
@@ -158,6 +167,7 @@ xxxxx
 """)
 
     tetrislol = PixelIcon()
+    fractal_objects.append(tetrislol)
     tetrislol.generate_pixels_by_multiline_string(
 """
    
@@ -166,6 +176,7 @@ xxx
 """)
 
     x1 = PixelIcon()
+    fractal_objects.append(x1)
     x1.generate_pixels_by_multiline_string(
 """
 x x
@@ -174,6 +185,7 @@ x x
 """)
 
     x2 = PixelIcon()
+    fractal_objects.append(x2)
     x2.generate_pixels_by_multiline_string(
 """
 - - 
@@ -183,6 +195,7 @@ x x
 """)
 
     x3 = PixelIcon()
+    fractal_objects.append(x3)
     x3.generate_pixels_by_multiline_string(
 """
 - -
@@ -192,6 +205,7 @@ x x
 
 
 x4 = PixelIcon()
+fractal_objects.append(x4)
 x4.generate_pixels_by_multiline_string(
 """
 -- 
@@ -201,6 +215,7 @@ x4.generate_pixels_by_multiline_string(
 
 
 x5 = PixelIcon()
+fractal_objects.append(x5)
 x5.generate_pixels_by_multiline_string(
 """
 xxxx
@@ -210,19 +225,47 @@ xxxx
 """)
 
 x6 = PixelIcon()
+fractal_objects.append(x6)
 x6.generate_pixels_by_multiline_string(
 """
-  x
+  x 
  xx 
-xxx
+xxx 
 xxxx
 """)
 
 twotimestwo = PixelIcon()
+fractal_objects.append(twotimestwo)
 twotimestwo.generate_pixels_by_multiline_string(
 """
 xx
 x 
+""")
+
+
+moon = PixelIcon()
+fractal_objects.append(moon)
+moon.generate_pixels_by_multiline_string(
+"""
+ ,-,
+/.( 
+\ { 
+ `-`
+""")
+
+
+moon2 = PixelIcon()
+fractal_objects.append(moon2)
+moon2.generate_pixels_by_multiline_string(
+"""
+   _..._   
+ .:::::::. 
+...........
+...........
+...........
+...........
+`:::::::::'
+  `':::'"  
 """)
 
 pi = x1
@@ -257,10 +300,34 @@ def c_set_border(w,h):
                 c.set(x, y) 
 
 
-for val in PixelIcon.instances:
+for key, val in enumerate(fractal_objects):
     #print(10-val.width)
-    for px in val.get_fractal_pixels(3):
+    #print(val)
+    i = 1
+    while len(val.get_fractal_pixels(i)) < 1024:
+        i+=1 
+        
+    for px in val.get_fractal_pixels(i):
         c.set(px.x, px.y)
+
+
+    # w, h = 1024, 1024
+    # data = np.zeros((h, w, 3), dtype=np.uint8)
+    # for px in val.get_fractal_pixels(i):
+    #     data[px.x, px.y] = [255,255,255]
+    # img = Image.fromarray(data, 'RGB')
+    # img.save('fractal'+str(key)+'.png')
+
+    print(c.frame())
+    c.clear()
+    
+
+w, h = 1920, 1500
+data = np.zeros((h, w, 3), dtype=np.uint8)
+for px in fractal_objects[2].get_fractal_pixels(6):
+    data[px.x, px.y] = [255,255,255]
+img = Image.fromarray(data, 'RGB')
+img.save('my_fractal.png')
 
 # for i in range(0,7):
 #     # print("".join(["\n"]*20)) #''clear'' terminal

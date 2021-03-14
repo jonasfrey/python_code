@@ -138,7 +138,7 @@ def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i:i + n]
 
-ar = list(chunks(scaled_one_dimensional_array, scaled_width))
+ar = list(chunks(oda, scaled_width))
 
 # create numpy array -.- 
 ar = np.array(ar)

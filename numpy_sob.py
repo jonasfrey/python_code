@@ -57,20 +57,57 @@ ar2 = [
     [33,33,33],
     [44,44,44],
 ]
+ar2 = [
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+    ["px_r", "px_g", "px_b"],
+]
 def chunks(ar, n):
-    #n = int(len(ar) / n)
-    # print(n)
-    # return [ for() ar[0::n],ar[1::n],ar[2::n]]
     """Yield successive n-sized chunks from lst."""
     arr = []
     for i in range(0, len(ar), n):
         arr.append(ar[i:i + n])
 
     return arr
+def jesse_chunks(ar, n):
+    return [ar[0:n],ar[n:2*n],ar[2*n:3*n]]
 
 
-ar = (chunks(ar, 5))
-pprint(ar)
+
+ar2_chunked = (chunks(ar2, 5))
+ar2_jesse_chunked = (jesse_chunks(ar2, 5))
+
+print("chunks")
+pprint(ar2_chunked)
+print("jesse_chunks")
+pprint(ar2_jesse_chunked)
+
 #print(ar)
 # ar = np.array(ar)
 # ar = ar.flatten()
