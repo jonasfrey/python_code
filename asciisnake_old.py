@@ -310,6 +310,10 @@ class Game:
 
     def render(self): 
         
+        #print(self.c.pysimplegui_printer.event)
+        if self.c.pysimplegui_printer.event in (sg.WIN_CLOSED, '_EXIT_', 'Close'):
+            exit()
+
         self.render_id += 1
         print(self.render_id)
 

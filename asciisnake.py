@@ -5,9 +5,9 @@ import gc
 import keyboard
 import threading
 import json
-import pygame
 
 from pysimplegui_printer import PySimpleGUI_Printer
+
 
 class Ascii_Map:
     def __init__(self):
@@ -23,18 +23,17 @@ class Ascii_Map:
         self.food_powerup_portal         = ["🔄", "α" ]
         self.food_powerup_brick          = ["❓", "#" ]
         self.food_powerup_fast           = ["💨", "☇" ]
-        self.food_powerup_clown           = ["❓", "%" ]
-        self.food_nerf_garlic           = ["🐉", "Ç" ]
+        self.food_powerup_clown          = ["❓", "%" ]
+        self.food_nerf_garlic            = ["🐉", "Ç" ]
         self.food_powerup_tornado        = ["💫", "?" ]
         self.food_powerup_character_set  = ["💱", "X" ]
-        self.food_powerup_gun              =["🔫", "ö" ]
+        self.food_powerup_gun            = ["🔫", "ö" ]
         self.food_default                = ["🍏", "@" ]
         self.food_default                = ["🍏", "@" ]
-        
 
         self.eye                         = ["❓", "¬" ]
         self.mouth                       = ["👄", "o" ]
-        self.food_default                = ["🍏", "@" ]
+        self.food_default                = ["🌕", "@" ]
         self.fallback                    = ["🌑", " " ]
     
 
@@ -53,7 +52,7 @@ class Ascii_Map:
 
 class Game: 
     def __init__(self):
-
+        game_self = self
         if self.is_sudo() != True:
             print("run with sudo ")    
             exit()
@@ -67,16 +66,78 @@ class Game:
 
         snake = Object(self)
         snake.name = "snake_utf_8_head"
-        snake.speed_point_3d.x = 0.1
+        snake.limbs = []
+        snake.speed = 0.1
+        snake.speed_point_3d.x = snake.speed
+        snake.collidable = True
 
-        def snake_render_function(self):
-            if(self.point_3d.x > 10):
-                self.point_3d.x = 0
+        def render_function(self):
+            if(self.point_3d_has_new_integer_position): 
+                for key, val in enumerate(self.limbs):
 
-        snake.render_function = snake_render_function 
+                    key = len(self.limbs) - (key+1)
+
+                    val = self.limbs[key]
+                    val_before_in_array = self.limbs[key-1]
+                    
+                    val.position_point_3d.x = val_before_in_array.position_point_3d.x
+                    val.position_point_3d.y = val_before_in_array.position_point_3d.y
+                
+                if(len(self.limbs) > 0):
+                    self.limbs[0].position_point_3d.x = self.position_point_3d.x
+                    self.limbs[0].position_point_3d.y = self.position_point_3d.y
+
+            if keyboard.is_pressed('w'):  # if key 'w' is down 
+                self.speed_point_3d =  Point_3D(0, -self.speed, 0)
+            if keyboard.is_pressed('s'):  # if key 's' is down 
+                self.speed_point_3d = Point_3D(0, self.speed, 0)
+            if keyboard.is_pressed('a'):  # if key 'a' is down 
+                self.speed_point_3d =  Point_3D(-self.speed, 0, 0)
+            if keyboard.is_pressed('d'):  # if key 'd' is down 
+                self.speed_point_3d = Point_3D(self.speed, 0, 0)
+
+            if keyboard.is_pressed('l'): #
+                print("l is pressed") 
+                for val in range(0, 1):
+                    self.add_limb(self)
+
+            if keyboard.is_pressed('n'): # 
+                    self.speed = (self.speed + 0.05)
+            
+            if keyboard.is_pressed('m'): # 
+                    self.speed = (self.speed - 0.05)
         
-        
-        game_self = self
+        def add_limb(self):
+            limb = Object(self)
+            limb.name = "snake_utf_8_body"
+            limb.speed = 0
+            
+            if(len(self.limbs) > 0):
+                limb.position_point_3d = self.limbs[-1].position_point_3d
+            else: 
+                limb.position_point_3d = self.position_point_3d
+
+            self.limbs.append(limb)
+
+        def collision_function(self, collision_with):
+
+            if(collision_with[0].name == "food_default"):
+                self.add_limb(self)
+                collision_with[0].position_point_3d = random_position_point_3d()
+
+        snake.limbs = []
+        snake.add_limb = add_limb
+        snake.collision_function = collision_function
+                
+        snake.render_function = render_function
+
+
+        def random_position_point_3d():
+            return Point_3D(random.randint(0,game_self.c.width-1), random.randint(0,game_self.c.width-1), random.randint(0,2))            
+
+        food = Object(self)
+        food.name = "food_default"
+        food.position_point_3d = random_point_3d()
 
 
     def is_sudo(self): 
@@ -88,30 +149,62 @@ class Game:
 
     def render(self): 
         
+        #print(self.c.pysimplegui_printer.event)
+        if self.c.pysimplegui_printer.event == None:
+            self.end()
+        self.c.pysimplegui_printer.window_title =  " render_id:" + str(self.render_id)
+
         self.render_id += 1
         
-        print("asciisnake render_id: "+str(self.render_id))
+        #print("asciisnake render_id: "+str(self.render_id))
 
         self.c.clear_ascii_pixel_array(self.ascii_map.get_string_by_prop_name("game_black_pixel"))
 
         #for obj in gc.get_objects():
         for obj in Object._instances:
+            
+            #self.pygames_events = pygame.event.get()
 
             #destory object if rendered_count_limit is reached
             if(obj.rendered_count > obj.rendered_count_limit & obj.rendered_count_limit != 0):
+                print("deleting obj")
                 del obj
                 continue
 
             #cache the position 
-            obj.last_rendered_point_3d.x = obj.point_3d.x
-            obj.last_rendered_point_3d.z = obj.point_3d.z
-            obj.last_rendered_point_3d.y = obj.point_3d.y
+            obj.last_render_dict = obj.__dict__.copy()
+
+            #calculate the new speed_point
+            obj.speed_point_3d.x = (obj.speed_point_3d.x) + (obj.acceleration_point_3d.x) 
+            obj.speed_point_3d.y = (obj.speed_point_3d.y) + (obj.acceleration_point_3d.y) 
+            obj.speed_point_3d.z = (obj.speed_point_3d.z) + (obj.acceleration_point_3d.z)
 
             #calculate new position
-            obj.point_3d.x = (obj.point_3d.x) + (obj.speed_point_3d.x) 
-            obj.point_3d.y = (obj.point_3d.y) + (obj.speed_point_3d.y) 
-            obj.point_3d.z = (obj.point_3d.z) + (obj.speed_point_3d.z) 
+            obj.position_point_3d.x = (obj.position_point_3d.x) + (obj.speed_point_3d.x) 
+            obj.position_point_3d.y = (obj.position_point_3d.y) + (obj.speed_point_3d.y) 
+            obj.position_point_3d.z = (obj.position_point_3d.z) + (obj.speed_point_3d.z) 
+
+            #acceleration delta
+            obj.delta_acceleration_point_3d.x = obj.last_render_dict.acceleration_point_3d.x - obj.acceleration_point_3d.x
+            obj.delta_acceleration_point_3d.y = obj.last_render_dict.acceleration_point_3d.y - obj.acceleration_point_3d.y
+            obj.delta_acceleration_point_3d.z = obj.last_render_dict.acceleration_point_3d.z - obj.acceleration_point_3d.z
+         
+            #speed delta 
+            obj.delta_speed_point_3d.x = obj.last_render_dict.speed_point_3d.x - obj.speed_point_3d.x
+            obj.delta_speed_point_3d.y = obj.last_render_dict.speed_point_3d.y - obj.speed_point_3d.y
+            obj.delta_speed_point_3d.z = obj.last_render_dict.speed_point_3d.z - obj.speed_point_3d.z
+         
+            #position delta
+            obj.delta_position_point_3d.x = obj.last_render_dict.position_point_3d.x - obj.position_point_3d.x
+            obj.delta_position_point_3d.y = obj.last_render_dict.position_point_3d.y - obj.position_point_3d.y
+            obj.delta_position_point_3d.z = obj.last_render_dict.position_point_3d.z - obj.position_point_3d.z
             
+            #check if delta greater than 1 since 1 is the grid size 
+            obj.point_3d_has_new_integer_position  = obj.delta_position_point_3d.x > 1 or obj.delta_position_point_3d.x > 1 or obj.delta_position_point_3d.x
+
+            if( delta):
+                obj.point_3d_has_new_integer_position = True
+
             if(obj.render_function != None):
                 obj.render_function(obj)
 
@@ -135,35 +228,36 @@ class Game:
 
             obj.collision_with = []
 
+
             if obj.collidable == True :
                 for obj2 in gc.get_objects():
 
                     if isinstance(obj2, Object):
                         if obj2 == obj or obj2.rendered_count < 2: #ignore just spawned objects:
                             continue
+                        
                         if (
-                            (obj2.point_3d.x == obj.point_3d.x) and 
-                            (obj2.point_3d.y == obj.point_3d.y) and
-                            (obj2.point_3d.z == obj.point_3d.z)
+                            (int(obj2.point_3d.x) == int(obj.point_3d.x)) and 
+                            (int(obj2.point_3d.y) == int(obj.point_3d.y)) and
+                            (int(obj2.point_3d.z) == int(obj.point_3d.z))
                             ):
                                 obj.collision_with.append(obj2)
 
                 if(len(obj.collision_with) > 0):
                     if(obj.collision_function != None):
-                        obj.collision_function(obj.parent_class_instance, obj, obj.collision_with)
-          
-                    
-        # will search for ascii symbol in map or if not found return fallback 
-        ascii_string = self.ascii_map.get_string_by_prop_name(obj.name)
+                        obj.collision_function(obj, obj.collision_with)
+        
 
-        #ascii_string  can be overwritten by having the property ascii character
-        if(hasattr(obj, "ascii_character")):
-            ascii_string = getattr(obj, "ascii_character")
+            # will search for ascii symbol in map or if not found return fallback 
+            ascii_string = self.ascii_map.get_string_by_prop_name(obj.name)
 
-        # increment the rendered_count on object since it gets rendered
-        obj.rendered_count += 1
+            #ascii_string  can be overwritten by having the property ascii character
+            if(hasattr(obj, "ascii_character")):
+                ascii_string = getattr(obj, "ascii_character")
 
-        self.c.add_ascii(obj.point_3d.x, obj.point_3d.y, obj.point_3d.z, ascii_string)
+            # increment the rendered_count on object since it gets rendered
+            obj.rendered_count += 1
+            self.c.add_ascii(obj.point_3d.x, obj.point_3d.y, obj.point_3d.z, ascii_string)
 
 
     def end(self):
@@ -204,10 +298,11 @@ class Object:
         # 'parent' object
         self.parent_class_instance = parent_class_instance
         #  point
-        self.point_3d = Point_3D(0,0,1)
-        self.last_rendered_point_3d = Point_3D(0,0,1)
+        self.position_point_3d = Point_3D(0,0,1)
         #  speed vector which is used to calculate the new position on an object
         self.speed_point_3d = Point_3D(0,0,0)
+        # acceleration
+        self.acceleration_point_3d = Point_3D(0,0,0)
         # snake, item, enemy... 
         self.name = "default"
         # defines how many with the same name can exists at the same time
@@ -228,9 +323,12 @@ class Object:
         self.collision_function = None
         # other object this collided with will be appended here
         self.collision_with = []
-
         # append instance to class object property 
         self._instances.append(self)
+        # is set to true if the new point_3d.x and .y position differenciate from self.last_rendered_point_3d 
+        self.point_3d_has_new_integer_position = False
+        #a copy of the object from the last render which can be used to calculate deltas
+        self.last_render_dict = self.__dict__.copy()
 
 
 class GenericObject(Object):
@@ -294,8 +392,10 @@ class Canvas:
             else:
                 render_string += val
         
-        time.sleep(0.001) # 1000(ms)/60(fps) => 0.016 ms sleep
+        time.sleep(0.016) # 1000(ms)/60(fps) => 0.016 ms sleep
+        #print(self.pysimplegui_printer.event)
         self.pysimplegui_printer.print(render_string)
+
         #self.pygame_printer.clear()
         #self.clear_terminal()
         #print(render_string)
