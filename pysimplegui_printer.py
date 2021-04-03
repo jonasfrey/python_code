@@ -11,6 +11,10 @@ class PySimpleGUI_Printer:
         self.text = ""
         self.padding = 10
         self.size = ((self.font_scale+self.padding)* self.width,(self.font_scale+self.padding)* self.height)
+        self.event = "__TIMEOUT__"
+        self.value = None
+        self.window_title = "pysimplegui_printer.window_title"
+        self.render_id = 0
         # layout the form
         self.layout = [
             [
@@ -32,12 +36,18 @@ class PySimpleGUI_Printer:
         # loop that would normally do something useful
 
     def print(self, text):
+        
         self.text = text
         # check to see if the cancel button was clicked and exit loop if clicked
-        event, values = self.window.Read(timeout=0)
+        
+        self.event, self.value = self.window.read(timeout=0)
+        self.render_id += 1
+        #print(self.event)
         # update bar with loop value +1 so that bar eventually reaches the maximum
         #self.progress_bar.UpdateBar(self.i+1, 10000)
         self.sg_text.update(self.text)
+
+        self.window.TKroot.title(self.window_title)
 
 
 
