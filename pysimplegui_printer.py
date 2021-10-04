@@ -5,7 +5,12 @@ import time
 class PySimpleGUI_Printer:
     def __init__(self):
         self.i = 0
+        self.width = 22
+        self.height = 22
+        self.font_scale = 10
         self.text = ""
+        self.padding = 10
+        self.size = ((self.font_scale+self.padding)* self.width,(self.font_scale+self.padding)* self.height)
         self.event = "__TIMEOUT__"
         self.value = None
         self.window_title = "pysimplegui_printer.window_title"
@@ -16,8 +21,8 @@ class PySimpleGUI_Printer:
                 sg.Text(
                     'A custom progress meter',
                     key='text',
-                    size=(50,50), 
-                    font='OpenSansEmoji'
+                    size=self.size, 
+                    font=("Helvetica", self.font_scale)
                 )
             ],
             [
@@ -26,7 +31,7 @@ class PySimpleGUI_Printer:
         ]
 
         # create the form
-        self.window = sg.Window('Custom Progress Meter').Layout(self.layout)
+        self.window = sg.Window('Custom Progress Meter', size=self.size).Layout(self.layout)
         self.sg_text = self.window.FindElement('text')
         # loop that would normally do something useful
 
