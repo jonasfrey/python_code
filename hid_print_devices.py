@@ -3,13 +3,21 @@ import time
 import os
 
 
+# for d in hid.enumerate():
+#     keys = list(d.keys())
+#     keys.sort()
+#     for key in keys:
+#         print("%s : %s" % (key, d[key]))
+#     print()
+
+### enumerate USB devices
 for d in hid.enumerate():
     keys = list(d.keys())
     keys.sort()
     for key in keys:
         print("%s : %s" % (key, d[key]))
     print()
-
+    
 # def get_bar_string(value, max, width = 255):
 #   value = int(value)
 #   str_str = ""
