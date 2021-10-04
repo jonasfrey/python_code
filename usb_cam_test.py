@@ -1,10 +1,20 @@
 import cv2
+from numpy.lib import median
 import pyautogui
+import imutils
 import time
 import os
 import numpy as np
 
 from tkinter import * 
+
+
+class Virtual_cam_canvas:
+    def __init__(self, cam_x, cam_y): 
+        self.cam_x = cam_x
+        self.cam_y = cam_y
+
+
 
 
 class Point_2_d:
@@ -89,14 +99,7 @@ class Pen:
 
 
 
-# seems not to work, cv2 is overwriting the settings ... 
-# commands = []
-# commands.append("v4l2-ctl -d /dev/video1 -c exposure_auto=1")
-# commands.append("v4l2-ctl -d /dev/video1 -c exposure_absolute=1")
-# commands.append("v4l2-ctl -d /dev/video1 -c exposure_auto_priority=0")
-# command = " && ".join(commands)
-# print(command)
-# os.system(command)
+
 
 pen = Pen()
 
@@ -244,18 +247,32 @@ class Camera:
         self.axis = axis
         self.id = id
 
-        self.light_detected = False
-        self.light_detected_coordinates = (0,0)
 
+        self.light_detected = False
+        self.light_detected_point_2_d = Point_2_d(0,0)
 
         self.last_bigger_mask = np.array([[]])
         self.bigger_mask = np.array([[]])
+        self.bigger_mask_sum = 0
+        self.last_bigger_mask_sum = 0
         self.last_bigger_mask_color = ""
+
+        self.mask_red_channel_bright_sum = 0
+        self.last_mask_red_channel_bright_sum = 0
 
         self.frame_ts_ms = 0
         self.last_frame_ts_ms = 0
         self.last_frame_ts_ms_frame_ts_ms_delta_ms = 0
         self.fps = 0
+
+        #seems not to work, cv2 is overwriting the settings ... 
+        commands = []
+        commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_auto=1')
+        commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_absolute=1')
+        commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_auto_priority=0')
+        command = " && ".join(commands)
+        print(command)
+        os.system(command)
 
         #capture = cv2.VideoCapture("http://11.23.58.105:8080/video")
         #capture = cv2.VideoCapture("http://11.23.58.102:8080/video")
@@ -263,7 +280,7 @@ class Camera:
         self.capture = cv2.VideoCapture(self.id)
         # print(cv2.getBuildInformation())
         self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-        self.capture.set(cv2.CAP_PROP_EXPOSURE, 2)
+        self.capture.set(cv2.CAP_PROP_EXPOSURE, 8)
         self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
         width = 1280
         height = 720
@@ -292,6 +309,7 @@ class Camera:
         self.last_frame_ts_ms_frame_ts_ms_delta_ms = abs(self.frame_ts_ms-self.last_frame_ts_ms) 
         self.last_frame_ts_ms = self.frame_ts_ms
         self.fps = 1000.0/self.last_frame_ts_ms_frame_ts_ms_delta_ms
+        #print(self.fps)
 
     def do_capture(self):
         _, self.frame = self.capture.read()
@@ -299,14 +317,148 @@ class Camera:
         self.detect_fps()
 
 
-        self.masks = self.get_masks()
+        # old approach trying to get masks
+        # self.masks = self.get_masks()
 
-        blue_mask = list(filter(lambda x: x.name == "blue", self.masks))[0]
-        red_mask1 = list(filter(lambda x: x.name == "red1", self.masks))[0]
-        red_mask2 = list(filter(lambda x: x.name == "red2", self.masks))[0]
+        # blue_mask = list(filter(lambda x: x.name == "blue", self.masks))[0]
+        # red_mask1 = list(filter(lambda x: x.name == "red1", self.masks))[0]
+        # red_mask2 = list(filter(lambda x: x.name == "red2", self.masks))[0]
 
-        blue_mask_data = blue_mask.data 
-        red_mask_data = red_mask1.data + red_mask2.data
+        # blue_mask_data = blue_mask.data 
+        # red_mask_data = red_mask1.data + red_mask2.data
+
+    
+        only_blue_channel_mask = self.frame.copy()
+        
+        # set green and red channels to 0
+        only_blue_channel_mask[:, :, 1] = 0
+        only_blue_channel_mask[:, :, 2] = 0
+
+        only_blue_channel_mask = cv2.cvtColor(only_blue_channel_mask, cv2.COLOR_BGR2GRAY)
+        #cv2.imshow('only_blue_channel_mask_'+str(self.id), only_blue_channel_mask)
+        blue_mask_data_sum = np.sum(only_blue_channel_mask)
+
+
+        only_red_channel_mask = self.frame.copy()
+        
+        # set blue and green channels to 0
+        only_red_channel_mask[:, :, 0] = 0
+        only_red_channel_mask[:, :, 1] = 0
+
+        only_red_channel_gray = cv2.cvtColor(
+            only_red_channel_mask,
+            cv2.COLOR_BGR2GRAY
+            )
+        only_red_channel_gray_blurred = cv2.GaussianBlur(
+            only_red_channel_gray,
+            (
+                # int(((pyautogui.position()[1]) / 1080)*50) | 1, 
+                # int(((pyautogui.position()[1]) / 1080)*50) | 1
+                41,41
+            ),
+            0
+            )
+        cv2.imshow(
+            'only_red_channel_gray_blurred'+str(self.id),
+            only_red_channel_gray_blurred
+        )
+        only_red_channel_gray_blurred_light_pixels_only = cv2.threshold(
+            only_red_channel_gray_blurred, 
+            # int(((pyautogui.position()[1]) / 1080)*255),
+            18,
+            255, 
+            cv2.THRESH_BINARY
+            )[1]
+
+        only_red_channel_gray_blurred_light_pixels_only_eroded = cv2.erode(
+            only_red_channel_gray_blurred_light_pixels_only,
+            None,
+            iterations=2
+            )
+        only_red_channel_gray_blurred_light_pixels_only_eroded_dilated = cv2.dilate(
+            only_red_channel_gray_blurred_light_pixels_only_eroded,
+            None,
+            iterations=4
+            )
+
+
+
+        mask_red_channel_bright_sum = np.sum(
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated == 255
+            )
+
+        # circles = cv2.HoughCircles(
+        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
+        #     cv2.HOUGH_GRADIENT,
+        #     1.2,
+        #     100
+        #     )
+
+        # if circles is not None:
+        #     # convert the (x, y) coordinates and radius of the circles to integers
+        #     circles = np.round(circles[0, :]).astype("int")
+        #     # loop over the (x, y) coordinates and radius of the circles
+        #     for (x, y, r) in circles:
+        #         # draw the circle in the output image, then draw a rectangle
+        #         # corresponding to the center of the circle
+        #         cv2.circle(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, (x, y), r, (0, 255, 0), 4)
+        #         cv2.rectangle(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+
+
+        # coord = cv2.findNonZero(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated)
+        
+        # if coord != None: 
+        #     np.average(coord)
+        #     print(median)
+        # print(coord)
+
+        contours = cv2.findContours(
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE)
+
+        cnts = imutils.grab_contours(contours)
+
+        
+        for c in cnts:
+            # compute the center of the contour
+            M = cv2.moments(c)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+
+            # draw the contour and center of the shape on the image
+            cv2.drawContours(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, [c], -1, (0, 255, 0), 2)
+            cv2.circle(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, (cX, cY), 7, (0, 255, 0), -1)
+            cv2.putText(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, "center", (cX - 20, cY - 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+
+        # loop over the contours
+        # for (i, c) in enumerate(cnts):
+        #     # draw the bright spot on the image
+        #     (x, y, w, h) = cv2.boundingRect(c)
+        #     ((cX, cY), radius) = cv2.minEnclosingCircle(c)
+        #     cv2.circle(image, (int(cX), int(cY)), int(radius),
+        #         (0, 0, 255), 3)
+        #     cv2.putText(image, "#{}".format(i + 1), (x, y - 15),
+        #         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+
+        # cv2.circle(
+        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
+        #     coord,
+        #     10,
+        #     (0, 255, 0),
+        #     4)
+
+        cv2.imshow(
+            "only_red_channel_gray"+str(self.id),
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+        )
+        cv2.imshow(
+            'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+        )
+        
 
         # blue_mask_bitwise_and_frame = cv2.bitwise_and(self.frame,self.frame,mask = blue_mask_data)
         # cv2.imshow('blue_mask', blue_mask_data)
@@ -316,72 +468,84 @@ class Camera:
         # cv2.imshow('red_mask', red_mask_data)
         # cv2.imshow('red_mask_bitwise_and_frame', red_mask_bitwise_and_frame)
 
-        blue_mask_data_sum = np.sum(blue_mask_data == 255)
-        red_mask_data_sum = np.sum(red_mask_data == 255)
-
-        if(blue_mask_data_sum > red_mask_data_sum):
-            #print("bigger_mask => blue")
-            self.bigger_mask = blue_mask_data
-            self.bigger_mask_color = "blue"
-
-        else: 
-            #print("bigger_mask => red")
-            self.bigger_mask = red_mask_data
-            self.bigger_mask_color = "red"
+        # fallback 
+        # self.bigger_mask = only_blue_channel_mask
+        
+        # if(blue_mask_data_sum > red_mask_data_sum):
+        #     #print("bigger_mask => blue")
+        #     self.bigger_mask = only_blue_channel_mask
+        #     self.bigger_mask_sum = blue_mask_data_sum
+        #     self.bigger_mask_color = "blue"
+        # else: 
+        #     #print("bigger_mask => red")
+        #     self.bigger_mask = only_red_channel_mask
+        #     self.bigger_mask_sum = red_mask_data_sum
+        #     self.bigger_mask_color = "red"
 
         #best would be if red and blue changes every frame. 
         # with that we could bitwise and both masks blue and red 
         # and be pretty sure, it is our custom pen! 
         # unless a police car with flashing blue red light drives by the window
         #  and causes a missinterpretation of the frame XD
-        self.last_mask_different_color = False
-        if(self.bigger_mask_color != self.last_bigger_mask_color):
-            self.last_mask_different_color = True
-            # print("last mask was different color: 1")
-        else: 
-            self.last_mask_different_color = True
-            # print("last mask was different color: 0")
+        # self.last_mask_different_color = False
+        # if(self.bigger_mask_color != self.last_bigger_mask_color):
+        #     self.last_mask_different_color = True
+        #     # print("last mask was different color: 1")
+        # else: 
+        #     self.last_mask_different_color = True
+        #     # print("last mask was different color: 0")
 
-        self.bigger_mask_bitwise_and_last_bigger_mask = cv2.bitwise_and(
-            self.bigger_mask,
-            self.bigger_mask,
-            mask=self.last_bigger_mask)
-
-        self.last_bigger_mask = self.bigger_mask
+        # self.bigger_mask_bitwise_and_last_bigger_mask = cv2.bitwise_and(
+        #     self.bigger_mask,
+        #     self.bigger_mask,
+        #     mask=self.last_bigger_mask)
 
 
-        (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(
-            self.bigger_mask_bitwise_and_last_bigger_mask
-            )
-
-        gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-
-        (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(
-            gray
-            )
-
-        cv2.circle(self.frame, maxLoc, 2, (255, 0, 0), 2)
-
-        self.bigger_mask_bitwise_and_last_bigger_mask_sum = np.sum(
-            self.bigger_mask_bitwise_and_last_bigger_mask == 255
-            )
-        self.click_treshhold = 50
+        # self.last_bigger_mask_sum_bigger_mask_sum_delta = abs(self.last_bigger_mask_sum-self.bigger_mask_sum)
         
-        if(self.bigger_mask_bitwise_and_last_bigger_mask_sum > 50):
-            print("light on!!!!")
-            self.light_detected = True
-            self.light_detected_coordinates = maxLoc
+        # #print("last_bigger_mask_sum_bigger_mask_sum_delta: "+str(self.last_bigger_mask_sum_bigger_mask_sum_delta))
+
+        # self.last_bigger_mask_sum = self.bigger_mask_sum
+        # self.last_bigger_mask = self.bigger_mask
+
+        # self.last_mask_red_channel_bright_sum_mask_red_channel_bright_sum_delta = abs(self.last_mask_red_channel_bright_sum -self.mask_red_channel_bright_sum)
+        
+        # print(self.last_mask_red_channel_bright_sum_mask_red_channel_bright_sum_delta)
+
+        # self.last_mask_red_channel_bright_sum = mask_red_channel_bright_sum
+
+        # # (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(
+        # #     self.bigger_mask_bitwise_and_last_bigger_mask
+        # #     )
+
+        # # gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+
+        # (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(self.bigger_mask)
+
+
+
+        # cv2.circle(self.frame, maxLoc, 5, (0, 255, 0), 2)
+
+        # self.bigger_mask_bitwise_and_last_bigger_mask_sum = np.sum(
+        #     self.bigger_mask_bitwise_and_last_bigger_mask == 255
+        #     )
+        # self.click_treshhold = 50
+        
+        # if(self.bigger_mask_bitwise_and_last_bigger_mask_sum > 50):
+        #     print("light on!!!!")
+        #     self.light_detected = True
+        #     self.light_detected_coordinates = maxLoc
             
-        self.light_detected = True
-        self.light_detected_coordinates = maxLoc
+        # self.light_detected = True
+        # self.light_detected_coordinates = maxLoc
         
-        #print(maxLoc)
-        #print("bigger_mask_bitwise_and_last_bigger_mask_sum: "+str(bigger_mask_bitwise_and_last_bigger_mask_sum))
+        # #print(maxLoc)
+        # #print("bigger_mask_bitwise_and_last_bigger_mask_sum: "+str(bigger_mask_bitwise_and_last_bigger_mask_sum))
         
-        cv2.imshow('original_frame_cam_id_'+str(self.id), self.frame)
-        #cv2.imshow('test_window_name_frame2', frame2)
+        # cv2.imshow('original_frame_cam_id_'+str(self.id), self.frame)
+        # #cv2.imshow('test_window_name_frame2', frame2)
         
-        self.last_bigger_mask_color = self.bigger_mask_color
+        # self.last_bigger_mask_color = self.bigger_mask_color
 
     def get_masks(self):
         hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
@@ -411,7 +575,7 @@ class Camera:
 
 cam_x = Camera("x", 1)
 cam_y = Camera("y", 3)
-
+virtual_cam_canvas = Virtual_cam_canvas(cam_x, cam_y)
 while(True):
 
 
