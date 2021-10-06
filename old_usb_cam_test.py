@@ -61,10 +61,6 @@ class Pen:
             "on_double_click",
             "on_double_ligth"
         ]
-        self.on_3_click_function_name_aliases = [
-            "on_triple_click",
-            "on_triple_light"
-        ]
         self.tkinter_points = []
         # self.on_3_click_function_name_aliases = [
         #     "on_triple_click",
@@ -92,18 +88,10 @@ class Pen:
                 self.multiple_light_on_counter+=1
             else: 
                 self.multiple_light_on_counter = 1
-            print("self.multiple_light_on_counter:"+str(self.multiple_light_on_counter))
+
             if(self.multiple_light_on_counter == 2):
                 print("double click!!!")
                 for string in self.on_2_click_function_name_aliases: 
-                    if(hasattr(self, string)):
-                        fun = getattr(self, string)
-                        if(callable(fun)): 
-                            fun(self)
-
-            if(self.multiple_light_on_counter == 3):
-                print("tripple click!!!")
-                for string in self.on_3_click_function_name_aliases: 
                     if(hasattr(self, string)):
                         fun = getattr(self, string)
                         if(callable(fun)): 
@@ -133,18 +121,11 @@ def pen_on_double_click(self):
     self.double_click_points_array.append([self.point_2_d.x, self.point_2_d.y])
 
 
-def pen_on_triple_click(self):
-    self.tkinter_points = []
-    self.double_click_points_array = []
-
-
 pen.on_double_click = pen_on_double_click
-pen.on_triple_click = pen_on_triple_click
-
 window = Tk()
 canvas = Canvas(window, width=1920, height=1080, background='#333')
 canvas.grid(row=0, column=0)
-
+canvas.create_line(100,100, 300,100, 200,300, 100,100, fill="red", width=3)
 
 
 class Mask:
@@ -355,6 +336,16 @@ class Camera:
         self.detect_fps()
 
 
+        # old approach trying to get masks
+        # self.masks = self.get_masks()
+
+        # blue_mask = list(filter(lambda x: x.name == "blue", self.masks))[0]
+        # red_mask1 = list(filter(lambda x: x.name == "red1", self.masks))[0]
+        # red_mask2 = list(filter(lambda x: x.name == "red2", self.masks))[0]
+
+        # blue_mask_data = blue_mask.data 
+        # red_mask_data = red_mask1.data + red_mask2.data
+
     
         only_blue_channel_mask = self.frame.copy()
         
@@ -386,10 +377,10 @@ class Camera:
             ),
             0
             )
-        # cv2.imshow(
-        #     'only_red_channel_gray_blurred'+str(self.id),
-        #     only_red_channel_gray_blurred
-        # )
+        cv2.imshow(
+            'only_red_channel_gray_blurred'+str(self.id),
+            only_red_channel_gray_blurred
+        )
         only_red_channel_gray_blurred_light_pixels_only = cv2.threshold(
             only_red_channel_gray_blurred, 
             # int(((pyautogui.position()[1]) / 1080)*255),
@@ -415,6 +406,30 @@ class Camera:
             only_red_channel_gray_blurred_light_pixels_only_eroded_dilated == 255
             )
 
+        # circles = cv2.HoughCircles(
+        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
+        #     cv2.HOUGH_GRADIENT,
+        #     1.2,
+        #     100
+        #     )
+
+        # if circles is not None:
+        #     # convert the (x, y) coordinates and radius of the circles to integers
+        #     circles = np.round(circles[0, :]).astype("int")
+        #     # loop over the (x, y) coordinates and radius of the circles
+        #     for (x, y, r) in circles:
+        #         # draw the circle in the output image, then draw a rectangle
+        #         # corresponding to the center of the circle
+        #         cv2.circle(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, (x, y), r, (0, 255, 0), 4)
+        #         cv2.rectangle(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+
+
+        # coord = cv2.findNonZero(only_red_channel_gray_blurred_light_pixels_only_eroded_dilated)
+        
+        # if coord != None: 
+        #     np.average(coord)
+        #     print(median)
+        # print(coord)
 
         contours = cv2.findContours(
             only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
@@ -444,19 +459,116 @@ class Camera:
             self.light_detected = True
 
 
-        # cv2.imshow(
-        #     "only_red_channel_gray"+str(self.id),
-        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
-        # )
-        # cv2.imshow(
-        #     'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
-        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
-        # ) 
-        # cv2.imshow(
-        # 'original_frame_cam_id_'+str(self.id),
-        # self.frame
-        # )
+        # loop over the contours
+        # for (i, c) in enumerate(cnts):
+        #     # draw the bright spot on the image
+        #     (x, y, w, h) = cv2.boundingRect(c)
+        #     ((cX, cY), radius) = cv2.minEnclosingCircle(c)
+        #     cv2.circle(image, (int(cX), int(cY)), int(radius),
+        #         (0, 0, 255), 3)
+        #     cv2.putText(image, "#{}".format(i + 1), (x, y - 15),
+        #         cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
 
+        # cv2.circle(
+        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
+        #     coord,
+        #     10,
+        #     (0, 255, 0),
+        #     4)
+
+        cv2.imshow(
+            "only_red_channel_gray"+str(self.id),
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+        )
+        cv2.imshow(
+            'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+        )
+        
+
+        # blue_mask_bitwise_and_frame = cv2.bitwise_and(self.frame,self.frame,mask = blue_mask_data)
+        # cv2.imshow('blue_mask', blue_mask_data)
+        # cv2.imshow('blue_mask_bitwise_and_frame', blue_mask_bitwise_and_frame)
+
+        # red_mask_bitwise_and_frame = cv2.bitwise_and(self.frame,self.frame,mask = red_mask_data)
+        # cv2.imshow('red_mask', red_mask_data)
+        # cv2.imshow('red_mask_bitwise_and_frame', red_mask_bitwise_and_frame)
+
+        # fallback 
+        # self.bigger_mask = only_blue_channel_mask
+        
+        # if(blue_mask_data_sum > red_mask_data_sum):
+        #     #print("bigger_mask => blue")
+        #     self.bigger_mask = only_blue_channel_mask
+        #     self.bigger_mask_sum = blue_mask_data_sum
+        #     self.bigger_mask_color = "blue"
+        # else: 
+        #     #print("bigger_mask => red")
+        #     self.bigger_mask = only_red_channel_mask
+        #     self.bigger_mask_sum = red_mask_data_sum
+        #     self.bigger_mask_color = "red"
+
+        #best would be if red and blue changes every frame. 
+        # with that we could bitwise and both masks blue and red 
+        # and be pretty sure, it is our custom pen! 
+        # unless a police car with flashing blue red light drives by the window
+        #  and causes a missinterpretation of the frame XD
+        # self.last_mask_different_color = False
+        # if(self.bigger_mask_color != self.last_bigger_mask_color):
+        #     self.last_mask_different_color = True
+        #     # print("last mask was different color: 1")
+        # else: 
+        #     self.last_mask_different_color = True
+        #     # print("last mask was different color: 0")
+
+        # self.bigger_mask_bitwise_and_last_bigger_mask = cv2.bitwise_and(
+        #     self.bigger_mask,
+        #     self.bigger_mask,
+        #     mask=self.last_bigger_mask)
+
+
+        # self.last_bigger_mask_sum_bigger_mask_sum_delta = abs(self.last_bigger_mask_sum-self.bigger_mask_sum)
+        
+        # #print("last_bigger_mask_sum_bigger_mask_sum_delta: "+str(self.last_bigger_mask_sum_bigger_mask_sum_delta))
+
+        # self.last_bigger_mask_sum = self.bigger_mask_sum
+        # self.last_bigger_mask = self.bigger_mask
+
+        # self.last_mask_red_channel_bright_sum_mask_red_channel_bright_sum_delta = abs(self.last_mask_red_channel_bright_sum -self.mask_red_channel_bright_sum)
+        
+        # print(self.last_mask_red_channel_bright_sum_mask_red_channel_bright_sum_delta)
+
+        # self.last_mask_red_channel_bright_sum = mask_red_channel_bright_sum
+
+        # # (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(
+        # #     self.bigger_mask_bitwise_and_last_bigger_mask
+        # #     )
+
+        # # gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
+
+        # (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(self.bigger_mask)
+
+
+
+        # cv2.circle(self.frame, maxLoc, 5, (0, 255, 0), 2)
+
+        # self.bigger_mask_bitwise_and_last_bigger_mask_sum = np.sum(
+        #     self.bigger_mask_bitwise_and_last_bigger_mask == 255
+        #     )
+        # self.click_treshhold = 50
+        
+        # if(self.bigger_mask_bitwise_and_last_bigger_mask_sum > 50):
+        #     print("light on!!!!")
+        #     self.light_detected = True
+        #     self.light_detected_coordinates = maxLoc
+            
+        # self.light_detected = True
+        # self.light_detected_coordinates = maxLoc
+        
+        # #print(maxLoc)
+        # #print("bigger_mask_bitwise_and_last_bigger_mask_sum: "+str(bigger_mask_bitwise_and_last_bigger_mask_sum))
+        
+        cv2.imshow('original_frame_cam_id_'+str(self.id), self.frame)
         # #cv2.imshow('test_window_name_frame2', frame2)
         
         # self.last_bigger_mask_color = self.bigger_mask_color
@@ -490,30 +602,20 @@ class Camera:
 cam_x = Camera("x", 3)
 cam_y = Camera("y", 1)
 virtual_cam_canvas = Virtual_cam_canvas(cam_x, cam_y)
-
-
-
-tkinter_p1_rect = canvas.create_rectangle(
-            0,0,0,0,
-            fill="black",
-            outline="green",
-            width=3
-        )
-# canvas.create_text(
-#     100,
-#     100, 
-#     fill="green",
-#     font="Arial 20",
-#     text="go to each corner and double click to calibrate: (p1->top left, p2 ->top right, p3 -> bottom left, p4 -> bottom right)"
-#     )
-
-
-tkinter_line_var = canvas.create_line(0, 0, 100, 100, fill="red", width=3)
 while(True):
 
+    canvas.delete("all")
+
+    # canvas.create_text(
+    #     100,
+    #     100, 
+    #     fill="green",
+    #     font="Arial 20",
+    #     text="go to each corner and double click to calibrate: (p1->top left, p2 ->top right, p3 -> bottom left, p4 -> bottom right)"
+    #     )
 
     if(len(pen.tkinter_points) > 4):
-        canvas.coords(tkinter_line_var, pen.tkinter_points)
+        canvas.create_line(pen.tkinter_points, fill="red", width=3)
 
     print(len(pen.tkinter_points))
 
@@ -530,28 +632,26 @@ while(True):
 
     else: 
         pen.light_on = False
+    #print(pen.double_click_points)
+    for (key, value) in enumerate(pen.double_click_points_array): 
+        rectangle_size = 20
 
-
-    # for (key, value) in enumerate(pen.double_click_points_array): 
-    #     rectangle_size = 20
-
-    #     canvas.create_rectangle(
-    #         value[0],
-    #         value[1],
-    #         value[0]+rectangle_size,
-    #         value[1]+rectangle_size,
-    #         fill="black",
-    #         outline="green",
-    #         width=3
-    #     )
-    #     canvas.create_text(
-    #         value[0]+(rectangle_size/2),
-    #         value[1]+(rectangle_size/2),
-    #         fill="white",
-    #         font="Arial "+str(int(rectangle_size/2)),
-    #         text="p"+str(key+1)
-    #         )
-    
+        canvas.create_rectangle(
+            value[0],
+            value[1],
+            value[0]+rectangle_size,
+            value[1]+rectangle_size,
+            fill="black",
+            outline="green",
+            width=3
+        )
+        canvas.create_text(
+            value[0]+(rectangle_size/2),
+            value[1]+(rectangle_size/2),
+            fill="white",
+            font="Arial "+str(int(rectangle_size/2)),
+            text="p"+str(key+1)
+            )
     window.title('cam_x.fps = '+str(cam_x.fps)+' '+'cam_y.fps = '+str(cam_y.fps))
     window.update()
 

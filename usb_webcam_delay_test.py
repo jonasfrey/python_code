@@ -200,11 +200,9 @@ current_n_white_pix = 0
 window = Tk()
     
 canvas = Canvas(window, width=1920, height=1080, background='#333')
-
-color_range_rects = []
-
 canvas.grid(row=0, column=0)
 canvas.create_line(100,100, 300,100, 200,300, 100,100, fill="red", width=5)
+color_range_rects = []
 # window.mainloop() -> manual render window.update()
 
 #canvas.create_line(100,100, 300,100, 200,300, 100,100, fill="red", width=5)

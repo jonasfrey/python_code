@@ -9,11 +9,143 @@ import numpy as np
 from tkinter import * 
 
 
+class Light: 
+    def __init__(self):
+        self.point_2_d = Point_2_d(0,0)
+
+
+class Frame: 
+    def __init__(self, width, height): 
+        self.data = None
+        self.width = width
+        self.height = height
+        self.light = Light()
+
+    def detect_light(self):
+        return False
+
+
+class Calibration_point: 
+    def __init__(self, canvas):
+        self.point_2_d = Point_2_d(0,0)
+        self.rectangle_size = 20
+        self.canvas = canvas
+        self.point_2_d.on_x_set = self.update_tkinter_stuff
+        self.point_2_d.on_y_set = self.update_tkinter_stuff
+
+
+        self.tkinter_rect_var =  self.canvas.create_rectangle(
+            0,0,0,0,
+            fill="black",
+            outline="green",
+            width=3
+        )
+        self.tkinter_line_var = self.canvas.create_text(
+            0,0,
+            fill="white",
+            font="Arial 20",
+            text="0"
+            )
+
+        self._name = 0
+        self.name = 0
+    @property 
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+        self.update_tkinter_stuff()
+        return True
+        
+
+    def update_tkinter_stuff(self):
+        self.canvas.itemconfig(
+            self.tkinter_line_var, 
+            fill="white",
+            font="Arial 20",
+            text=self.name
+        )
+        self.canvas.coords(
+            self.tkinter_line_var, 
+            self.point_2_d.x+(self.rectangle_size/2),
+            self.point_2_d.y+(self.rectangle_size/2),
+        )
+        self.canvas.coords(
+            self.tkinter_rect_var, 
+            self.point_2_d.x,
+            self.point_2_d.y,
+            self.point_2_d.x+self.rectangle_size,
+            self.point_2_d.y+self.rectangle_size,
+        )
+
 class Virtual_cam_canvas:
-    def __init__(self, cam_x, cam_y): 
+    def __init__(self, cam_x, cam_y, pen, canvas):
+        self.canvas = canvas 
         self.cam_x = cam_x
         self.cam_y = cam_y
+        self._calibaration_point_index = 1
+        self.calibaration_point_index = 0
+        self.calibration_point_1 = Calibration_point(canvas)
+        self.calibration_point_1.name = "1"
+        self.calibration_point_2 = Calibration_point(canvas)
+        self.calibration_point_2.name = "2"
+        self.calibration_point_3 = Calibration_point(canvas)
+        self.calibration_point_3.name = "3"
+        self.calibration_point_4 = Calibration_point(canvas)
+        self.calibration_point_4.name = "4"
 
+        self.delta_x_cp1_cp2 = 0
+        self.delta_x_cp3_cp4 = 0
+        self.ratio_delta_x_cp1_cp2_to_delta_x_cp3_cp4 = 0
+
+        self.delta_y_cp1_cp2 = 0
+        self.delta_y_cp3_cp4 = 0
+        self.ratio_delta_y_cp1_cp2_to_delta_x_cp3_cp4 = 0
+
+        self.pen = pen
+
+    def on_pen_point_2_d_x_change(self):
+    
+        self.pen.point_2_d_normalized.x = self.pen.point_2_d.x * (self.yd/self.yd_strich) *(self.xd/self.xd_strich)
+        self.pen.point_2_d_normalized.y = self.pen.point_2_d.y * (self.xd/self.xd_strich) *(self.yd/self.yd_strich)
+        
+        # border margin/padding has to be removed 
+
+    @property 
+    def calibration_point_index(self):
+        return self._calibaration_point_index
+
+    @calibration_point_index.setter
+    def calibration_point_index(self, value):
+        self._calibaration_point_index = value
+        self.calibrate()
+        return True
+    
+    def calibrate(self):
+        self.delta_x_cp1_cp2 = abs(
+            self.calibration_point_1.point_2_d.x -
+            self.calibration_point_2.point_2_d.x
+            )
+        self.delta_x_cp3_cp4 = abs(
+            self.calibration_point_3.point_2_d.x -
+            self.calibration_point_4.point_2_d.x
+            )
+
+        self.xd = self.delta_x_cp1_cp2
+        self.xd_strich = self.delta_x_cp3_cp4
+
+        self.delta_y_cp1_cp3 = abs(
+            self.calibration_point_1.point_2_d.x -
+            self.calibration_point_3.point_2_d.x
+            )
+        self.delta_y_cp2_cp4 = abs(
+            self.calibration_point_2.point_2_d.x -
+            self.calibration_point_4.point_2_d.x
+            )
+        self.yd = self.delta_y_cp1_cp3
+        self.yd_strich = self.delta_y_cp2_cp4
 
 
 
@@ -29,6 +161,8 @@ class Point_2_d:
     @x.setter
     def x(self, value):
         self._x = value
+        if(hasattr(self, "on_x_set")):
+            self.on_x_set()
 
     @x.deleter
     def x(self):
@@ -41,10 +175,13 @@ class Point_2_d:
     @y.setter
     def y(self, value):
         self._y = value
+        if(hasattr(self, "on_y_set")):
+            self.on_y_set()
 
     @y.deleter
     def y(self):
         del self._y
+
 
 
 
@@ -54,6 +191,7 @@ class Pen:
         self._light_on = False
         self.last_light_on_ts_ms = 0
         self.current_light_on_ts = 0
+        self.point_2_d_normalized = Point_2_d(0,0)
         self.current_light_on_last_light_on_delta_ts_ms = 0
         self.multiple_light_on_threshhold_ms = 400
         self.multiple_light_on_counter = 0
@@ -115,37 +253,27 @@ class Pen:
 
 
 
-
-
-
 pen = Pen()
 
-pen.double_click_points_array = []
-pen.double_click_points_array_limit = 4
 
 def pen_on_double_click(self):
-    print("on double click event triggered")
-    
-    if(len(self.double_click_points_array) == self.double_click_points_array_limit):
-        self.double_click_points_array = []
-    
+    virtual_cam_canvas.calibaration_point_index = (( virtual_cam_canvas.calibaration_point_index) % 4 ) + 1
+    calibration_point = getattr(virtual_cam_canvas, "calibration_point_"+str(virtual_cam_canvas.calibaration_point_index))
+    calibration_point.point_2_d.x = pen.point_2_d.x
+    calibration_point.point_2_d.y = pen.point_2_d.y
 
-    self.double_click_points_array.append([self.point_2_d.x, self.point_2_d.y])
-
+    if(virtual_cam_canvas.calibration_point_index == 4):
+        virtual_cam_canvas.calibrate()
 
 def pen_on_triple_click(self):
     self.tkinter_points = []
-    self.double_click_points_array = []
-
 
 pen.on_double_click = pen_on_double_click
 pen.on_triple_click = pen_on_triple_click
 
 window = Tk()
-canvas = Canvas(window, width=1920, height=1080, background='#333')
+canvas = Canvas(window, width=1080, height=720, background='#333')
 canvas.grid(row=0, column=0)
-
-
 
 class Mask:
     def __init__(
@@ -278,13 +406,10 @@ class Camera:
             id
             ): 
 
-
-        #print("fps: "+str(fps))
-
-
         self.axis = axis
         self.id = id
 
+        self.frame = Frame(1080, 720)
 
         self.light_detected = False
         self.light_detected_point_2_d = Point_2_d(0,0)
@@ -303,27 +428,36 @@ class Camera:
         self.last_frame_ts_ms_frame_ts_ms_delta_ms = 0
         self.fps = 0
 
-        #seems not to work, cv2 is overwriting the settings ... 
-        commands = []
-        commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_auto=1')
-        commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_absolute=1')
-        commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_auto_priority=0')
-        command = " && ".join(commands)
-        print(command)
-        os.system(command)
-
         #capture = cv2.VideoCapture("http://11.23.58.105:8080/video")
         #capture = cv2.VideoCapture("http://11.23.58.102:8080/video")
         #capture = cv2.VideoCapture(1)
+
         self.capture = cv2.VideoCapture(self.id)
-        # print(cv2.getBuildInformation())
-        self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-        self.capture.set(cv2.CAP_PROP_EXPOSURE, 8)
-        self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
-        width = 1280
-        height = 720
-        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+        codec = 0x47504A4D # little endian 'MJPG', M->4D,J->4A,P->50, G->47
+        self.capture.set(cv2.CAP_PROP_FPS, 30.0)
+        self.capture.set(cv2.CAP_PROP_FOURCC, codec)
+        self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, self.frame.width)
+        self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, self.frame.height)
+        self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+        self.capture.set(cv2.CAP_PROP_EXPOSURE, 1)
+
+        #seems not to work, cv2 is overwriting the settings ... 
+        # commands = []
+        # commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_auto=1')
+        # commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_absolute=1')
+        # commands.append(f'v4l2-ctl -d /dev/video{self.id} -c exposure_auto_priority=0')
+        # command = " && ".join(commands)
+        # print(command)
+        # os.system(command)
+        # # print(cv2.getBuildInformation())
+        # self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        # self.capture.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        # self.capture.set(cv2.CAP_PROP_EXPOSURE, 8)
+        # width = 1280
+        # height = 720
+        # self.capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        # self.capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
         # $ v4l2-ctl -d /dev/video3 -l
         #
@@ -350,7 +484,7 @@ class Camera:
         #print(self.fps)
 
     def do_capture(self):
-        _, self.frame = self.capture.read()
+        _, self.frame.data = self.capture.read()
         self.frame_ts_ms = round(time.time() * 1000)
         self.detect_fps()
 
@@ -452,10 +586,10 @@ class Camera:
         #     'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
         #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
         # ) 
-        # cv2.imshow(
-        # 'original_frame_cam_id_'+str(self.id),
-        # self.frame
-        # )
+        cv2.imshow(
+        'original_frame_cam_id_'+str(self.id),
+        self.frame
+        )
 
         # #cv2.imshow('test_window_name_frame2', frame2)
         
@@ -489,16 +623,11 @@ class Camera:
 
 cam_x = Camera("x", 3)
 cam_y = Camera("y", 1)
-virtual_cam_canvas = Virtual_cam_canvas(cam_x, cam_y)
 
+virtual_cam_canvas = Virtual_cam_canvas(cam_x, cam_y, pen, canvas)
 
+    
 
-tkinter_p1_rect = canvas.create_rectangle(
-            0,0,0,0,
-            fill="black",
-            outline="green",
-            width=3
-        )
 # canvas.create_text(
 #     100,
 #     100, 
@@ -506,16 +635,14 @@ tkinter_p1_rect = canvas.create_rectangle(
 #     font="Arial 20",
 #     text="go to each corner and double click to calibrate: (p1->top left, p2 ->top right, p3 -> bottom left, p4 -> bottom right)"
 #     )
+tkinter_light_line_var = canvas.create_line(0, 0, 100, 100, fill="red", width=3)
 
-
-tkinter_line_var = canvas.create_line(0, 0, 100, 100, fill="red", width=3)
 while(True):
 
 
     if(len(pen.tkinter_points) > 4):
-        canvas.coords(tkinter_line_var, pen.tkinter_points)
+        canvas.coords(tkinter_light_line_var, pen.tkinter_points)
 
-    print(len(pen.tkinter_points))
 
     cam_x.do_capture()
     cam_y.do_capture()
@@ -525,32 +652,12 @@ while(True):
         pen.point_2_d.x = cam_x.light_detected_point_2_d.x
         pen.point_2_d.y = cam_y.light_detected_point_2_d.x ## we still have to take the x coord, since the camera is turned 90 degrees but not the image
         
-        pen.tkinter_points.append(pen.point_2_d.x)
-        pen.tkinter_points.append(pen.point_2_d.y)
+        desired_width_height=500
+        pen.tkinter_points.append(pen.point_2_d_normalized.x * desired_width_height)
+        pen.tkinter_points.append(pen.point_2_d_normalized.y * desired_width_height)
 
     else: 
         pen.light_on = False
-
-
-    # for (key, value) in enumerate(pen.double_click_points_array): 
-    #     rectangle_size = 20
-
-    #     canvas.create_rectangle(
-    #         value[0],
-    #         value[1],
-    #         value[0]+rectangle_size,
-    #         value[1]+rectangle_size,
-    #         fill="black",
-    #         outline="green",
-    #         width=3
-    #     )
-    #     canvas.create_text(
-    #         value[0]+(rectangle_size/2),
-    #         value[1]+(rectangle_size/2),
-    #         fill="white",
-    #         font="Arial "+str(int(rectangle_size/2)),
-    #         text="p"+str(key+1)
-    #         )
     
     window.title('cam_x.fps = '+str(cam_x.fps)+' '+'cam_y.fps = '+str(cam_y.fps))
     window.update()
