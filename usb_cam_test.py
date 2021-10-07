@@ -14,9 +14,6 @@ class Virtual_cam_canvas:
         self.cam_x = cam_x
         self.cam_y = cam_y
 
-
-
-
 class Point_2_d:
     def __init__(self, x, y): 
         self._x = x

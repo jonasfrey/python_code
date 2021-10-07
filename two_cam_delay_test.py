@@ -112,8 +112,8 @@ def start_video_capture(id):
     
 # Create two threads as follows
 try:
-   _thread.start_new_thread( start_video_capture,(1,))
-   _thread.start_new_thread( start_video_capture,(3,))
+    _thread.start_new_thread( start_video_capture,(1,))
+    _thread.start_new_thread( start_video_capture,(3,))
 except ValueError:
     print(ValueError)
     print ("Error: unable to start thread")
