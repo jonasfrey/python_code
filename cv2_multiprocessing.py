@@ -4,8 +4,12 @@ import cv2
 import os
 import multiprocessing 
 import time
-from tkinter import * 
 from PIL import Image, ImageTk
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot
+
 
 class Queue_object:
     def __init__(self, name, data):
@@ -56,6 +60,15 @@ class Camera_option:
         
     @value.setter
     def value(self,value):
+        #special case/bug, exposure_absolute only works if 
+        #exposure_auto is set to
+        # exposure_auto=3 (auto)
+        # and then
+        # exposure_auto=1 (manual)
+        if(self.name == "exposure_absolute"):
+            self.camera.set_v4l2_option("exposure_auto", 3)
+            self.camera.set_v4l2_option("exposure_auto", 1)
+
         if value != None:
             self.camera.set_v4l2_option(self.name, value)
             
@@ -390,45 +403,62 @@ class Tkinter_stuff:
     #     self.window_destroyed = True
 
 
+class App(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.title = 'PyQt5 button - pythonspot.com'
+        self.left = 10
+        self.top = 10
+        self.width = 320
+        self.height = 200
+        self.initUI()
+    
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        
+        button = QPushButton('PyQt5 button', self)
+        button.setToolTip('This is an example button')
+        button.move(100,70)
+        button.clicked.connect(self.on_click)
+        
+        self.show()
+
+    @pyqtSlot()
+    def on_click(self):
+        print('PyQt5 button click')
+
+
 if __name__ == '__main__':
+
+        app = QApplication(sys.argv)
+        ex = App()
+
 
         shared_process_data = Shared_process_data()
         cam1 = Camera(1)
         cam3 = Camera(3)
-        tkinter_stuff = Tkinter_stuff(cam1)
+        # tkinter_stuff = Tkinter_stuff(cam1)
         q = multiprocessing.Queue()
         
         num = multiprocessing.Value('d', 11.2)
         arr = multiprocessing.Array('i', [0])
         man_arr = multiprocessing.Manager().list()
         #frame = []
-        p3= multiprocessing.Process(target = tkinter_stuff.start_loop, args=(num, arr, man_arr, q,))
+        # p3= multiprocessing.Process(target = tkinter_stuff.start_loop, args=(num, arr, man_arr, q,))
         p1= multiprocessing.Process(target = cam1.start_capture_loop, args=(num, arr, man_arr, q,))
         p2= multiprocessing.Process(target = cam3.start_capture_loop, args=(num, arr, man_arr, q,))
         p1.start() 
         p2.start()
-        p3.start()
+        # p3.start()
         p1.join()
         p2.join()
 
-        # window = Tk()
-        # canvas = Canvas(window, width=1280, height=720, background='#333')
-        # canvas.grid(row=0, column=0)
-        # canvas.pack(expand=YES, fill=BOTH)
-        # while True: 
-
-        #     # frame = q.get()[0]
-        #     img = ImageTk.PhotoImage(image=Image.fromarray(frame))
-        #     canvas.create_image(1,1, anchor="nw", image=img)
-            
-        #     window.update()
-
-
-
-
-
-
-        # p3.join()
-
-
         print(cam1.frame)
+
+        sys.exit(app.exec_())
+
+
+
+
