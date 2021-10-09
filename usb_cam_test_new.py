@@ -484,116 +484,118 @@ class Camera:
         #print(self.fps)
 
     def do_capture(self):
-        _, self.frame.data = self.capture.read()
-        self.frame_ts_ms = round(time.time() * 1000)
-        self.detect_fps()
+        frame_capture_success, self.frame.data = self.capture.read()
+        if(frame_capture_success):
 
+            self.frame_ts_ms = round(time.time() * 1000)
+            self.detect_fps()
 
-    
-        only_blue_channel_mask = self.frame.copy()
+            self.frame = self.frame.data 
         
-        # set green and red channels to 0
-        only_blue_channel_mask[:, :, 1] = 0
-        only_blue_channel_mask[:, :, 2] = 0
+            only_blue_channel_mask = self.frame.copy()
+            
+            # set green and red channels to 0
+            only_blue_channel_mask[:, :, 1] = 0
+            only_blue_channel_mask[:, :, 2] = 0
 
-        only_blue_channel_mask = cv2.cvtColor(only_blue_channel_mask, cv2.COLOR_BGR2GRAY)
-        #cv2.imshow('only_blue_channel_mask_'+str(self.id), only_blue_channel_mask)
-        blue_mask_data_sum = np.sum(only_blue_channel_mask)
+            only_blue_channel_mask = cv2.cvtColor(only_blue_channel_mask, cv2.COLOR_BGR2GRAY)
+            #cv2.imshow('only_blue_channel_mask_'+str(self.id), only_blue_channel_mask)
+            blue_mask_data_sum = np.sum(only_blue_channel_mask)
 
 
-        only_red_channel_mask = self.frame.copy()
-        
-        # set blue and green channels to 0
-        only_red_channel_mask[:, :, 0] = 0
-        only_red_channel_mask[:, :, 1] = 0
+            only_red_channel_mask = self.frame.copy()
+            
+            # set blue and green channels to 0
+            only_red_channel_mask[:, :, 0] = 0
+            only_red_channel_mask[:, :, 1] = 0
 
-        only_red_channel_gray = cv2.cvtColor(
-            only_red_channel_mask,
-            cv2.COLOR_BGR2GRAY
+            only_red_channel_gray = cv2.cvtColor(
+                only_red_channel_mask,
+                cv2.COLOR_BGR2GRAY
+                )
+            only_red_channel_gray_blurred = cv2.GaussianBlur(
+                only_red_channel_gray,
+                (
+                    # int(((pyautogui.position()[1]) / 1080)*50) | 1, 
+                    # int(((pyautogui.position()[1]) / 1080)*50) | 1
+                    41,41
+                ),
+                0
+                )
+            # cv2.imshow(
+            #     'only_red_channel_gray_blurred'+str(self.id),
+            #     only_red_channel_gray_blurred
+            # )
+            only_red_channel_gray_blurred_light_pixels_only = cv2.threshold(
+                only_red_channel_gray_blurred, 
+                # int(((pyautogui.position()[1]) / 1080)*255),
+                18,
+                255, 
+                cv2.THRESH_BINARY
+                )[1]
+
+            only_red_channel_gray_blurred_light_pixels_only_eroded = cv2.erode(
+                only_red_channel_gray_blurred_light_pixels_only,
+                None,
+                iterations=2
+                )
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated = cv2.dilate(
+                only_red_channel_gray_blurred_light_pixels_only_eroded,
+                None,
+                iterations=4
+                )
+
+
+
+            mask_red_channel_bright_sum = np.sum(
+                only_red_channel_gray_blurred_light_pixels_only_eroded_dilated == 255
+                )
+
+
+            contours = cv2.findContours(
+                only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
+                cv2.RETR_EXTERNAL,
+                cv2.CHAIN_APPROX_SIMPLE)
+
+            cnts = imutils.grab_contours(contours)
+
+            
+            for c in cnts:
+                # compute the center of the contour
+                M = cv2.moments(c)
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                self.light_detected_point_2_d.x = cX 
+                self.light_detected_point_2_d.y = cY
+                # draw the contour and center of the shape on the image
+                cv2.drawContours(self.frame, [c], -1, (0, 255, 0), 2)
+                cv2.circle(self.frame, (cX, cY), 7, (0, 255, 0), -1)
+                cv2.putText(self.frame, "center", (cX - 20, cY - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # if no contours are found, light is not detected
+            if not cnts: 
+                self.light_detected = False
+            else: 
+                self.light_detected = True
+
+
+            # cv2.imshow(
+            #     "only_red_channel_gray"+str(self.id),
+            #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+            # )
+            # cv2.imshow(
+            #     'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
+            #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+            # ) 
+            cv2.imshow(
+            'original_frame_cam_id_'+str(self.id),
+            self.frame
             )
-        only_red_channel_gray_blurred = cv2.GaussianBlur(
-            only_red_channel_gray,
-            (
-                # int(((pyautogui.position()[1]) / 1080)*50) | 1, 
-                # int(((pyautogui.position()[1]) / 1080)*50) | 1
-                41,41
-            ),
-            0
-            )
-        # cv2.imshow(
-        #     'only_red_channel_gray_blurred'+str(self.id),
-        #     only_red_channel_gray_blurred
-        # )
-        only_red_channel_gray_blurred_light_pixels_only = cv2.threshold(
-            only_red_channel_gray_blurred, 
-            # int(((pyautogui.position()[1]) / 1080)*255),
-            18,
-            255, 
-            cv2.THRESH_BINARY
-            )[1]
 
-        only_red_channel_gray_blurred_light_pixels_only_eroded = cv2.erode(
-            only_red_channel_gray_blurred_light_pixels_only,
-            None,
-            iterations=2
-            )
-        only_red_channel_gray_blurred_light_pixels_only_eroded_dilated = cv2.dilate(
-            only_red_channel_gray_blurred_light_pixels_only_eroded,
-            None,
-            iterations=4
-            )
-
-
-
-        mask_red_channel_bright_sum = np.sum(
-            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated == 255
-            )
-
-
-        contours = cv2.findContours(
-            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE)
-
-        cnts = imutils.grab_contours(contours)
-
-        
-        for c in cnts:
-            # compute the center of the contour
-            M = cv2.moments(c)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-            self.light_detected_point_2_d.x = cX 
-            self.light_detected_point_2_d.y = cY
-            # draw the contour and center of the shape on the image
-            cv2.drawContours(self.frame, [c], -1, (0, 255, 0), 2)
-            cv2.circle(self.frame, (cX, cY), 7, (0, 255, 0), -1)
-            cv2.putText(self.frame, "center", (cX - 20, cY - 20),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-        # if no contours are found, light is not detected
-        if not cnts: 
-            self.light_detected = False
-        else: 
-            self.light_detected = True
-
-
-        # cv2.imshow(
-        #     "only_red_channel_gray"+str(self.id),
-        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
-        # )
-        # cv2.imshow(
-        #     'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
-        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
-        # ) 
-        cv2.imshow(
-        'original_frame_cam_id_'+str(self.id),
-        self.frame
-        )
-
-        # #cv2.imshow('test_window_name_frame2', frame2)
-        
-        # self.last_bigger_mask_color = self.bigger_mask_color
+            # #cv2.imshow('test_window_name_frame2', frame2)
+            
+            # self.last_bigger_mask_color = self.bigger_mask_color
 
     def get_masks(self):
         hsv = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)

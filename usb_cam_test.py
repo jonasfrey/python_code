@@ -370,6 +370,11 @@ class Camera:
         only_red_channel_mask[:, :, 0] = 0
         only_red_channel_mask[:, :, 1] = 0
 
+
+        image = self.frame
+
+
+
         only_red_channel_gray = cv2.cvtColor(
             only_red_channel_mask,
             cv2.COLOR_BGR2GRAY
@@ -441,20 +446,20 @@ class Camera:
             self.light_detected = True
 
 
-        # cv2.imshow(
-        #     "only_red_channel_gray"+str(self.id),
-        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
-        # )
-        # cv2.imshow(
-        #     'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
-        #     only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
-        # ) 
-        # cv2.imshow(
-        # 'original_frame_cam_id_'+str(self.id),
-        # self.frame
-        # )
+        cv2.imshow(
+            "only_red_channel_gray"+str(self.id),
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+        )
+        cv2.imshow(
+            'only_red_channel_gray_blurred_light_pixels_only_eroded_dilated'+str(self.id),
+            only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
+        ) 
+        cv2.imshow(
+        'original_frame_cam_id_'+str(self.id),
+        self.frame
+        )
 
-        # #cv2.imshow('test_window_name_frame2', frame2)
+        #cv2.imshow('test_window_name_frame2', frame2)
         
         # self.last_bigger_mask_color = self.bigger_mask_color
 

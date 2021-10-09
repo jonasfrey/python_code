@@ -1,5 +1,5 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QPushButton, QSlider
+from PyQt5.QtWidgets import QHBoxLayout, QWidget, QApplication, QLabel, QVBoxLayout, QPushButton, QSlider
 from PyQt5.QtGui import QPixmap
 import sys
 import cv2
@@ -8,6 +8,17 @@ import numpy as np
 import os 
 import signal
 from PIL import Image, ImageFont, ImageDraw
+import functools
+
+def rsetattr(obj, attr, val):
+    pre, _, post = attr.rpartition('.')
+    return setattr(rgetattr(obj, pre) if pre else obj, post, val)
+
+def rgetattr(obj, attr, *args):
+    def _getattr(obj, attr):
+        return getattr(obj, attr, *args)
+    return functools.reduce(_getattr, [obj] + attr.split('.'))
+
 
 class CaptureThread(QThread):
     
@@ -51,6 +62,7 @@ class Camera_option:
         # exposure_auto=3 (auto)
         # and then
         # exposure_auto=1 (manual)
+        #print(self.name)
         if(self.name == "exposure_absolute"):
             self.camera.set_v4l2_option("exposure_auto", 3)
             self.camera.set_v4l2_option("exposure_auto", 1)
@@ -155,6 +167,7 @@ class Camera:
             self.camera_options.append(camera_option)
 
 
+
     def __setattr__(self, name, value):
         
         super(Camera, self).__setattr__(name, value)
@@ -234,8 +247,9 @@ class Camera:
         return self.do_system_calls_by_array_of_strings(commands)
 
 class App(QWidget):
-    def __init__(self):
+    def __init__(self, data):
         super().__init__()
+        self.data = data
         self.setWindowTitle("Qt live label demo")
         self.disply_width = 640
         self.display_height = 480
@@ -250,26 +264,51 @@ class App(QWidget):
         image_cam_1_overlay = []
         image_cam_3_overlay = []
         # create a text label
-        self.textLabel = QLabel('Webcam')
+        self.textLabel = QLabel('Webcams')
 
-        # create a vertical box layout and add the two labels
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.image_label1)
-        button = QPushButton('X', self)
-        button.setToolTip('This is an example button')
-        vbox.addWidget(button)
 
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setFocusPolicy(Qt.StrongFocus)
-        self.slider.setTickPosition(QSlider.TicksBothSides)
-        self.slider.setTickInterval(10)
-        self.slider.setSingleStep(1)
-        vbox.addWidget(self.slider)
+        self.main_layout = QVBoxLayout()
+        self.main_layout = QHBoxLayout()
+        
+        self.left_box = QVBoxLayout()
+        self.main_layout.addLayout(self.left_box)
+        self.right_box = QVBoxLayout()
+        self.main_layout.addLayout(self.right_box)
 
-        vbox.addWidget(self.image_label3)
-        vbox.addWidget(self.textLabel)
-        # set the vbox layout as the widgets layout
-        self.setLayout(vbox)
+        self.left_box.addWidget(self.image_label1)
+        self.left_box.addWidget(self.image_label3)
+
+
+        #self.setLayout(self.main_layout)
+
+        image_cam_1_overlay = []
+        image_cam_3_overlay = []
+
+        self.sliders = []
+
+        
+        for (obj) in self.data.c1.camera_options:
+            if( "int" in obj.datatype): 
+                textLabel = QLabel(obj.name)
+                self.right_box.addWidget(textLabel)
+                slider = QSlider(Qt.Horizontal)
+                slider.setFocusPolicy(Qt.StrongFocus)
+                slider.setTickPosition(QSlider.TicksBothSides)
+                slider.setMinimum(int(obj.min))
+                slider.setMaximum(int(obj.max))
+                slider.setSingleStep(1)
+                #print(obj.name)
+                path = "c1."+str(obj.name)
+                print(path)
+                slider.valueChanged.connect(
+                    lambda val: rsetattr(self.data, path, val)
+                )
+                #slider.valueChanged.connect(self.get_on_value_changed_function("c1."+str(obj.name)))
+                self.right_box.addWidget(slider)
+                self.sliders.append(slider)
+
+        self.setLayout(self.main_layout)
+
 
     def img1clicked(self, click_event):
 
@@ -283,7 +322,7 @@ class App(QWidget):
     
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
-        cv_img = cv_img * self.slider.value()
+        #cv_img = cv_img * self.slider.value()
         # im = Image.fromarray(cv_img)
         # fontpath = "/usr/share/fonts/truetype/droid/DroidSansFallbackFull.ttf"
         # font = ImageFont.truetype(fontpath, 25)
@@ -299,12 +338,20 @@ class App(QWidget):
         p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     
+
+class Data: 
+    def __init__(self):
+        self.initialized = True
+
 if __name__=="__main__":
-    app = QApplication(sys.argv)
-    a = App()
     c1 = Camera(1)
     c3 = Camera(3)
-    
+    data = Data()
+    data.c1 = c1
+    data.c3 = c3
+    app = QApplication(sys.argv)
+    a = App(data)
+
     def cam_on_update_frame(self):
 
         a.update_image(self.frame, self.id)
