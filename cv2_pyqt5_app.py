@@ -23,19 +23,21 @@ def rgetattr(obj, attr, *args):
 
 class CaptureThread(QThread):
     
-    update_frame = pyqtSignal(np.ndarray)
+    update_frame = pyqtSignal(np.ndarray, int)
 
     def __init__(self, capture):
         super(CaptureThread, self).__init__()
         self.capture = capture
         self.frame = None
         self.frame_ok = None
+        self.frame_id = 0
 
     def run(self):
         while True:
             self.frame_ok, self.frame = self.capture.read()
             if self.frame_ok:
-                self.update_frame.emit(self.frame)
+                self.frame_id+=1
+                self.update_frame.emit(self.frame, self.frame_id)
 
 
         self.capture.release()
@@ -75,8 +77,17 @@ class Camera_option:
         return True
 
 class Cv2_frame: 
-    def __init__(self, data):
+    def __init__(self, data, camera):
         self.data = data
+        self.camera = camera
+
+    #property 
+    def name(self):
+        return self.__class__.__name__
+
+    @property 
+    def frame_id(self):
+        return self.camera.frame_id
 
     @property
     def data(self):
@@ -90,18 +101,35 @@ class Cv2_frame:
         return data 
 
 class Cv2_frame_original(Cv2_frame):
-    def __init__(self, data):
-        super().__init__(data) # alias for Cv2_frame.init(data)
-        self._data = data
-        self.name = self.__class__.__name__
+    def __init__(self, data, camera):
+        super().__init__(data, camera) # alias for Cv2_frame.init(data)
+     
+    def manipulate_data(self, data):    
+        return data
 
+class Cv2_frame_fancy(Cv2_frame):
+    def __init__(self, data, camera):
+        super().__init__(data, camera) # alias for Cv2_frame.init(data)
+    
+    def manipulate_data(self, data):
+        # set green and red channels to 0
+        try: 
+            t = self.camera.frame_id
+            w = self.camera.width
+        except:
+            t = 1
+            w = 1
 
+        size = 200
+        for i in range(0, size):
+            data[:, (t*5+i)%w, 0] = 0+((255/size)*i)
+
+        return data
 
 class Cv2_frame_blue_channel(Cv2_frame):
-    def __init__(self, data):
-        super().__init__(data) # alias for Cv2_frame.init(data)
-        self.name = self.__class__.__name__
-
+    def __init__(self, data, camera):
+        super().__init__(data, camera) # alias for Cv2_frame.init(data)
+ 
     def manipulate_data(self, data):
         # set green and red channels to 0
         data[:, :, 1] = 0
@@ -122,9 +150,9 @@ class Cv2_frame_blue_channel(Cv2_frame):
 
 
 class Cv2_frame_only_red_channel_gray_blurred_light_pixels_only_eroded_dilated(Cv2_frame):
-    def __init__(self, data):
-        super().__init__(data) # alias for Cv2_frame.init(data)
-        self.name = self.__class__.__name__
+    def __init__(self, data, camera):
+        super().__init__(data, camera) # alias for Cv2_frame.init(data)
+
 
     def manipulate_data(self, data):
         # set green and red channels to 0
@@ -179,7 +207,6 @@ class Cv2_frame_only_red_channel_gray_blurred_light_pixels_only_eroded_dilated(C
             (222,255,222),
             1
         ) 
-        cv2.imshow("asdf", only_red_channel_gray_blurred_light_pixels_only_eroded_dilated)
 
         return only_red_channel_gray_blurred_light_pixels_only_eroded_dilated
 
@@ -214,11 +241,12 @@ class Camera:
         self.frame_delta_ts = 0
         self.overlay_string = ""
         numpy_zeros = np.zeros([2,2,3],dtype=np.uint8)
-        cv2_frame_original = Cv2_frame_original(numpy_zeros.copy())
+        cv2_frame_original = Cv2_frame_original(numpy_zeros.copy(), self)
         self.cv2_frames = [
             cv2_frame_original,
-            Cv2_frame_blue_channel(numpy_zeros.copy()),
-            Cv2_frame_only_red_channel_gray_blurred_light_pixels_only_eroded_dilated(numpy_zeros.copy())
+            Cv2_frame_blue_channel(numpy_zeros.copy(), self),
+            Cv2_frame_fancy(numpy_zeros.copy(), self),
+            Cv2_frame_only_red_channel_gray_blurred_light_pixels_only_eroded_dilated(numpy_zeros.copy(), self)
         ]
         self.cv2_frame_current_index = 0
 
@@ -231,7 +259,7 @@ class Camera:
             "axis",
             "frame_delta_ts"
         ]
-        self.debug_font_size = 2
+        self.debug_font_size = 1
         self.file_saved = False
 
         self.capture_thread = CaptureThread(self.capture)
@@ -284,10 +312,13 @@ class Camera:
 
         return True
 
-    def update_frame(self, frame):
+    def update_frame(self, frame, frame_id):
 
-        for obj in self.cv2_frames:
-            obj.data = frame.copy()
+        # for obj in self.cv2_frames:
+        #     obj.data = frame.copy()
+        self.frame_id = frame_id
+        
+        self.cv2_frame_current_object.data = frame.copy()
 
         self.frame = self.cv2_frame_current_object.data
 
@@ -300,16 +331,23 @@ class Camera:
         self.overlay_string += f"height: {self.height}\n"
         self.overlay_string += f"fps: {self.fps}\n"
         font_size_base = 28
+
+        #n_channels = 3
+        #transparent_img = np.zeros((self.width, self.height, n_channels), dtype=np.uint8)
+
         for (key,value) in enumerate(self.on_frame_debug_props): 
             cv2.putText(
-                self.frame,
+                 #transparent_img,
+                 self.frame,
                 str(value + " : "+ str(rgetattr(self, value))),
                 (font_size_base,font_size_base*3+int(int(key)*(font_size_base * self.debug_font_size))), 
                 cv2.FONT_HERSHEY_SIMPLEX, 
                 self.debug_font_size, 
-                (0,255,0),
+                (255,255,255),
                 2
             ) 
+
+        #self.frame = cv2.addWeighted(self.frame, 0.3, transparent_img, 0.7, 0)
 
         update_frame_function = getattr(self, "on_update_frame")
         if update_frame_function != None: 
