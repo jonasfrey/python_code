@@ -473,8 +473,8 @@ class App(QWidget):
         self.image_label1 = QLabel(self)
         self.image_label1.resize(self.disply_width, self.display_height)
      
-        self.image_label3 = QLabel(self)
-        self.image_label3.resize(self.disply_width, self.display_height)
+        self.image_label5 = QLabel(self)
+        self.image_label5.resize(self.disply_width, self.display_height)
         
         # create a text label
         self.textLabel = QLabel('Webcams')
@@ -501,7 +501,7 @@ class App(QWidget):
         button.clicked.connect(
             lambda val: [ self.data.c1.switch_axis(),self.data.c3.switch_axis(),  ]
         )
-        self.left_box.addWidget(self.image_label3)
+        self.left_box.addWidget(self.image_label5)
 
 
         #self.setLayout(self.main_layout)
@@ -560,10 +560,10 @@ class Data:
 
 if __name__=="__main__":
     c1 = Camera(1)
-    c3 = Camera(3)
+    c5 = Camera(5)
     data = Data()
     data.c1 = c1
-    data.c3 = c3
+    data.c5 = c5
     app = QApplication(sys.argv)
     a = App(data)
 
@@ -572,7 +572,7 @@ if __name__=="__main__":
         a.update_image(self.frame, self.id)
     
     c1.on_update_frame = cam_on_update_frame
-    c3.on_update_frame = cam_on_update_frame
+    c5.on_update_frame = cam_on_update_frame
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
