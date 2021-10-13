@@ -10,6 +10,10 @@ import signal
 from PIL import Image, ImageFont, ImageDraw
 import functools
 import time
+import glob
+
+from sip import settracemask
+
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
@@ -213,9 +217,10 @@ class Cv2_frame_only_red_channel_gray_blurred_light_pixels_only_eroded_dilated(C
 class Camera:
     instance_counter = 0
     axiss = ["x", "y"]
-    def __init__(self, id):
+    def __init__(self, id, app):
         Camera.instance_counter+=1
         self.camera_options = []
+        self.app = app
         self.id = id
         self.capture = cv2.VideoCapture(self.id)
         
@@ -239,6 +244,7 @@ class Camera:
         self.frame_this_ts = 0
         self.frame_last_ts = 0
         self.frame_delta_ts = 0
+        self.frame = 255 * np.ones((1000,1000,3), np.uint8)
         self.overlay_string = ""
         numpy_zeros = np.zeros([2,2,3],dtype=np.uint8)
         cv2_frame_original = Cv2_frame_original(numpy_zeros.copy(), self)
@@ -313,7 +319,7 @@ class Camera:
         return True
 
     def update_frame(self, frame, frame_id):
-
+        
         # for obj in self.cv2_frames:
         #     obj.data = frame.copy()
         self.frame_id = frame_id
@@ -321,6 +327,8 @@ class Camera:
         self.cv2_frame_current_object.data = frame.copy()
 
         self.frame = self.cv2_frame_current_object.data
+
+        setattr(self.app, "labelimage_"+str(self.id), self.frame)
 
         self.frame_this_ts = round(time.time() * 1000)
         self.frame_delta_ts = abs(self.frame_this_ts - self.frame_last_ts)
@@ -347,12 +355,6 @@ class Camera:
                 2
             ) 
 
-        #self.frame = cv2.addWeighted(self.frame, 0.3, transparent_img, 0.7, 0)
-
-        update_frame_function = getattr(self, "on_update_frame")
-        if update_frame_function != None: 
-            update_frame_function(self)
-            
 
     def set_camera_options_to_default(self):
         for obj in self.camera_options: 
@@ -462,13 +464,76 @@ class Camera:
         ]
         return self.do_system_calls_by_array_of_strings(commands)
 
+class Q_gui_object():
+    types = [
+        "label", 
+        "labelimage"
+    ]
+    def __init__(self, name, value, type):
+        self.type = type
+        self.q_object = self.get_q_object(name, value)
+        self.name = name
+        self.value = value
+
+    @property 
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+
+        if(self.type == "label"): 
+            self.q_object.setText(self._value)
+
+        if(self.type == "labelimage"):
+            pixmap = self.convert_cv_to_pixmap(self._value)
+            self.q_object.setPixmap(pixmap)
+
+
+        return True
+
+
+    def convert_cv_to_pixmap(self, cv_img):
+        
+        """Convert from an opencv image to QPixmap"""
+
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(555,555, Qt.KeepAspectRatio)
+        return QPixmap.fromImage(p)
+    
+
+
+    
+    def get_q_object(self, name, value):
+        if(self.type == "label"):
+
+            l = QLabel(value)
+            #self.left_box.addWidget(l)
+            l.setText(value)
+
+            return l
+        if(self.type == "labelimage"): 
+            o = QLabel()
+            o.resize(555,555)
+            return o 
+
 class App(QWidget):
-    def __init__(self, data):
+    def __init__(self):
         super().__init__()
-        self.data = data
-        self.setWindowTitle("Qt live label demo")
+        self.q_gui_objects = []
+        self.cameras = []
+        self.setup_gui()
+
+    def setup_gui(self):
+        self._window_title = "Cv2 pyqt app"
         self.disply_width = 888
         self.display_height = 500
+
+
         # create the label that holds the image
         self.image_label1 = QLabel(self)
         self.image_label1.resize(self.disply_width, self.display_height)
@@ -486,52 +551,103 @@ class App(QWidget):
         self.main_layout.addLayout(self.left_box)
         self.right_box = QVBoxLayout()
         self.main_layout.addLayout(self.right_box)
+            
 
-        self.left_box.addWidget(self.image_label1)
+        # if(len(self.cameras) > 0):
+        #     self.left_box.addWidget(self.image_label1)
 
-        def img1_click(event):
-            self.data.c1.cv2_frame_current_index += 1
+        #     def img1_click(event):
+        #         self.cameras[0].cv2_frame_current_index += 1
 
-            #lambda val: [ self.data.c1.switch_axis(),self.data.c3.switch_axis(),  ]
+        #         #lambda val: [ self.cameras[0].switch_axis(),self.cameras[1].switch_axis(),  ]
 
-        self.image_label1.mousePressEvent = img1_click
+        #     self.image_label1.mousePressEvent = img1_click
 
-        button = QPushButton('switch camera axis x <-> y')
-        self.left_box.addWidget(button)
-        button.clicked.connect(
-            lambda val: [ self.data.c1.switch_axis(),self.data.c3.switch_axis(),  ]
-        )
-        self.left_box.addWidget(self.image_label5)
+        #     button = QPushButton('switch camera axis x <-> y')
+        #     self.left_box.addWidget(button)
+        #     button.clicked.connect(
+        #         lambda val: [ self.cameras[0].switch_axis(),self.cameras[1].switch_axis(),  ]
+        #     )
+        #     self.left_box.addWidget(self.image_label5)
 
 
-        #self.setLayout(self.main_layout)
+        #     #self.setLayout(self.main_layout)
 
-        self.sliders = []
+        #     self.sliders = []
 
-        
-        for (obj) in self.data.c1.camera_options:
-            if( "int" in obj.datatype): 
-                textLabel = QLabel(obj.name)
-                self.right_box.addWidget(textLabel)
-                slider = QSlider(Qt.Horizontal)
-                slider.setFocusPolicy(Qt.StrongFocus)
-                slider.setTickPosition(QSlider.TicksBothSides)
-                slider.setMinimum(int(obj.min))
-                slider.setMaximum(int(obj.max))
-                slider.setSingleStep(1)
-                #print(obj.name)
-                path1 = "c1."+str(obj.name)
-                path3 = "c3."+str(obj.name)
+            
+        #     for (obj) in self.cameras[0].camera_options:
+        #         if( "int" in obj.datatype): 
+        #             textLabel = QLabel(obj.name)
+        #             self.right_box.addWidget(textLabel)
+        #             slider = QSlider(Qt.Horizontal)
+        #             slider.setFocusPolicy(Qt.StrongFocus)
+        #             slider.setTickPosition(QSlider.TicksBothSides)
+        #             slider.setMinimum(int(obj.min))
+        #             slider.setMaximum(int(obj.max))
+        #             slider.setSingleStep(1)
+        #             #print(obj.name)
+        #             path1 = "c1."+str(obj.name)
+        #             path3 = "c3."+str(obj.name)
 
-                slider.valueChanged.connect(
-                    lambda val: [ rsetattr(self.data, path1, val), rsetattr(self.data, path3, val) ]
-                )
-                #slider.valueChanged.connect(self.get_on_value_changed_function("c1."+str(obj.name)))
-                self.right_box.addWidget(slider)
-                self.sliders.append(slider)
+        #             slider.valueChanged.connect(
+        #                 lambda val: [ rsetattr(self.data, path1, val), rsetattr(self.data, path3, val) ]
+        #             )
+        #             #slider.valueChanged.connect(self.get_on_value_changed_function("c1."+str(obj.name)))
+        #             self.right_box.addWidget(slider)
+        #             self.sliders.append(slider)
 
         self.setLayout(self.main_layout)
 
+    def setup_cam_gui(self):
+        for cam in self.cameras: 
+            setattr(self, "label_cam_id"+str(cam.id), "cam_id:"+str(cam.id))
+            setattr(self, "labelimage_"+str(cam.id),cam.frame)
+
+            # setattr(self, str(cam.id), "cam_id:"+str(cam.id))
+
+    """
+    checks if property name begins with 
+    """
+    def __setattr__(self,name, value):
+        #setattr(self, name, value) #->RecursionError: maximum recursion depth exceeded while calling
+        #self.__dict__[name] = value
+        super().__setattr__(name, value)
+        parts = name.split("_")
+        prefix = parts[0]
+        name = "_".join(parts)
+        
+        q_gui_objects = list(filter(lambda x: x.name == name and x.type == prefix, self.q_gui_objects))
+
+        if(prefix in Q_gui_object.types): 
+            if(len(q_gui_objects) > 0):
+                q_gui_object = q_gui_objects[0]
+                q_gui_object.value = value
+            else: 
+                q_gui_object = Q_gui_object(name, value, prefix)
+                self.right_box.addWidget(q_gui_object.q_object)
+                self.q_gui_objects.append(q_gui_object)
+
+
+
+    @property 
+    def window_title(self):
+        return self._window_title 
+    
+    @window_title.setter
+    def window_title(self, value):
+        self._window_title = value
+        self.setWindowTitle(self._window_title)
+        
+
+    @property 
+    def cameras(self):
+        return self._cameras 
+    
+    @cameras.setter
+    def cameras(self, value):
+        self._cameras = value
+        self.setup_cam_gui()
 
     def img1clicked(self, click_event):
 
@@ -554,27 +670,37 @@ class App(QWidget):
         return QPixmap.fromImage(p)
     
 
-class Data: 
-    def __init__(self):
-        self.initialized = True
-
 if __name__=="__main__":
-    c1 = Camera(1)
-    c5 = Camera(5)
-    data = Data()
-    data.c1 = c1
-    data.c5 = c5
-    app = QApplication(sys.argv)
-    a = App(data)
 
-    def cam_on_update_frame(self):
 
-        a.update_image(self.frame, self.id)
-    
-    c1.on_update_frame = cam_on_update_frame
-    c5.on_update_frame = cam_on_update_frame
+    paths = glob.glob("/dev/video*")
+
+    captures = []
+    cameras = []
+
+
+    qapp = QApplication(sys.argv)
+
+    app = App()
+    app.window_title = "CV2 PyQt5 App"
+
+    for path in paths: 
+        num = int(path[-1])
+        if num == 0:
+            continue
+        #print(num)
+        cap = cv2.VideoCapture(num)
+        captures.append(cap)
+        capture_possilble = captures[-1].isOpened()
+        if capture_possilble: 
+            cap.release()
+            c = Camera(num, app)
+            cameras.append(c)
+
+    app.cameras = cameras
+
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    a.show()
-    sys.exit(app.exec_())
+    app.show()
+    sys.exit(qapp.exec_())
