@@ -464,50 +464,67 @@ class Camera:
         ]
         return self.do_system_calls_by_array_of_strings(commands)
 
-class Q_gui_object():
+class Gui_object():
     types = [
         "label", 
         "labelimage"
     ]
-    def __init__(self, name, value, type):
+    def __init__(self, name, value, type, *additional_properties):
         self.type = type
         self.q_object = self.get_q_object(name, value)
         self.name = name
         self.value = value
+        if(len(additional_properties) > 0):
+            for key, value in additional_properties.items():
+                setattr(self, key, value)
 
-    @property 
-    def value(self):
-        return self._value
+    def __setattr__(self, name: str, value) -> None:
+        super().__setattr__(str(name), value)
+        if(name == 'value'):
+            if(self.type == "label"): 
+                self.q_object.setText(value)
 
-    @value.setter
-    def value(self, value):
-        self._value = value
+            if(self.type == "labelimage"):
+                pixmap = self.convert_cv_to_pixmap(value)
+                print(self.q_object)
+                self.q_object.setPixmap(pixmap)
 
-        if(self.type == "label"): 
-            self.q_object.setText(self._value)
+        if(name == 'value'):
+            if(self.type == "labelimage"):
+                self.resize_label_image(self.q_object)
 
-        if(self.type == "labelimage"):
-            pixmap = self.convert_cv_to_pixmap(self._value)
-            self.q_object.setPixmap(pixmap)
+    def __getattribute__(self, name):
+        #return super(self).__getattribute__(name)
+        #return super().__getattribute__(str(name))
+        try: 
 
-
-        return True
-
+            return super().__getattribute__(str(name))
+        except: 
+            if(name=='width'):
+                return 50 #default value 
+            if(name=='height'):
+                return 50 #default value 
+            raise AttributeError
+                
+        # if(hasattr(self, "_"+str(name))):
+        #     return super(self).__getattribute__(str(name))
+        # else:
+        #     raise AttributeError
+                
+    def resize_label_image(self, q_object):
+        q_object.resize(self.width, self.height)
 
     def convert_cv_to_pixmap(self, cv_img):
         
         """Convert from an opencv image to QPixmap"""
-
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(555,555, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(22,22, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
-    
 
 
-    
     def get_q_object(self, name, value):
         if(self.type == "label"):
 
@@ -518,13 +535,13 @@ class Q_gui_object():
             return l
         if(self.type == "labelimage"): 
             o = QLabel()
-            o.resize(555,555)
+            self.resize_label_image(o)
             return o 
 
 class App(QWidget):
     def __init__(self):
         super().__init__()
-        self.q_gui_objects = []
+        self.gui_objects = []
         self.cameras = []
         self.setup_gui()
 
@@ -533,14 +550,7 @@ class App(QWidget):
         self.disply_width = 888
         self.display_height = 500
 
-
-        # create the label that holds the image
-        self.image_label1 = QLabel(self)
-        self.image_label1.resize(self.disply_width, self.display_height)
-     
-        self.image_label5 = QLabel(self)
-        self.image_label5.resize(self.disply_width, self.display_height)
-        
+  
         # create a text label
         self.textLabel = QLabel('Webcams')
 
@@ -602,7 +612,13 @@ class App(QWidget):
     def setup_cam_gui(self):
         for cam in self.cameras: 
             setattr(self, "label_cam_id"+str(cam.id), "cam_id:"+str(cam.id))
-            setattr(self, "labelimage_"+str(cam.id),cam.frame)
+            gui_object_name = "labelimage_"+str(cam.id)
+            setattr(self, gui_object_name ,cam.frame)
+            gui_object = list(filter(lambda x: x.name == gui_object_name, self.gui_objects))[0]
+
+
+            setattr(gui_object, 'width',100)
+            setattr(gui_object, 'height',100)
 
             # setattr(self, str(cam.id), "cam_id:"+str(cam.id))
 
@@ -617,16 +633,16 @@ class App(QWidget):
         prefix = parts[0]
         name = "_".join(parts)
         
-        q_gui_objects = list(filter(lambda x: x.name == name and x.type == prefix, self.q_gui_objects))
+        gui_objects = list(filter(lambda x: x.name == name and x.type == prefix, self.gui_objects))
 
-        if(prefix in Q_gui_object.types): 
-            if(len(q_gui_objects) > 0):
-                q_gui_object = q_gui_objects[0]
-                q_gui_object.value = value
+        if(prefix in Gui_object.types): 
+            if(len(gui_objects) > 0):
+                gui_object = gui_objects[0]
+                gui_object.value = value
             else: 
-                q_gui_object = Q_gui_object(name, value, prefix)
-                self.right_box.addWidget(q_gui_object.q_object)
-                self.q_gui_objects.append(q_gui_object)
+                gui_object = Gui_object(name, value, prefix)
+                self.right_box.addWidget(gui_object.q_object)
+                self.gui_objects.append(gui_object)
 
 
 
@@ -666,7 +682,7 @@ class App(QWidget):
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(22,22, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
     
 
