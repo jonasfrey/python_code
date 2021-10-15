@@ -75,20 +75,21 @@ class Pyqt5_layout_object():
         pyqt5_class_object_instance = pyqt5_class_object()
         self.pyqt5_class_instance = pyqt5_class_object_instance
         
-        if(self.typus == 'layout'):
+        if(self.typus == 'column' or self.typus == 'row'):
             self.value = 'lauout has no value'
-            # qw = QWidget()
-            # pyqt5_class_object_instance.addWidget(qw)
-            # pyqt5_class_object_instance_inner = pyqt5_class_object()
-            # qw.setLayout(pyqt5_class_object_instance_inner)
-            
-            # r = lambda: random.randint(0,255)
-            # rc = ('#%02X%02X%02X' % (r(),r(),r()))
-            # label = QLabel(rc)
-            # qw.setStyleSheet('background-color: '+rc)
-            # pyqt5_class_object_instance_inner.addWidget(label)
 
-            # pyqt5_class_object_instance.addLayout(pyqt5_class_object_instance_inner)
+            qw = QWidget()
+            pyqt5_class_object_instance.addWidget(qw)
+            pyqt5_class_object_instance_inner = pyqt5_class_object()
+            qw.setLayout(pyqt5_class_object_instance_inner)
+            
+            r = lambda: random.randint(0,255)
+            rc = ('#%02X%02X%02X' % (r(),r(),r()))
+            label = QLabel(rc)
+            qw.setStyleSheet('background-color: '+rc)
+            pyqt5_class_object_instance_inner.addWidget(label)
+
+            pyqt5_class_object_instance.addLayout(pyqt5_class_object_instance_inner)
             
 
         if(self.typus == 'label'):
@@ -224,7 +225,7 @@ class Pyqt5_layout:
             for obj in object['c']:
                 pyqt5_layout_object = self.foreach_prop_in_oject(obj, converted_object)
                 
-                if(pyqt5_layout_object.typus == 'layout'):
+                if(pyqt5_layout_object.typus == 'column' or pyqt5_layout_object.typus == 'row'):
                     converted_object.pyqt5_class_instance.addLayout(pyqt5_layout_object.pyqt5_class_instance)
                     
                 if(pyqt5_layout_object.typus == 'label'):
