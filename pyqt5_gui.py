@@ -28,20 +28,6 @@ class Pyqt5_app(QWidget):
         self.main_layout = QHBoxLayout()
         
 
-        pyqt5_layout_object = Pyqt5_layout_object('QVBoxLayout')
-
-        self.left_box = QVBoxLayout()
-        self.left_box = pyqt5_layout_object.pyqt5_class_instance
-        label = QLabel('111')
-        self.left_box.addWidget(label)
-        self.main_layout.addLayout(self.left_box)
-
-        self.right_box = QHBoxLayout()
-        label = QLabel('222')
-        self.right_box.addWidget(label)
-        self.main_layout.addLayout(self.right_box)
-            
-
 
         self.pyqt5_layout = Pyqt5_layout()
         self.setLayout(self.pyqt5_layout.converted_layout.pyqt5_class_instance)
@@ -72,28 +58,41 @@ class Pyqt5_layout_object():
     """
     qbox_layout_class_name_mappings = {
         'column':'QHBoxLayout',
-        'row':'QVBoxLayout'
+        'row':'QVBoxLayout', 
+        'label':'QLabel', 
     }
 
-    def __init__(self, string):
-        self.c = []
-        self.get_pyqt5_class_name_by_string(string)
-        pyqt5_class_object = globals()[self.get_pyqt5_class_name_by_string(string)]
-        pyqt5_class_object_instance = pyqt5_class_object()
-
-        qw = QWidget()
-        r = lambda: random.randint(0,255)
-        rc = ('#%02X%02X%02X' % (r(),r(),r()))
-        label = QLabel(rc)
-        qw.setStyleSheet('background-color: '+rc)
-        pyqt5_class_object_instance.addWidget(qw)
-        pyqt5_class_object_instance_inner = pyqt5_class_object()
-        qw.setLayout(pyqt5_class_object_instance_inner)
-        pyqt5_class_object_instance_inner.addWidget(label)
-        pyqt5_class_object_instance.addLayout(pyqt5_class_object_instance_inner)
+    def __init__(self, typus, value=''):
+        self.value = value
+        self.typus = typus
         
-        self.pyqt5_class_instance = pyqt5_class_object_instance
+        self.c = []
+        
+        self.pyqt5_class_name = self.get_pyqt5_class_name_by_string(typus)
+        pyqt5_class_object = globals()[self.pyqt5_class_name]
+        
 
+        pyqt5_class_object_instance = pyqt5_class_object()
+        self.pyqt5_class_instance = pyqt5_class_object_instance
+        
+        if(self.typus == 'layout'):
+            self.value = 'lauout has no value'
+            # qw = QWidget()
+            # pyqt5_class_object_instance.addWidget(qw)
+            # pyqt5_class_object_instance_inner = pyqt5_class_object()
+            # qw.setLayout(pyqt5_class_object_instance_inner)
+            
+            # r = lambda: random.randint(0,255)
+            # rc = ('#%02X%02X%02X' % (r(),r(),r()))
+            # label = QLabel(rc)
+            # qw.setStyleSheet('background-color: '+rc)
+            # pyqt5_class_object_instance_inner.addWidget(label)
+
+            # pyqt5_class_object_instance.addLayout(pyqt5_class_object_instance_inner)
+            
+
+        if(self.typus == 'label'):
+            pyqt5_class_object_instance.setText(self.value)
 
         # label = QLabel('Webcams')
         # self.pyqt5_class_instance.addWidget(label)
@@ -111,58 +110,83 @@ class Pyqt5_layout:
         self.converted_layout = None
         self.layout_json = """
             {
-                "pyqt5_class_name":"column",
-                "c":[
-                        {
-                            "pyqt5_class_name":"row",
-                            "c":[
-                                    {
-                                        "pyqt5_class_name":"column",
-                                        "c":[
-                                                {
-                                                    "pyqt5_class_name":"row",
-                                                    "c":[
-                                                        
-                                                    ]
-                                                }
-                                        ]
-                                    }
-                            ]
-                        },
-                        {
-                            "pyqt5_class_name":"row",
-                            "c":[
-                                    {
-                                        "pyqt5_class_name":"column",
-                                        "c":[
-                                                {
-                                                    "pyqt5_class_name":"row",
-                                                    "c":[
-                                                        {
-                                                            "pyqt5_class_name":"column",
-                                                            "c":[
-                                                                {
-                                                                    "pyqt5_class_name":"row"
-                                                                },
-                                                                {
-                                                                    "pyqt5_class_name":"row"
-                                                                },
-                                                                {
-                                                                    "pyqt5_class_name":"row"
-                                                                },
-                                                                {
-                                                                    "pyqt5_class_name":"row"
-                                                                }
-                                                            ]
-                                                        }
-                                                    ]
-                                                }
-                                        ]
-                                    }
-                            ]
-                        }
-                ]
+  "typus": "column",
+  "c": [
+    {
+      "typus": "label",
+      "value": "1"
+    },
+    {
+      "typus": "row",
+      "c": [
+        {
+          "typus": "label",
+          "value": "2"
+        },
+        {
+          "typus": "column",
+          "c": [
+            {
+              "typus": "label",
+              "value": "3"
+            },
+            {
+              "typus": "row"
             }
+          ]
+        }
+      ]
+    },
+    {
+      "typus": "row",
+      "c": [
+        {
+          "typus": "label",
+          "value": "4"
+        },
+        {
+          "typus": "column",
+          "c": [
+            {
+              "typus": "label",
+              "value": "5"
+            },
+            {
+              "typus": "row",
+              "c": [
+                {
+                  "typus": "label",
+                  "value": "6"
+                },
+                {
+                  "typus": "column",
+                  "c": [
+                    {
+                      "typus": "label",
+                      "value": "7"
+                    },
+                    {
+                      "typus": "row"
+                    },
+                    {
+                      "typus": "row"
+                    },
+                    {
+                      "typus": "row"
+                    },
+                    {
+                      "typus": "row"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
         """
 
         self.update_layout()
@@ -181,17 +205,31 @@ class Pyqt5_layout:
 
     def foreach_prop_in_oject(self, object, parent):
 
-        converted_object = Pyqt5_layout_object(object['pyqt5_class_name'])
+        
+        pyqt5_layout_object_typus = object['typus']
+        
+        if('value' in object):
+            pyqt5_layout_object_value = object['value']
+        else:
+            pyqt5_layout_object_value = ''
+
+        converted_object = Pyqt5_layout_object(
+            pyqt5_layout_object_typus,
+            pyqt5_layout_object_value
+        )
+        
         # print(object['c'])
 
         if('c' in object):
             for obj in object['c']:
                 pyqt5_layout_object = self.foreach_prop_in_oject(obj, converted_object)
-                try:
+                
+                if(pyqt5_layout_object.typus == 'layout'):
                     converted_object.pyqt5_class_instance.addLayout(pyqt5_layout_object.pyqt5_class_instance)
-                except:
-                    print('alreadz')
-                    raise
+                    
+                if(pyqt5_layout_object.typus == 'label'):
+                    converted_object.pyqt5_class_instance.addWidget(pyqt5_layout_object.pyqt5_class_instance)
+
                 converted_object.c.append(pyqt5_layout_object)
 
 
