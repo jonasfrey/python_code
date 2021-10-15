@@ -1,8 +1,10 @@
 import time
 import keyboard
 import mouse
+from pymouse import PyMouse
+
 # import pyautogui
-from pynput.mouse import Button, Controller
+
 
 class Time_measuring:
     def __init__(self):
@@ -31,7 +33,7 @@ if __name__ == "__main__":
     print("test")
     t = 0
     tt = 0
-    pynput_mouse = Controller()
+    
     while_loop_t = Time_measuring()
     alt_pressed_measuring = Time_measuring()
     fps_screen_nowadays = 144
@@ -70,6 +72,7 @@ if __name__ == "__main__":
         print("press alt + j , alt + l , alt + i , alt + i to move mouse")
         #if keyboard.is_pressed("windows"):  # win windows super super_l left windows all not working 
         if keyboard.is_pressed("alt"):  # if key 'q' is pressed 
+    
             # print("alt pressed")
             alt_pressed_measuring.measure()
 
@@ -101,14 +104,15 @@ if __name__ == "__main__":
             # if keyboard.is_pressed("win") and keyboard.is_pressed('space'):
             if keyboard.is_pressed("alt") and keyboard.is_pressed('space'):
                 print("space")
-                pynput_mouse.press(Button.left)
+
+                # pynput_mouse.press(Button.left)
                 #pynput_mouse.click(Button.left, 1)
                 #pyautogui.mouseDown()
-                #mouse.click(button='left')l
+                mouse.click(button='left')
             else: 
-                pynput_mouse.release(Button.left)
+                # pynput_mouse.release(Button.left)
                 #pyautogui.mouseUp()
-                #mouse.release()
+                mouse.release()
 
             
             move_mouse = (x != o_x or y != o_y)

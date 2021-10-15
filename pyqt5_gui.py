@@ -8,6 +8,8 @@ import random
 import functools
 from json.encoder import py_encode_basestring_ascii
 import time 
+import copy
+
 
 import cv2
 
@@ -30,18 +32,22 @@ important , this is your data object, you can reference its data in the view wit
 '''
 class Data:
     def __init__(self):
-        self.label1 = Gui_object('label1', 'llabel 1 gui object', 'label')
+        self.label1 = Gui_object('label1', 'label1', 'label')
+        self.button1 = Gui_object('button1', 'button1', 'button')
 
 class Gui_object():
     types = [
         "label", 
-        "labelimage"
+        "labelimage",
+        "button"
     ]
+
     def __init__(self, name, value, type, *additional_properties):
         self.type = type
-        self.q_object = self.get_q_object(name, value)
+        self.q_objects = [self.get_q_object(name, value)]
         self.name = name
         self.value = value
+
         if(len(additional_properties) > 0):
             for key, value in additional_properties.items():
                 setattr(self, key, value)
@@ -49,23 +55,25 @@ class Gui_object():
     def __setattr__(self, name: str, value) -> None:
         super().__setattr__(str(name), value)
         if(name == 'value'):
-            if(self.type == "label"): 
-                self.q_object.setText(value)
+          self.q_objects_set_value(value)
+
+    def q_objects_set_value(self, value):
+      for q_object in self.q_objects:
+            if(self.type == "label"
+              or self.type == "button"
+            ): 
+                q_object.setText(value)
 
             if(self.type == "labelimage"):
                 pixmap = self.convert_cv_to_pixmap(value)
-                print(self.q_object)
-                self.q_object.setPixmap(pixmap)
-
-        if(name == 'value'):
-            if(self.type == "labelimage"):
-                self.resize_label_image(self.q_object)
+                self.resize_label_image(q_object)
+                print(q_object)
+                q_object.setPixmap(pixmap)
 
     def __getattribute__(self, name):
         #return super(self).__getattribute__(name)
         #return super().__getattribute__(str(name))
         try: 
-
             return super().__getattribute__(str(name))
         except: 
             if(name=='width'):
@@ -74,10 +82,6 @@ class Gui_object():
                 return 50 #default value 
             raise AttributeError
                 
-        # if(hasattr(self, "_"+str(name))):
-        #     return super(self).__getattribute__(str(name))
-        # else:
-        #     raise AttributeError
                 
     def resize_label_image(self, q_object):
         q_object.resize(self.width, self.height)
@@ -95,17 +99,18 @@ class Gui_object():
 
     def get_q_object(self, name, value):
         if(self.type == "label"):
-
-            l = QLabel(value)
+            o = QLabel(value)
             #self.left_box.addWidget(l)
-            l.setText(value)
+            o.setText(value)
 
-            return l
         if(self.type == "labelimage"): 
             o = QLabel()
             self.resize_label_image(o)
-            return o 
-
+        if(self.type == "button"): 
+            o = QPushButton(value)
+            # o.clicked.connect(() 
+          
+        return o
 
 
 class Pyqt5_app(QWidget):
@@ -120,16 +125,25 @@ class Pyqt5_app(QWidget):
         self.setWindowTitle('asdf')
 
         self.pyqt5_layout = Pyqt5_layout(data=Data())
+
+        qlab = QPushButton('click me')
+
+        qlab.setText('CLICK ME')
+
+        def c():
+          self.pyqt5_layout.data.label1.value = str(time.time())
+          print('test')
+
+        qlab.clicked.connect(c)
+
+        self.pyqt5_layout.converted_layout.pyqt5_class_instance.addWidget(qlab)
+        
         self.setLayout(self.pyqt5_layout.converted_layout.pyqt5_class_instance)
         
         self.show()
         self.setGeometry(300, 300, 300, 220)
 
-        t = 0
-        while(True):
-          t = t + 1
-          time.sleep(0.1)
-          self.pyqt5_layout.data.label1.value = 't is:'+str(t)
+
 class Pyqt5_layout_object():
     """
     alias:pyqt5 class name
@@ -138,6 +152,7 @@ class Pyqt5_layout_object():
         'column':'QHBoxLayout',
         'row':'QVBoxLayout', 
         'label':'QLabel', 
+        'button':'QPushButton', 
     }
 
     def __init__(self, typus):
@@ -190,8 +205,8 @@ class Pyqt5_layout:
   "typus": "column",
   "c": [
     {
-      "typus": "label",
-      "value": "label1"
+      "typus": "button",
+      "value": "button1"
     },
     {
       "typus": "row",
@@ -291,23 +306,33 @@ class Pyqt5_layout:
         if('value' in object):
             
             pyqt5_layout_object_value =  rgetattr(self.data, object['value'])
+            qlab = QLabel(pyqt5_layout_object_value.value)
 
-            converted_object.pyqt5_class_instance = pyqt5_layout_object_value.q_object
+            pyqt5_layout_object_value.q_objects.append(
+              qlab
+            )
+
+            converted_object.pyqt5_class_instance = qlab
+
         
         # print(object['c'])
 
         if('c' in object):
             for obj in object['c']:
+
                 pyqt5_layout_object = self.foreach_prop_in_oject(obj, converted_object)
                 
                 if(pyqt5_layout_object.typus == 'column' or pyqt5_layout_object.typus == 'row'):
                     converted_object.pyqt5_class_instance.addLayout(pyqt5_layout_object.pyqt5_class_instance)
                     
-                if(pyqt5_layout_object.typus == 'label'):
+                if(
+                  pyqt5_layout_object.typus == 'label'
+                  or
+                  pyqt5_layout_object.typus == 'button'
+                  ):
                     converted_object.pyqt5_class_instance.addWidget(pyqt5_layout_object.pyqt5_class_instance)
 
                 converted_object.c.append(pyqt5_layout_object)
-
 
         return converted_object 
         
@@ -321,5 +346,16 @@ if __name__ == '__main__':
     qApplication = QApplication(sys.argv)
 
     pyqt5_app = Pyqt5_app()
+
+
+    # t = 0
+    # while(True):
+    #   print(1)
+    #     string = 't is:'+str(t)
+    #     pyqt5_app.pyqt5_layout.data.label1.q_object.setText(string)
+    #     t = t + 1
+    #     print(string)
+    #     time.sleep(1)
+
 
     sys.exit(qApplication.exec_())
