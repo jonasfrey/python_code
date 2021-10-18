@@ -24,46 +24,7 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
-class Data:
-    def __init__(self):
-      self.initialized = True
 
-      self.label1 = Gui_object('the text on label', 'label')
-      self.button1 = Gui_object('text on btn', 'button')
-
-    def printsomething(self,var):
-        print(var)
-
-    def button1_click(self):
-        self.button1.value = 'btn 1 clicked '+str(time.time())
-
-    def set_n_get_function_by_string(self, string):
-
-        funname = 'fun_'+str((int(time.time())))
-        funstr = ''
-        funstrlines = []
-        funstrlines.append('def '+str(funname)+'(self, q_event):')
-
-        for property in dir(self):
-            print(property)
-            funstrlines.append('    '+property+'='+'self.'+property)           
-            # print(property, ":", value)
-
-        # funstrlines.append('    return '+string)
-        funstrlines.append('    '+string)
-        funstr = "\n".join(funstrlines)
-        #print(funstr) 
-        exec(funstr)
-        functionbody = locals()[funname]
-        # we have to bind the method to the class in order to automatically
-        # get the first parameter 'self'
-        # simply setattr wont work
-        # setattr(self, fname, lambda: functionbody(self))
-        # this will bind the method to the self
-        setattr(self, funname, types.MethodType( functionbody, self ))
-
-        return getattr(self, funname)
-            
 
 class Gui_object():
     event_aliases = {
@@ -157,45 +118,6 @@ class Gui_object():
 
         return o
 
-class NestedTest:
-    def __init__(self):
-        self.nested_obj = Gui_object('text on lab', 'button')
-
-
-class Pyqt5_app(QWidget):
-    def __init__(self):
-
-        super().__init__()
-
-        self.setup_gui()
-
-    def setup_gui(self):
-
-        self.setWindowTitle('asdf')
-
-        
-        data = Data()
-        data.nt = NestedTest()
-
-        self.pyqt5_layout = Pyqt5_layout(data)
-
-        qlab = QPushButton('click me')
-
-        qlab.setText('CLICK ME')
-
-        def c():
-          self.pyqt5_layout.data.label1.value = str(time.time())
-          print('test')
-
-        qlab.clicked.connect(c)
-
-        self.pyqt5_layout.converted_layout.pyqt5_class_instance.addWidget(qlab)
-        
-        self.setLayout(self.pyqt5_layout.converted_layout.pyqt5_class_instance)
-        
-        self.show()
-        self.setGeometry(300, 300, 300, 220)
-
 
 class Pyqt5_layout_object():
     """
@@ -240,46 +162,28 @@ class Pyqt5_layout_object():
         except:
             return string
 
+
 class Pyqt5_layout:
 
     def __init__(self, data):
         self.data = data
-        tmp_layout = None
-        self.converted_layout = None
+        self.rendered_layout = None
         self.layout_json = """
             {
   "typus": "column",
   "c": [
     {
       "typus": "button",
-      "syncd_obj": "button1",
+      "sync_obj": "button1",
       "on_click": "button1.value = 'holz schnoms'"
-    },
-    {
-      "typus": "button",
-      "syncd_obj": "nt.nested_obj",
-      "on_click": "nt.nested_obj.value = time.time()"
     },
     {
       "typus": "row",
       "c": [
         {
           "typus": "label",
-          "syncd_obj": "label1",
+          "sync_obj": "label1",
           "on_click": "print(q_event.globalX())"
-        },
-        {
-          "typus": "column",
-          "c": [
-            {
-              "on_mouse_move": "print(q_event.globalX())",
-              "typus": "label",
-              "syncd_obj": "label1"
-            },
-            {
-              "typus": "row"
-            }
-          ]
         }
       ]
     },
@@ -288,28 +192,28 @@ class Pyqt5_layout:
       "c": [
         {
           "typus": "label",
-          "syncd_obj": "label1"
+          "sync_obj": "label1"
         },
         {
           "typus": "column",
           "c": [
             {
               "typus": "label",
-              "syncd_obj": "label1"
+              "sync_obj": "label1"
             },
             {
               "typus": "row",
               "c": [
                 {
                   "typus": "label",
-                  "syncd_obj": "label1"
+                  "sync_obj": "label1"
                 },
                 {
                   "typus": "column",
                   "c": [
                     {
                       "typus": "label",
-                      "syncd_obj": "label1"
+                      "sync_obj": "label1"
                     },
                     {
                       "typus": "row"
@@ -329,12 +233,13 @@ class Pyqt5_layout:
 }
         """
 
-        self.update_layout()
+        self.rendered_layout = self.render_layout().pyqt5_class_instance
 
 
-    def update_layout(self):
+    def render_layout(self):
         obj = json.loads(self.layout_json)
         self.converted_layout = self.foreach_prop_in_oject(obj, self)
+        return self.converted_layout
 
     def foreach_prop_in_oject(self, object, parent):
       
@@ -343,9 +248,9 @@ class Pyqt5_layout:
                 pyqt5_layout_object_typus
         )
 
-        if('syncd_obj' in object):
+        if('sync_obj' in object):
             
-            gui_object =  rgetattr(self.data, object['syncd_obj'])
+            gui_object =  rgetattr(self.data, object['sync_obj'])
             child_gui_object = Gui_object(
               gui_object.value, 
               gui_object.type
@@ -387,6 +292,73 @@ class Pyqt5_layout:
                 converted_object.c.append(pyqt5_layout_object)
 
         return converted_object 
+
+
+
+class Data:
+    def __init__(self):
+      self.initialized = True
+      self.label1 = Gui_object('the text on label', 'label')
+      self.button1 = Gui_object('text on btn', 'button')
+
+    def set_n_get_function_by_string(self, string):
+
+        funname = 'fun_'+str((int(time.time())))
+        funstr = ''
+        funstrlines = []
+        funstrlines.append('def '+str(funname)+'(self, q_event):')
+
+        for property in dir(self):
+            print(property)
+            funstrlines.append('    '+property+'='+'self.'+property)           
+            # print(property, ":", value)
+
+        # funstrlines.append('    return '+string)
+        funstrlines.append('    '+string)
+        funstr = "\n".join(funstrlines)
+        #print(funstr) 
+        exec(funstr)
+        functionbody = locals()[funname]
+        # we have to bind the method to the class in order to automatically
+        # get the first parameter 'self'
+        # simply setattr wont work
+        # setattr(self, fname, lambda: functionbody(self))
+        # this will bind the method to the self
+        setattr(self, funname, types.MethodType( functionbody, self ))
+
+        return getattr(self, funname)
+            
+
+
+class Pyqt5_app(QWidget):
+    def __init__(self):
+
+        super().__init__()
+
+        self.initialize_gui()
+
+    def initialize_gui(self):
+
+        self.setWindowTitle('asdf')
+
+        data = Data()
+        self.pyqt5_layout = Pyqt5_layout(data, self)
+        self.layout = QHBoxLayout()
+        self.render_render_layout()
+        self.setLayout(self.layout)
+        self.show()
+
+    def reset_layout(self):
+        if(hasattr(self, 'render_layout')):
+            self.layout.removeItem(self.render_layout)
+            for i in reversed(range(self.render_layout.count())): 
+                self.render_layout.itemAt(i).widget().setParent(None)
+
+    def render_render_layout(self):
+        self.reset_layout()
+        self.render_layout = self.pyqt5_layout.render_layout()
+        self.layout.addLayout(self.render_layout.pyqt5_class_instance)
+
 
 if __name__ == '__main__':
 

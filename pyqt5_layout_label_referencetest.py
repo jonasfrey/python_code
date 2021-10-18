@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import lowercasebase
-
+import random
 
 from PyQt5.QtWidgets import (
 
@@ -44,9 +44,21 @@ class Window(QWidget):
 
         # Set the layout on the application's window
 
+        pyqt5_layoutouter = QHBoxLayout()
+
+        layout.addLayout(pyqt5_layoutouter)
+        qw = QWidget()
+        pyqt5_layoutouter.addWidget(qw)
+        pyqt5_layoutinner = QHBoxLayout()
+        qw.setLayout(pyqt5_layoutinner)
+
+        r = lambda: random.randint(0,255)
+        rc = ('#%02X%02X%02X' % (r(),r(),r()))
+        label = QLabel(rc)
+        qw.setStyleSheet('background-color: '+rc)
+        pyqt5_layoutinner.addWidget(label)
         self.setLayout(layout)
 
-        print(self.children())
 
 
 if __name__ == "__main__":
