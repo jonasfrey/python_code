@@ -11,7 +11,6 @@ class Imagemanipulation_functions_object:
     def __init__(self, frame):
         self.frame = frame
 
-
     @property
     def names(self):
         current_function_name =sys._getframe().f_code.co_name

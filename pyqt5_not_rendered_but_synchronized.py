@@ -1,5 +1,5 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QHBoxLayout, QWidget, QApplication, QLabel, QVBoxLayout, QPushButton, QSlider
+from PyQt5.QtWidgets import QHBoxLayout, QWidget, QApplication,QLineEdit, QLabel, QVBoxLayout, QPushButton, QSlider
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import forcepoint, pyqtSignal, pyqtSlot, Qt, QThread
 import json
@@ -23,15 +23,7 @@ def rgetattr(obj, attr, *args):
         return getattr(obj, attr, *args)
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
-class Sync_obj:
-    def __init__(self, value):
-      self._value = value
-      self.type = type(value)
-    def __setattr__(self, name: str, value) -> None:
-        super().__setattr__(name, value)
-        if(name == 'value'):
-          Pyqt5_app.re_render_layout()
-
+          
 
 class Gui_object():
     event_aliases = {
@@ -39,14 +31,15 @@ class Gui_object():
       "on_mouse_release":"mousePressEvent", 
       "on_mouse_press":"mousePressEvent", 
       "on_mouse_move":"mouseMoveEvent", 
-      "on_change":"changeEvent", 
+      "on_change":"changeEvent"
     }
     
     types = [
         "label", 
         "labelimage",
         "button", 
-        "slider"
+        "slider",
+        "textinput"
     ]
     input_properties = [
       "value",
@@ -61,11 +54,14 @@ class Gui_object():
         self._max = 0
         self._step = 1
         self._value = value
-        self.sync_obj_path = 
         # self.on_click = None
         if(len(additional_properties) > 0):
             for key, value in additional_properties.items():
                 setattr(self, key, value)
+
+    def input_change(self, param):
+        print('input change called')
+        print(param)
 
     def __setattr__(self, name: str, value) -> None:
         property_name_for_setter = name
@@ -78,8 +74,6 @@ class Gui_object():
         if(name == 'value'):
           self.q_objects_set_value(value)
           
-          Pyqt5_app.re_render_layout()
-
 
         for event_name_alias, event_name_qt in Gui_object.event_aliases.items(): 
           if(name == event_name_alias):
@@ -103,6 +97,7 @@ class Gui_object():
     def __getattribute__(self, name):
         if(name in Gui_object.input_properties):
           name = '_'+str(name)
+        print('Gui_object getattr was called with propname :'+str(name))
         #return super(self).__getattribute__(name)
         #return super().__getattribute__(str(name))
         try: 
@@ -136,9 +131,39 @@ class Gui_object():
         if(self.type == "labelimage"):
             o = QLabel()
             self.resize_label_image(o)
+
         if(self.type == "button"):
             o = QPushButton(value)
             # o.clicked.connect(()
+        if(self.type == "textinput"):
+
+            o = QLineEdit(value)
+
+            # exec(
+            #     """
+            # def input_change(param):
+            #     print(param)
+            #     """
+            # )
+            # def input_change(param):
+            #     print(self.value)
+            #     self.value = param
+            #     print(self.value)
+                # print(param)
+                
+            # o.textChanged.connect(hure)
+            # fun = getattr(self, 'input_change')
+            o.textChanged.connect(
+                lambda val: [ setattr(self, 'value', val), print(self.value) ]
+            )
+            # o.textChanged.connect(getattr(self, 'input_change'))
+            self.input_change(1)
+            # o.changeEvent = self.input_change
+
+            o.setText(str(value))
+
+            # o.clicked.connect(()
+
 
         return o
 
@@ -147,12 +172,16 @@ class Pyqt5_layout_object():
     """
     alias:pyqt5 class name
     """
-    qbox_layout_class_name_mappings = {
-        'column':'QHBoxLayout',
-        'row':'QVBoxLayout',
-        'label':'QLabel',
-        'button':'QPushButton',
-        'checkbox':'QCheckBox',
+    q_class_name_mappings = {
+        'containers':{
+          'column':'QHBoxLayout',
+          'row':'QVBoxLayout',
+        }, 
+        'content':{
+          'label':'QLabel',
+          'button':'QPushButton',
+          'textinput':'QLineEdit'
+        }
     }
 
     def __init__(self, typus):
@@ -180,13 +209,24 @@ class Pyqt5_layout_object():
             
             self.pyqt5_class_instance_for_widgets = pyqt5_layoutinner
 
+    
+    def get_q_class_name_mapping(self, string):
+      for key in Pyqt5_layout_object.q_class_name_mappings:
+        value = Pyqt5_layout_object.q_class_name_mappings[key]
+        if(string in value):
+          return value[string]
 
-    def get_pyqt5_class_name_by_string(self, string):
-        try:
-            return Pyqt5_layout_object.qbox_layout_class_name_mappings[string]
-        except:
-            return string
+      return False
 
+    def get_pyqt5_class_name_by_string(self, string):      
+      q_class_name = string 
+      
+      mapped_q_class_name = self.get_q_class_name_mapping(string)
+
+      if(mapped_q_class_name):
+        q_class_name = mapped_q_class_name
+      
+      return q_class_name
 
 class Pyqt5_layout:
 
@@ -198,28 +238,22 @@ class Pyqt5_layout:
   "typus": "column",
   "c": [
     {
+      "typus": "textinput",
+      "sync_obj": "textinput1"
+    },
+    {
       "typus": "button",
       "sync_obj": "button1",
-      "on_click": "button1.value = 'holz schnoms'"
+      "on_click": "button1.value = 'test'"
     },
     {
-      "typus": "button",
-      "value": "str(button1.value)+str(label1.value)",
-      "on_click": "str(time.time)+str(button1.value)+str(label1.value)"
+      "typus": "label",
+      "sync_obj": "label1",
+      "on_click": "label1.value = button1.value"
     },
     {
-      "typus": "checkbox",
-      "value": "bool1",
-    },
-    {
-      "typus": "row",
-      "c": [
-        {
-          "typus": "label",
-          "sync_obj": "label1",
-          "on_click": "print(q_event.globalX())"
-        }
-      ]
+      "typus": "label",
+      "sync_obj": "button1"
     },
     {
       "typus": "row",
@@ -278,7 +312,6 @@ class Pyqt5_layout:
     def foreach_prop_in_oject(self, object, parent):
       
         pyqt5_layout_object_typus = object['typus']
-
         converted_object = Pyqt5_layout_object(
                 pyqt5_layout_object_typus
         )
@@ -315,13 +348,7 @@ class Pyqt5_layout:
                 
                 if(pyqt5_layout_object.typus == 'column' or pyqt5_layout_object.typus == 'row'):
                     converted_object.pyqt5_class_instance.addLayout(pyqt5_layout_object.pyqt5_class_instance)
-                    
-                if(
-                  pyqt5_layout_object.typus == 'label'
-                  or
-                  pyqt5_layout_object.typus == 'button'
-                  ):  
-                    print(pyqt5_layout_object.pyqt5_class_instance)
+                else:
                     converted_object.pyqt5_class_instance_for_widgets.addWidget(pyqt5_layout_object.pyqt5_class_instance)
 
                 converted_object.c.append(pyqt5_layout_object)
@@ -335,6 +362,7 @@ class Data:
       self.initialized = True
       self.label1 = Gui_object('the text on label', 'label')
       self.button1 = Gui_object('text on btn', 'button')
+      self.textinput1 = Gui_object('preview text', 'textinput')
 
     def set_n_get_function_by_string(self, string):
 
@@ -347,6 +375,8 @@ class Data:
             print(property)
             funstrlines.append('    '+property+'='+'self.'+property)           
             # print(property, ":", value)
+          
+        funstrlines.append('    print(self.textinput1.value)')           
 
         # funstrlines.append('    return '+string)
         funstrlines.append('    '+string)
