@@ -30,6 +30,23 @@ class Pyqt5_layout_object:
         "QHBoxLayout",
         "QVBoxLayout"
     ]
+    qt_input_events = [
+        "event",
+        "closeEvent",
+        "focusInEvent",
+        "focusOutEvent",
+        "enterEvent",
+        "keyPressEvent",
+        "keyReleaseEvent",
+        "leaveEvent",
+        "mouseDoubleClickEvent",
+        "mouseMoveEvent",
+        "mousePressEvent",
+        "mouseReleaseEvent",
+        "moveEvent",
+        "paintEvent",
+        "resizeEvent"
+    ]
     def __init__(self,dict_object, data):
         self.data = data
         self.dict_object = dict_object
@@ -42,25 +59,28 @@ class Pyqt5_layout_object:
 
         self.synced_obj_data_path = None 
         self.render_function = None
+        if(self.is_qt_layout_class_name() == False):
+            self.qt_object.setMouseTracking(True)
 
         if(self.wants_to_be_evaluated()):
-            function_body = self.data.set_n_get_return_function_by_string(self.c)
-
-            self.qt_object.setText(str(function_body()))
+            function_body = self.data.get_return_function_by_string(self.c)
+            evaluated_return = str(function_body())
+            print(evaluated_return)
+            self.qt_object.setText(evaluated_return)
 
         for i in self.dict_object:
             if(hasattr(self.qt_object, i)):
                 
-                function_body = self.data.set_n_get_return_function_by_string(self.dict_object[i])
 
-                if(i == 'mousePressEvent'):
+                if(i in Pyqt5_layout_object.qt_input_events):
+                    function_body = self.data.get_void_function_by_string(self.dict_object[i], ["Pyqt5_app.re_render_layout()"])
                     setattr(self.qt_object, i, function_body)
                 else: 
-
+                    function_body = self.data.get_return_function_by_string(self.dict_object[i])
                     attr = getattr(self.qt_object, i)
                     if(callable(attr)):
                         function_return = function_body()
-                        print(attr)
+                        # print(attr)
                         attr(function_return)
                         # print(attr)
 
@@ -69,6 +89,8 @@ class Pyqt5_layout_object:
             # self.type = 'has_children'
             # has children 
     def wants_to_be_synced(self):
+        tmpfalse = False
+        return tmpfalse 
         try:
             rgetattr(self.data, self.c)
             return True
@@ -93,11 +115,12 @@ class Pyqt5_layout_object:
         # if condition is true or non existsing 
         if('if' in self.dict_object):
             condition = self.dict_object["if"]
-            function_body = self.data.set_n_get_return_function_by_string(condition)
+            function_body = self.data.get_return_function_by_string(condition)
             condition_result = function_body()
             return condition_result
         else:
             return True
+
 class Pyqt5_layout:
 
     def __init__(self, data):
@@ -112,7 +135,8 @@ class Pyqt5_layout:
                 { 
                     "qt_class_name": "QPushButton",  
                     "c": "'click me'", 
-                    "mousePressEvent": "print('hi')"       
+                    "mousePressEvent": "test_synced_obj()", 
+                    "mouseMoveEvent" : "print('damn mouse moved')"
                 },
                 { 
                     "qt_class_name": "QPushButton",  
@@ -144,7 +168,12 @@ class Pyqt5_layout:
                   "c": "len(cameras)"
                 },
                 {
+                  "qt_class_name": "QLabel",  
+                  "c": "textasdf.value"
+                },
+                {
                   "qt_class_name": "QWidget",  
+                  "mouseMoveEvent" : "self.textasdf.value = 'damn mouse moved x{x} and y{y}'.format(x=event.x(),y=event.y())",
                   "setStyleSheet": "'background-color: '+random_color()",
                   "c": [
                     {
@@ -200,7 +229,8 @@ class Pyqt5_layout:
         return self.converted_layout.qt_object
 
     def foreach_prop_in_oject(self, object):
-
+        # object should resolve to multiple objects
+        # if('for' in object):
         pyqt5_layout_object_parent = Pyqt5_layout_object(object, self.data)
         if(pyqt5_layout_object_parent.has_children()):
             for obj in pyqt5_layout_object_parent.c:
@@ -209,7 +239,7 @@ class Pyqt5_layout:
                 if(pyqt5_layout_object_child == False):
                     continue
 
-                if(pyqt5_layout_object_parent.qt_class_name == 'QWidget'):
+                if(pyqt5_layout_object_parent.qt_class_name == 'QWidget'):                    
                     pyqt5_layout_object_parent.qt_object.setLayout(pyqt5_layout_object_child.qt_object)
                 else: 
                     if(pyqt5_layout_object_child.is_qt_layout_class_name()):
@@ -222,9 +252,38 @@ class Pyqt5_layout:
         else:
             return False
 
+class Synced_data_obj():
+
+    intern_propname_prefix = '_'
+    def __init__(self, value):
+        self._value = value
+
+    def __setattr__(self, name, value) -> None:
+        
+        # print('Synced_data_obj.setattr value')
+        # print(value)
+
+        if(name.startswith(Synced_data_obj.intern_propname_prefix) == False):
+            super().__setattr__(Synced_data_obj.intern_propname_prefix+name, value)
+            Pyqt5_app.re_render_layout()
+        else:
+            super().__setattr__(name, value)
+
+    def __getattribute__(self, name):
+
+        # print('Synced_data_obj.getattr name')
+        # print(name)
+
+        if(name.startswith(Synced_data_obj.intern_propname_prefix) == False):
+            return super().__getattribute__(str(Synced_data_obj.intern_propname_prefix+name))
+        else: 
+            return super().__getattribute__(name)
+        # re rendering is only neccessary when setter is called ... Pyqt5_app.re_render_layout()
+
+
 class Camera(): 
     def __init__(self) -> None:
-        self.test = 1
+        self.fps = Synced_data_obj(100) # will be data.cameras.fps.value 
         # self.xyz = ... 
         # self.xyz = ... 
         # self.xyz = ... 
@@ -233,32 +292,60 @@ class Camera():
 class Data():
     def __init__(self) -> None:
         self.cameras = []
+        self.textasdf = Synced_data_obj('this is text data')
 
-    def set_n_get_return_function_by_string(self, string):
-        return self.set_n_get_function_by_string(string, 'return')
 
-    def set_n_get_void_function_by_string(self, string):
-        return self.set_n_get_function_by_string(string, '')
+    def test_synced_obj(self):
+        self.textasdf.value = 'test 1'
+        time.sleep(1)
+        self.textasdf.value = 'test 2'
+        time.sleep(1)
+        self.textasdf.value = 'test 3'
+        time.sleep(1)
+        self.textasdf.value = 'test 4'
+        time.sleep(1)
 
     def random_color(self):
         r = lambda: random.randint(0,255)
         rc = ('#%02X%02X%02X' % (r(),r(),r()))
         return str(rc)
 
-    def set_n_get_function_by_string(self, string, last_line_prefix):
+    def get_return_function_by_string(self, string, code_statements=[]):
+        return self.get_function_by_string(string, True, code_statements)
+        
+    def get_void_function_by_string(self, string, code_statements=[]):
+        return self.get_function_by_string(string, False, code_statements)
+        
+    def get_function_by_string(self, string, return_evaluated=False, code_statements=[]):
 
         funname = 'fun_'+str((int(time.time())))
         funstr = ''
         funstrlines = []
-        funstrlines.append('def '+str(funname)+'(self, *args):')
+        funstrlines.append('def '+str(funname)+'(self,event=None,**kvargs):')
+        # kvargs => key value args
+
+
+        funstrlines.append('    for key, value in kvargs.items():')
+        funstrlines.append('        exec(key+\'=value\')')           
 
         for property in dir(self):
             # print(property)
             funstrlines.append('    '+property+'='+'self.'+property)           
             # print(property, ":", value)
+        
+        if(return_evaluated):
+            varname = 'var_'+str((int(time.time())))
+            funstrlines.append('    '+varname+'='+string)
+        else:
+            funstrlines.append('    '+string)
 
-        # funstrlines.append('    return '+string)
-        funstrlines.append('    '+str(last_line_prefix)+' '+string)
+            
+        for statement in code_statements:
+            funstrlines.append('    '+str(statement))
+
+        if(return_evaluated):
+            funstrlines.append('    return '+'('+varname+')')
+
         funstr = "\n".join(funstrlines)
         #print(funstr) 
         exec(funstr)
@@ -314,7 +401,7 @@ class Pyqt5_app(QWidget):
     def render_render_layout(self):
 
         if(hasattr(self, 'pyqt5_layout')):
-            print('re rendering layout')
+            # print('re rendering layout')
             self.reset_layout()
             self.render_layout = self.pyqt5_layout.render_layout()
             self.layout.addLayout(self.render_layout)
