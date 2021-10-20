@@ -1,4 +1,3 @@
-
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QHBoxLayout, QWidget, QApplication,QLineEdit, QLabel, QVBoxLayout, QPushButton, QSlider
 from PyQt5.QtGui import QPixmap
@@ -32,7 +31,6 @@ class Pyqt5_layout_object:
     ]
     def __init__(self,dict_object, data):
         self.data = data
-        self.dict_object = dict_object
         self.qt_class_name = dict_object["qt_class_name"]
         self.qt_object = globals()[self.qt_class_name]()
         if 'c' in dict_object:
@@ -47,22 +45,6 @@ class Pyqt5_layout_object:
             function_body = self.data.set_n_get_return_function_by_string(self.c)
 
             self.qt_object.setText(str(function_body()))
-
-        for i in self.dict_object:
-            if(hasattr(self.qt_object, i)):
-                
-                function_body = self.data.set_n_get_return_function_by_string(self.dict_object[i])
-
-                if(i == 'mousePressEvent'):
-                    setattr(self.qt_object, i, function_body)
-                else: 
-
-                    attr = getattr(self.qt_object, i)
-                    if(callable(attr)):
-                        function_return = function_body()
-                        print(attr)
-                        attr(function_return)
-                        # print(attr)
 
     def has_children(self):
         return (type(self.c) == list)
@@ -88,16 +70,7 @@ class Pyqt5_layout_object:
             # wants to be evaluated 
     def is_qt_layout_class_name(self):
         return self.qt_class_name in Pyqt5_layout_object.qt_layout_class_names
-    
-    def if_condition_is_true(self):
-        # if condition is true or non existsing 
-        if('if' in self.dict_object):
-            condition = self.dict_object["if"]
-            function_body = self.data.set_n_get_return_function_by_string(condition)
-            condition_result = function_body()
-            return condition_result
-        else:
-            return True
+        
 class Pyqt5_layout:
 
     def __init__(self, data):
@@ -109,32 +82,6 @@ class Pyqt5_layout:
             {
               "qt_class_name" : "QVBoxLayout", 
               "c": [
-                { 
-                    "qt_class_name": "QPushButton",  
-                    "c": "'click me'", 
-                    "mousePressEvent": "print('hi')"       
-                },
-                { 
-                    "qt_class_name": "QPushButton",  
-                    "c": "'len(cameras)'+str(len(cameras))", 
-                    "mousePressEvent": "Pyqt5_app.re_render_layout()" ,
-                    "mousePressEventdisabled": "print('lel whz is this alreadz called')" 
-                },
-                { 
-                    "qt_class_name": "QPushButton",  
-                    "c": "'add cam'", 
-                    "mousePressEvent": "cameras.append(1)"       
-                },
-                { 
-                    "qt_class_name": "QPushButton",  
-                    "c": "'remove cam'", 
-                    "mousePressEvent": "cameras.pop(0)"       
-                },
-                {
-                    "if": "len(cameras) > 0", 
-                    "qt_class_name": "QLabel",  
-                    "c": "str(time.time())+'len cameras is bigger 0'"           
-                },
                 {
                   "qt_class_name": "QLabel",  
                   "c": "str(time.time())+'i want to get rendered'"
@@ -142,20 +89,6 @@ class Pyqt5_layout:
                 {
                   "qt_class_name": "QLabel",  
                   "c": "len(cameras)"
-                },
-                {
-                  "qt_class_name": "QWidget",  
-                  "setStyleSheet": "'background-color: '+random_color()",
-                  "c": [
-                    {
-                    "qt_class_name": "QHBoxLayout",  
-                    "c": [
-                        {
-                            "qt_class_name" : "QVBoxLayout"
-                        }
-                    ]
-                    }
-                  ]
                 },
                 {
                   "qt_class_name": "QHBoxLayout",  
@@ -205,22 +138,14 @@ class Pyqt5_layout:
         if(pyqt5_layout_object_parent.has_children()):
             for obj in pyqt5_layout_object_parent.c:
                 pyqt5_layout_object_child = self.foreach_prop_in_oject(obj)
+                    
+                if(pyqt5_layout_object_child.is_qt_layout_class_name()):
+                    pyqt5_layout_object_parent.qt_object.addLayout(pyqt5_layout_object_child.qt_object)
+                else:
+                    pyqt5_layout_object_parent.qt_object.addWidget(pyqt5_layout_object_child.qt_object)
 
-                if(pyqt5_layout_object_child == False):
-                    continue
+        return pyqt5_layout_object_parent
 
-                if(pyqt5_layout_object_parent.qt_class_name == 'QWidget'):
-                    pyqt5_layout_object_parent.qt_object.setLayout(pyqt5_layout_object_child.qt_object)
-                else: 
-                    if(pyqt5_layout_object_child.is_qt_layout_class_name()):
-                        pyqt5_layout_object_parent.qt_object.addLayout(pyqt5_layout_object_child.qt_object)
-                    else:
-                        pyqt5_layout_object_parent.qt_object.addWidget(pyqt5_layout_object_child.qt_object)
-
-        if(pyqt5_layout_object_parent.if_condition_is_true()):
-            return pyqt5_layout_object_parent
-        else:
-            return False
 
 class Camera(): 
     def __init__(self) -> None:
@@ -240,20 +165,16 @@ class Data():
     def set_n_get_void_function_by_string(self, string):
         return self.set_n_get_function_by_string(string, '')
 
-    def random_color(self):
-        r = lambda: random.randint(0,255)
-        rc = ('#%02X%02X%02X' % (r(),r(),r()))
-        return str(rc)
 
     def set_n_get_function_by_string(self, string, last_line_prefix):
 
         funname = 'fun_'+str((int(time.time())))
         funstr = ''
         funstrlines = []
-        funstrlines.append('def '+str(funname)+'(self, *args):')
+        funstrlines.append('def '+str(funname)+'(self):')
 
         for property in dir(self):
-            # print(property)
+            print(property)
             funstrlines.append('    '+property+'='+'self.'+property)           
             # print(property, ":", value)
 
@@ -307,17 +228,15 @@ class Pyqt5_app(QWidget):
     def reset_layout(self):
         if(hasattr(self, 'render_layout')):
             self.layout.removeItem(self.render_layout)
-            for i in reversed(range(self.render_layout.count())):
-                if(self.render_layout.itemAt(i).widget() != None):
-                    self.render_layout.itemAt(i).widget().setParent(None)
+            for i in reversed(range(self.render_layout.count())): 
+                self.render_layout.itemAt(i).widget().setParent(None)
 
     def render_render_layout(self):
-
-        if(hasattr(self, 'pyqt5_layout')):
-            print('re rendering layout')
-            self.reset_layout()
-            self.render_layout = self.pyqt5_layout.render_layout()
-            self.layout.addLayout(self.render_layout)
+        # if(hasattr(self, 'pyqt5_layout')):
+        print('re rendering layout')
+        self.reset_layout()
+        self.render_layout = self.pyqt5_layout.render_layout()
+        self.layout.addLayout(self.render_layout)
 
 
 if __name__ == '__main__':
