@@ -11,9 +11,9 @@ from json.encoder import py_encode_basestring_ascii
 import time 
 import copy
 import types
-
-
 import cv2
+
+
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
@@ -52,10 +52,17 @@ class Pyqt5_layout_object:
         self.dict_object = dict_object
         self.qt_class_name = dict_object["qt_class_name"]
         self.qt_object = globals()[self.qt_class_name]()
+        self.code_statements_before_string_evaluation = []
+        self.code_statements_after_string_evaluation = []
+
         if 'c' in dict_object:
             self.c = dict_object["c"] # c is shor for children, can be string, or data path
         else:
             self.c = None
+        if 'code_statements_before_string_evaluation' in self.dict_object:
+            self.code_statements_before_string_evaluation = self.dict_object['code_statements_before_string_evaluation']
+        if 'code_statements_after_string_evaluation' in self.dict_object:
+            self.code_statements_after_string_evaluation = self.dict_object['code_statements_after_string_evaluation']
 
         self.synced_obj_data_path = None 
         self.render_function = None
@@ -63,9 +70,9 @@ class Pyqt5_layout_object:
             self.qt_object.setMouseTracking(True)
 
         if(self.wants_to_be_evaluated()):
-            function_body = self.data.get_return_function_by_string(self.c)
+            function_body = self.data.get_return_function_by_string(self.c, self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
             evaluated_return = str(function_body())
-            print(evaluated_return)
+            # print(evaluated_return)
             self.qt_object.setText(evaluated_return)
 
         for i in self.dict_object:
@@ -73,10 +80,10 @@ class Pyqt5_layout_object:
                 
 
                 if(i in Pyqt5_layout_object.qt_input_events):
-                    function_body = self.data.get_void_function_by_string(self.dict_object[i], ["Pyqt5_app.re_render_layout()"])
+                    function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_layout()"])
                     setattr(self.qt_object, i, function_body)
                 else: 
-                    function_body = self.data.get_return_function_by_string(self.dict_object[i])
+                    function_body = self.data.get_return_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
                     attr = getattr(self.qt_object, i)
                     if(callable(attr)):
                         function_return = function_body()
@@ -115,7 +122,7 @@ class Pyqt5_layout_object:
         # if condition is true or non existsing 
         if('if' in self.dict_object):
             condition = self.dict_object["if"]
-            function_body = self.data.get_return_function_by_string(condition)
+            function_body = self.data.get_return_function_by_string(condition, self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
             condition_result = function_body()
             return condition_result
         else:
@@ -154,6 +161,16 @@ class Pyqt5_layout:
                     "c": "'remove cam'", 
                     "mousePressEvent": "cameras.pop(0)"       
                 },
+                { 
+                    "qt_class_name": "QPushButton",  
+                    "c": "'add to string array'", 
+                    "mousePressEvent": "stringarray.append(Synced_data_obj('more txt'+str(len(stringarray))))"       
+                },
+                { 
+                    "qt_class_name": "QPushButton",  
+                    "c": "'remove from string array'", 
+                    "mousePressEvent": "stringarray.pop(1)"       
+                },
                 {
                     "if": "len(cameras) > 0", 
                     "qt_class_name": "QLabel",  
@@ -169,8 +186,30 @@ class Pyqt5_layout:
                 },
                 {
                   "qt_class_name": "QLabel",  
-                  "c": "textasdf.value"
+                  "for": "value, key in stringarray",
+                  "c": "'string arr value '+str(value.value)"
+
                 },
+                {
+                  "qt_class_name": "QVBoxLayout",  
+                  "for": "obj, index in some_deep_nested_shits",
+                  "c": [
+                      {
+                        "qt_class_name":"QLabel",
+                        "for": "obj, index in obj.yet_more_nested_array",
+                        "c": "'yet_more_nested_array'+str(obj.holy_smokes.value)"
+                      },
+                        {
+                        "qt_class_name":"QLabel",
+                        "c":"'lol'"
+                      }
+                  ]
+
+                },
+                {
+                  "qt_class_name": "QLabel",  
+                  "c": "textasdf.value"
+                },  
                 {
                   "qt_class_name": "QWidget",  
                   "mouseMoveEvent" : "self.textasdf.value = 'damn mouse moved x{x} and y{y}'.format(x=event.x(),y=event.y())",
@@ -225,32 +264,110 @@ class Pyqt5_layout:
 
     def render_layout(self):
         obj = json.loads(self.layout_json)
-        self.converted_layout = self.foreach_prop_in_oject(obj)
-        return self.converted_layout.qt_object
+        parent_dict = {
+            "qt_class_name" : "QHBoxLayout"
+        }
+        pyqt5_layout_object_parent = Pyqt5_layout_object(parent_dict, self.data)
+        self.foreach_prop_in_oject(obj, pyqt5_layout_object_parent)
+        return pyqt5_layout_object_parent.qt_object
 
-    def foreach_prop_in_oject(self, object):
+    def foreach_prop_in_oject(self, object, pyqt5_layout_object_parent):
         # object should resolve to multiple objects
         # if('for' in object):
-        pyqt5_layout_object_parent = Pyqt5_layout_object(object, self.data)
-        if(pyqt5_layout_object_parent.has_children()):
-            for obj in pyqt5_layout_object_parent.c:
-                pyqt5_layout_object_child = self.foreach_prop_in_oject(obj)
+        # {
+        #     "for": "val, i in cameras", 
+        #     "c": "'fps val is'+val.fps.value"
+        # }
+        # would be converted to 
+        # {
+        #     "c": "'fps cameras[1] is'+cameras[1].fps.value"
+        # }
+        # {
+        #     "c": "'fps cameras[2] is'+cameras[2].fps.value"
+        # }
+        # ...
+        # so we cretae a property called objectinforloop 
+        # {
+        #     "for": "val, i in cameras", 
+        #     "c": "'fps value is'+value.fps.value"
+        # }
+        # converted to 
+        # {
+        #     "c": "'fps value is'+value.fps.value",
+        #     "varname_value_in_for":"val",
+        #     "index_in_for": "1", 
+        #     "array_var_name_in_for": "cameras"
+        # },
+        # {
+        #     "c": "'fps value is'+value.fps.val",
+        #     "varname_value_in_for":"value",
+        #     "index_in_for": "2", 
+        #     "array_var_name_in_for": "cameras"
+        # }
+        # ...
+        # then when evaluating 
 
-                if(pyqt5_layout_object_child == False):
-                    continue
+        if 'code_statements_before_string_evaluation' in pyqt5_layout_object_parent.dict_object:
+            code_statements_before_string_evaluation_parent = pyqt5_layout_object_parent.dict_object['code_statements_before_string_evaluation']
+        else:
+            code_statements_before_string_evaluation_parent = []
+
+        if('for' in object):
+            pyqt5_layout_objects = []
+            parts = str(object['for']).split(' in ')
+
+            array_var_name_in_for = parts.pop(len(parts)-1)
+            parts = parts.pop(0).split(',')
+            value_var_name_in_for = parts.pop(0).strip()
+            index_var_name_in_for = parts.pop(0).strip()
+            # print(array_var_name_in_for)
+    
+            length = self.data.get_return_function_by_string(
+                "len("+array_var_name_in_for+")", 
+                code_statements_before_string_evaluation_parent
+            )()
+            # print(length)
+            # exit()
+
+            for key in range(0, length):
+                single_for_object = object.copy()
+                
+                del single_for_object['for']
+                
+                single_for_object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation_parent + [str(value_var_name_in_for)+' = '+str(array_var_name_in_for)+'['+str(key)+']']
+
+                pyqt5_layout_object = Pyqt5_layout_object(single_for_object, self.data)
+                pyqt5_layout_objects.append(pyqt5_layout_object)
+                # print(value)
+            
+        else:
+            pyqt5_layout_objects = [Pyqt5_layout_object(object, self.data)]
+
+        if(len(pyqt5_layout_objects)> 1):
+
+            print(pyqt5_layout_objects)
+
+        for pyqt5_layout_object in pyqt5_layout_objects:
+
+            # pyqt5_layout_object = Pyqt5_layout_object(object, self.data)
+
+            if(pyqt5_layout_object.has_children()):
+                for obj in pyqt5_layout_object.c:
+                    self.foreach_prop_in_oject(obj, pyqt5_layout_object)
+
+            
+            if(pyqt5_layout_object.if_condition_is_true()):
+
 
                 if(pyqt5_layout_object_parent.qt_class_name == 'QWidget'):                    
-                    pyqt5_layout_object_parent.qt_object.setLayout(pyqt5_layout_object_child.qt_object)
+                    pyqt5_layout_object_parent.qt_object.setLayout(pyqt5_layout_object.qt_object)
                 else: 
-                    if(pyqt5_layout_object_child.is_qt_layout_class_name()):
-                        pyqt5_layout_object_parent.qt_object.addLayout(pyqt5_layout_object_child.qt_object)
+                    if(pyqt5_layout_object.is_qt_layout_class_name()):
+                        pyqt5_layout_object_parent.qt_object.addLayout(pyqt5_layout_object.qt_object)
                     else:
-                        pyqt5_layout_object_parent.qt_object.addWidget(pyqt5_layout_object_child.qt_object)
+                        pyqt5_layout_object_parent.qt_object.addWidget(pyqt5_layout_object.qt_object)
 
-        if(pyqt5_layout_object_parent.if_condition_is_true()):
-            return pyqt5_layout_object_parent
-        else:
-            return False
+
 
 class Synced_data_obj():
 
@@ -281,6 +398,18 @@ class Synced_data_obj():
         # re rendering is only neccessary when setter is called ... Pyqt5_app.re_render_layout()
 
 
+class Yet_more_nested():
+    def __init__(self) -> None:
+        self.holy_smokes = Synced_data_obj('true dat')
+class Some_deep_nested_shit():
+    def __init__(self) -> None:
+        self.aha = Synced_data_obj('asdf')
+        self.yet_more_nested_array = [
+            Yet_more_nested(),
+            Yet_more_nested(),
+            Yet_more_nested(),
+            Yet_more_nested()
+        ] 
 class Camera(): 
     def __init__(self) -> None:
         self.fps = Synced_data_obj(100) # will be data.cameras.fps.value 
@@ -293,7 +422,18 @@ class Data():
     def __init__(self) -> None:
         self.cameras = []
         self.textasdf = Synced_data_obj('this is text data')
-
+        self.stringarray = [
+            Synced_data_obj('stringarray text 1'),
+            Synced_data_obj('stringarray text 2'),
+            Synced_data_obj('stringarray text 3'),
+            Synced_data_obj('stringarray text 4')
+        ]
+        self.some_deep_nested_shits = [
+         Some_deep_nested_shit(),
+         Some_deep_nested_shit(),
+         Some_deep_nested_shit(),
+         Some_deep_nested_shit(),
+        ]
 
     def test_synced_obj(self):
         self.textasdf.value = 'test 1'
@@ -310,13 +450,13 @@ class Data():
         rc = ('#%02X%02X%02X' % (r(),r(),r()))
         return str(rc)
 
-    def get_return_function_by_string(self, string, code_statements=[]):
-        return self.get_function_by_string(string, True, code_statements)
+    def get_return_function_by_string(self, string, code_statements_before_string_evaluation=[], code_statements_after_string_evaluation=[]):
+        return self.get_function_by_string(string, True, code_statements_before_string_evaluation, code_statements_after_string_evaluation)
         
-    def get_void_function_by_string(self, string, code_statements=[]):
-        return self.get_function_by_string(string, False, code_statements)
+    def get_void_function_by_string(self, string, code_statements_before_string_evaluation=[], code_statements_after_string_evaluation=[]):
+        return self.get_function_by_string(string, False, code_statements_before_string_evaluation, code_statements_after_string_evaluation)
         
-    def get_function_by_string(self, string, return_evaluated=False, code_statements=[]):
+    def get_function_by_string(self, string, return_evaluated=False, code_statements_before_string_evaluation=[],code_statements_after_string_evaluation=[]):
 
         funname = 'fun_'+str((int(time.time())))
         funstr = ''
@@ -333,14 +473,18 @@ class Data():
             funstrlines.append('    '+property+'='+'self.'+property)           
             # print(property, ":", value)
         
+        for statement in code_statements_before_string_evaluation:
+            funstrlines.append('    '+str(statement))
+
         if(return_evaluated):
+
             varname = 'var_'+str((int(time.time())))
             funstrlines.append('    '+varname+'='+string)
         else:
             funstrlines.append('    '+string)
 
             
-        for statement in code_statements:
+        for statement in code_statements_after_string_evaluation:
             funstrlines.append('    '+str(statement))
 
         if(return_evaluated):
