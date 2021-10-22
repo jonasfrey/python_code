@@ -12,8 +12,8 @@ import time
 import copy
 import types
 import cv2
-
-
+import gc
+import inspect
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
@@ -45,13 +45,23 @@ class Pyqt5_layout_object:
         "mouseReleaseEvent",
         "moveEvent",
         "paintEvent",
-        "resizeEvent"
+        "resizeEvent", 
+        "textChanged", 
+        "valueChanged"
     ]
+
     def __init__(self,dict_object, data):
         self.data = data
         self.dict_object = dict_object
-        self.qt_class_name = dict_object["qt_class_name"]
-        self.qt_object = globals()[self.qt_class_name]()
+        self.qt_constructor = dict_object["qt_constructor"]
+        if(self.qt_constructor.find('(') == -1):
+            self.qt_constructor = self.qt_constructor + '()'
+        self.qt_class_name = self.get_qt_class_name_by_constructor(self.qt_constructor)
+        # self.qt_object = globals()[self.qt_class_name]()
+        self.qt_constructor_instance_varname = "tmp_qt_constructor_instance"
+        self.qt_object = exec(self.qt_constructor_instance_varname+' = '+self.qt_constructor)        
+        self.qt_object = locals()[self.qt_constructor_instance_varname]
+        # self.qt_object = exec(self.qt_constructor)
         self.code_statements_before_string_evaluation = []
         self.code_statements_after_string_evaluation = []
 
@@ -77,11 +87,24 @@ class Pyqt5_layout_object:
 
         for i in self.dict_object:
             if(hasattr(self.qt_object, i)):
-                
-
                 if(i in Pyqt5_layout_object.qt_input_events):
                     function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_layout()"])
-                    setattr(self.qt_object, i, function_body)
+                    if(i == "valueChanged"):
+                     # function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
+                        localattrname = 'i_cannot_connect_this_function_directly_thats_why_i_set_this_attribute_'+str(i)
+                        setattr(self.qt_object, localattrname, function_body)
+
+                        self.qt_object.valueChanged.connect(getattr(self.qt_object, localattrname))
+                        
+                        # self.qt_object.valueChanged.connect(
+                        #     lambda val: function_body(val)
+                        # )
+
+                    else:
+                        setattr(self.qt_object, i, function_body)
+                    # qt_object_fun = getattr(self.qt_object, i)
+                    # qt_object_fun.connect(getattr(self.qt_object, localattrname))
+                    
                 else: 
                     function_body = self.data.get_return_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
                     attr = getattr(self.qt_object, i)
@@ -90,6 +113,14 @@ class Pyqt5_layout_object:
                         # print(attr)
                         attr(function_return)
                         # print(attr)
+
+    def get_qt_class_name_by_constructor(self, string):
+        parts = string.split('(')
+        qt_class_name = parts.pop(0)
+        return qt_class_name
+
+    def has_c_property(self):
+        return 'c' in self.dict_object
 
     def has_children(self):
         return (type(self.c) == list)
@@ -111,6 +142,7 @@ class Pyqt5_layout_object:
         return (
             self.is_qt_layout_class_name() == False and 
             self.has_children() == False and 
+            self.has_c_property() == True and
             self.wants_to_be_synced() == False
             )
             # self.type = 'wants_to_be_evaluated'
@@ -134,121 +166,141 @@ class Pyqt5_layout:
 
         self.data = data
         
-        self.rendered_layout = None
         self.layout_json = """
             {
-              "qt_class_name" : "QVBoxLayout", 
+              "qt_constructor" : "QVBoxLayout", 
               "c": [
                 { 
-                    "qt_class_name": "QPushButton",  
+                    "qt_constructor": "QSlider(Qt.Horizontal)", 
+                    "valueChanged": "print(11)",
+                    "setMinimum" : "1", 
+                    "setMaximum" : "10" 
+                },
+                { 
+                    "qt_constructor": "QLabel", 
+                    "c":"'slider val : '+str(sliderval.value)"
+                },
+                { 
+                    "qt_constructor": "QLineEdit",  
+                    "c": "textforinput.value", 
+                    "textChanged": "textforinput._value = event"
+                },
+                { 
+                    "qt_constructor": "QPushButton",  
+                    "c": "'reset text above'", 
+                    "mousePressEvent" : "textforinput.value = 'reseetet text'"
+                },
+
+                { 
+                    "qt_constructor": "QPushButton",  
                     "c": "'click me'", 
                     "mousePressEvent": "test_synced_obj()", 
                     "mouseMoveEvent" : "print('damn mouse moved')"
                 },
                 { 
-                    "qt_class_name": "QPushButton",  
+                    "qt_constructor": "QPushButton",  
                     "c": "'len(cameras)'+str(len(cameras))", 
                     "mousePressEvent": "Pyqt5_app.re_render_layout()" ,
                     "mousePressEventdisabled": "print('lel whz is this alreadz called')" 
                 },
                 { 
-                    "qt_class_name": "QPushButton",  
+                    "qt_constructor": "QPushButton",  
                     "c": "'add cam'", 
                     "mousePressEvent": "cameras.append(1)"       
                 },
                 { 
-                    "qt_class_name": "QPushButton",  
+                    "qt_constructor": "QPushButton",  
                     "c": "'remove cam'", 
                     "mousePressEvent": "cameras.pop(0)"       
                 },
                 { 
-                    "qt_class_name": "QPushButton",  
+                    "qt_constructor": "QPushButton",  
                     "c": "'add to string array'", 
                     "mousePressEvent": "stringarray.append(Synced_data_obj('more txt'+str(len(stringarray))))"       
                 },
                 { 
-                    "qt_class_name": "QPushButton",  
+                    "qt_constructor": "QPushButton",  
                     "c": "'remove from string array'", 
                     "mousePressEvent": "stringarray.pop(1)"       
                 },
                 {
                     "if": "len(cameras) > 0", 
-                    "qt_class_name": "QLabel",  
+                    "qt_constructor": "QLabel",  
                     "c": "str(time.time())+'len cameras is bigger 0'"           
                 },
                 {
-                  "qt_class_name": "QLabel",  
+                  "qt_constructor": "QLabel",  
                   "c": "str(time.time())+'i want to get rendered'"
                 },
                 {
-                  "qt_class_name": "QLabel",  
+                  "qt_constructor": "QLabel",  
                   "c": "len(cameras)"
                 },
                 {
-                  "qt_class_name": "QLabel",  
+                  "qt_constructor": "QLabel",  
                   "for": "value, key in stringarray",
                   "c": "'string arr value '+str(value.value)"
 
                 },
                 {
-                  "qt_class_name": "QVBoxLayout",  
+                  "qt_constructor": "QVBoxLayout",  
                   "for": "obj, index in some_deep_nested_shits",
                   "c": [
                       {
-                        "qt_class_name":"QLabel",
+                        "qt_constructor":"QLabel",
                         "for": "obj, index in obj.yet_more_nested_array",
                         "c": "'yet_more_nested_array'+str(obj.holy_smokes.value)"
                       },
                         {
-                        "qt_class_name":"QLabel",
+                        "qt_constructor":"QLabel",
                         "c":"'lol'"
                       }
                   ]
 
                 },
                 {
-                  "qt_class_name": "QLabel",  
+                  "qt_constructor": "QLabel",  
                   "c": "textasdf.value"
                 },  
                 {
-                  "qt_class_name": "QWidget",  
+                  "qt_constructor": "QWidget",  
                   "mouseMoveEvent" : "self.textasdf.value = 'damn mouse moved x{x} and y{y}'.format(x=event.x(),y=event.y())",
                   "setStyleSheet": "'background-color: '+random_color()",
                   "c": [
                     {
-                    "qt_class_name": "QHBoxLayout",  
+                    "qt_constructor": "QHBoxLayout",  
                     "c": [
                         {
-                            "qt_class_name" : "QVBoxLayout"
+                            "qt_constructor" : "QVBoxLayout"
                         }
                     ]
                     }
                   ]
                 },
                 {
-                  "qt_class_name": "QHBoxLayout",  
+                  "qt_constructor": "QHBoxLayout",  
                   "c": [
                     {
-                        "qt_class_name" : "QVBoxLayout"
+                        "qt_constructor" : "QVBoxLayout"
                     }
                   ]
                 },
                 {
-                  "qt_class_name": "QVBoxLayout",  
+                  "qt_constructor": "QVBoxLayout",  
                   "c": [
                     {
-                        "qt_class_name" : "QHBoxLayout", 
+                        "qt_constructor" : "QHBoxLayout", 
                         "c": [
                             {
-                                "qt_class_name" : "QHBoxLayout"
+                                "qt_constructor" : "QHBoxLayout"
                             }
                         ]
                     },
                     {
-                        "qt_class_name" : "QHBoxLayout", 
+                        "qt_constructor" : "QHBoxLayout", 
                         "c": [
                             {
-                                "qt_class_name" : "QHBoxLayout"
+                                "qt_constructor" : "QHBoxLayout"
                             }
                         ]
                     }
@@ -259,55 +311,24 @@ class Pyqt5_layout:
             }
         """
 
-        self.rendered_layout = self.render_layout()
-
-
     def render_layout(self):
         obj = json.loads(self.layout_json)
-        parent_dict = {
-            "qt_class_name" : "QHBoxLayout"
-        }
-        pyqt5_layout_object_parent = Pyqt5_layout_object(parent_dict, self.data)
-        self.foreach_prop_in_oject(obj, pyqt5_layout_object_parent)
-        return pyqt5_layout_object_parent.qt_object
 
-    def foreach_prop_in_oject(self, object, pyqt5_layout_object_parent):
-        # object should resolve to multiple objects
-        # if('for' in object):
-        # {
-        #     "for": "val, i in cameras", 
-        #     "c": "'fps val is'+val.fps.value"
-        # }
-        # would be converted to 
-        # {
-        #     "c": "'fps cameras[1] is'+cameras[1].fps.value"
-        # }
-        # {
-        #     "c": "'fps cameras[2] is'+cameras[2].fps.value"
-        # }
-        # ...
-        # so we cretae a property called objectinforloop 
-        # {
-        #     "for": "val, i in cameras", 
-        #     "c": "'fps value is'+value.fps.value"
-        # }
-        # converted to 
-        # {
-        #     "c": "'fps value is'+value.fps.value",
-        #     "varname_value_in_for":"val",
-        #     "index_in_for": "1", 
-        #     "array_var_name_in_for": "cameras"
-        # },
-        # {
-        #     "c": "'fps value is'+value.fps.val",
-        #     "varname_value_in_for":"value",
-        #     "index_in_for": "2", 
-        #     "array_var_name_in_for": "cameras"
-        # }
-        # ...
-        # then when evaluating 
+        if(type(obj) != dict):
+            raise Exception('root of layout_json hase to be one single object {...}, not an array')
+        if('for' in obj):
+            raise Exception('root of layout_json must not contain a "for" property')
+        
+        pyqt5_layout_object_parent = self.foreach_prop_in_oject(obj)
+        return pyqt5_layout_object_parent[0].qt_object
 
-        if 'code_statements_before_string_evaluation' in pyqt5_layout_object_parent.dict_object:
+    def foreach_prop_in_oject(self, object, pyqt5_layout_object_parent=None):
+
+
+        if (
+            pyqt5_layout_object_parent != None and 
+            'code_statements_before_string_evaluation' in pyqt5_layout_object_parent.dict_object
+            ):
             code_statements_before_string_evaluation_parent = pyqt5_layout_object_parent.dict_object['code_statements_before_string_evaluation']
         else:
             code_statements_before_string_evaluation_parent = []
@@ -343,9 +364,6 @@ class Pyqt5_layout:
         else:
             pyqt5_layout_objects = [Pyqt5_layout_object(object, self.data)]
 
-        if(len(pyqt5_layout_objects)> 1):
-
-            print(pyqt5_layout_objects)
 
         for pyqt5_layout_object in pyqt5_layout_objects:
 
@@ -356,8 +374,10 @@ class Pyqt5_layout:
                     self.foreach_prop_in_oject(obj, pyqt5_layout_object)
 
             
-            if(pyqt5_layout_object.if_condition_is_true()):
-
+            if(
+                pyqt5_layout_object.if_condition_is_true() and
+                pyqt5_layout_object_parent != None
+                ):
 
                 if(pyqt5_layout_object_parent.qt_class_name == 'QWidget'):                    
                     pyqt5_layout_object_parent.qt_object.setLayout(pyqt5_layout_object.qt_object)
@@ -367,7 +387,7 @@ class Pyqt5_layout:
                     else:
                         pyqt5_layout_object_parent.qt_object.addWidget(pyqt5_layout_object.qt_object)
 
-
+        return pyqt5_layout_objects
 
 class Synced_data_obj():
 
@@ -422,18 +442,16 @@ class Data():
     def __init__(self) -> None:
         self.cameras = []
         self.textasdf = Synced_data_obj('this is text data')
+        self.textforinput = Synced_data_obj('INIT TEXT')
         self.stringarray = [
             Synced_data_obj('stringarray text 1'),
             Synced_data_obj('stringarray text 2'),
-            Synced_data_obj('stringarray text 3'),
-            Synced_data_obj('stringarray text 4')
         ]
         self.some_deep_nested_shits = [
          Some_deep_nested_shit(),
          Some_deep_nested_shit(),
-         Some_deep_nested_shit(),
-         Some_deep_nested_shit(),
         ]
+        self.sliderval = Synced_data_obj(1)
 
     def test_synced_obj(self):
         self.textasdf.value = 'test 1'
@@ -535,18 +553,43 @@ class Pyqt5_app(QWidget):
         self.setLayout(self.layout)
         self.show()
 
+
+    def deleteItemsOfLayout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.setParent(None)
+                else:
+                    self.deleteItemsOfLayout(item.layout())
+
     def reset_layout(self):
         if(hasattr(self, 'render_layout')):
-            self.layout.removeItem(self.render_layout)
-            for i in reversed(range(self.render_layout.count())):
-                if(self.render_layout.itemAt(i).widget() != None):
-                    self.render_layout.itemAt(i).widget().setParent(None)
+
+            # for obj in gc.get_objects():
+            #     if isinstance(obj, QLabel):
+            #         del obj 
+            self.deleteItemsOfLayout(self.render_layout)
+                
+        #     self.layout.removeItem(self.render_layout)
+        #     # for i in reversed(range(self.render_layout.count())):
+        #     #     if(self.render_layout.itemAt(i).widget() != None):
+        #     #         self.render_layout.itemAt(i).widget().setParent(None)
+        #     for i in reversed(range(self.render_layout.count())): 
+        #         widgetToRemove = self.render_layout.itemAt(i).widget()
+        #         if(widgetToRemove != None):
+        #             # remove it from the layout list
+        #             self.render_layout.removeWidget(widgetToRemove)
+        #             # remove it from the gui
+        #             widgetToRemove.setParent(None)
 
     def render_render_layout(self):
 
         if(hasattr(self, 'pyqt5_layout')):
             # print('re rendering layout')
             self.reset_layout()
+            # del self.layout
             self.render_layout = self.pyqt5_layout.render_layout()
             self.layout.addLayout(self.render_layout)
 
@@ -558,3 +601,40 @@ if __name__ == '__main__':
     pyqt5_app = Pyqt5_app()
 
     sys.exit(qApplication.exec_())
+
+
+
+        # object should resolve to multiple objects
+        # if('for' in object):
+        # {
+        #     "for": "val, i in cameras", 
+        #     "c": "'fps val is'+val.fps.value"
+        # }
+        # would be converted to 
+        # {
+        #     "c": "'fps cameras[1] is'+cameras[1].fps.value"
+        # }
+        # {
+        #     "c": "'fps cameras[2] is'+cameras[2].fps.value"
+        # }
+        # ...
+        # so we cretae a property called objectinforloop 
+        # {
+        #     "for": "val, i in cameras", 
+        #     "c": "'fps value is'+value.fps.value"
+        # }
+        # converted to 
+        # {
+        #     "c": "'fps value is'+value.fps.value",
+        #     "varname_value_in_for":"val",
+        #     "index_in_for": "1", 
+        #     "array_var_name_in_for": "cameras"
+        # },
+        # {
+        #     "c": "'fps value is'+value.fps.val",
+        #     "varname_value_in_for":"value",
+        #     "index_in_for": "2", 
+        #     "array_var_name_in_for": "cameras"
+        # }
+        # ...
+        # then when evaluating 
