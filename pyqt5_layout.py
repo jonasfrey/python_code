@@ -47,7 +47,16 @@ class Pyqt5_layout_object:
         "paintEvent",
         "resizeEvent", 
         "textChanged", 
-        "valueChanged"
+        "valueChanged",
+        "sliderMoved"
+    ]
+    qt_class_names_with_setText = [
+        "QLabel", 
+        "QPushButton", 
+        "QLineEdit", 
+    ]
+    qt_class_names_with_setValue = [
+        "QSlider"
     ]
 
     def __init__(self,dict_object, data):
@@ -82,17 +91,20 @@ class Pyqt5_layout_object:
         if(self.wants_to_be_evaluated()):
             function_body = self.data.get_return_function_by_string(self.c, self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
             evaluated_return = str(function_body())
-            # print(evaluated_return)
-            self.qt_object.setText(evaluated_return)
+
+            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setText):
+                self.qt_object.setText(evaluated_return)
+            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setValue):
+                self.qt_object.setValue(int(evaluated_return))
 
         for i in self.dict_object:
             if(hasattr(self.qt_object, i)):
                 if(i in Pyqt5_layout_object.qt_input_events):
                     function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_layout()"])
                     if(i == "valueChanged"):
-                     # function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
+                        function_body_without_rerender = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
                         localattrname = 'i_cannot_connect_this_function_directly_thats_why_i_set_this_attribute_'+str(i)
-                        setattr(self.qt_object, localattrname, function_body)
+                        setattr(self.qt_object, localattrname, function_body_without_rerender)
 
                         self.qt_object.valueChanged.connect(getattr(self.qt_object, localattrname))
                         
@@ -172,7 +184,10 @@ class Pyqt5_layout:
               "c": [
                 { 
                     "qt_constructor": "QSlider(Qt.Horizontal)", 
-                    "valueChanged": "print(11)",
+                    "c": "sliderval.value",
+                    "valueChangedasdf": "print('value '+str(event)+' changed at:'+str(time.time()))",
+                    "valueChanged": "sliderval._value = event",
+                    "sliderMovedasdf": "print('value '+str(event)+' changed at:'+str(time.time()))",
                     "setMinimum" : "1", 
                     "setMaximum" : "10" 
                 },
