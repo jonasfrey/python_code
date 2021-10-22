@@ -46,9 +46,12 @@ class Pyqt5_layout_object:
         "moveEvent",
         "paintEvent",
         "resizeEvent", 
-        "textChanged", 
-        "valueChanged",
-        "sliderMoved"
+        "sliderMoved",
+
+    ]
+    qt_input_events_special = [
+        "textChanged",
+        "valueChanged"
     ]
     qt_class_names_with_setText = [
         "QLabel", 
@@ -85,39 +88,36 @@ class Pyqt5_layout_object:
 
         self.synced_obj_data_path = None 
         self.render_function = None
+
         if(self.is_qt_layout_class_name() == False):
             self.qt_object.setMouseTracking(True)
 
-        if(self.wants_to_be_evaluated()):
-            function_body = self.data.get_return_function_by_string(self.c, self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
-            evaluated_return = str(function_body())
-
-            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setText):
-                self.qt_object.setText(evaluated_return)
-            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setValue):
-                self.qt_object.setValue(int(evaluated_return))
+        self.update_evaluated_value_if_existing()
 
         for i in self.dict_object:
             if(hasattr(self.qt_object, i)):
+                function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_layout()"])
+                is_qt_input_event = False
                 if(i in Pyqt5_layout_object.qt_input_events):
-                    function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_layout()"])
-                    if(i == "valueChanged"):
-                        function_body_without_rerender = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
-                        localattrname = 'i_cannot_connect_this_function_directly_thats_why_i_set_this_attribute_'+str(i)
-                        setattr(self.qt_object, localattrname, function_body_without_rerender)
-
-                        self.qt_object.valueChanged.connect(getattr(self.qt_object, localattrname))
-                        
-                        # self.qt_object.valueChanged.connect(
-                        #     lambda val: function_body(val)
-                        # )
-
-                    else:
-                        setattr(self.qt_object, i, function_body)
+                    is_qt_input_event = True
+                    setattr(self.qt_object, i, function_body)
+                if(i in Pyqt5_layout_object.qt_input_events_special):
+                    # function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
+                    is_qt_input_event = True
+                    # self.qt_object.event = self.qt_object_event_function
+                    localattrname = 'i_cannot_connect_this_function_directly_thats_why_i_set_this_attribute_'+str(i)
+                    def teasdf(event):
+                        print(event)
+                    setattr(self.qt_object, localattrname, function_body)
+                    qt_event_function = getattr(self.qt_object, i)
+                    qt_event_function.connect(getattr(self.qt_object, localattrname))
+                    # self.qt_object.valueChanged.connect(
+                    #     lambda val: function_body(val)
+                    # )
                     # qt_object_fun = getattr(self.qt_object, i)
                     # qt_object_fun.connect(getattr(self.qt_object, localattrname))
                     
-                else: 
+                if(is_qt_input_event == False):
                     function_body = self.data.get_return_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
                     attr = getattr(self.qt_object, i)
                     if(callable(attr)):
@@ -125,6 +125,22 @@ class Pyqt5_layout_object:
                         # print(attr)
                         attr(function_return)
                         # print(attr)
+
+    # def qt_object_event_function(self, event):        
+    #     print(event)
+    #     print(dir(event))
+    #     return True
+
+    def update_evaluated_value_if_existing(self):
+        if(self.wants_to_be_evaluated()):
+            function_body = self.data.get_return_function_by_string(self.c, self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
+            evaluated_return = str(function_body())
+
+            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setText):
+                self.qt_object.setText(evaluated_return)
+
+            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setValue):
+                self.qt_object.setValue(int(evaluated_return))
 
     def get_qt_class_name_by_constructor(self, string):
         parts = string.split('(')
@@ -199,6 +215,10 @@ class Pyqt5_layout:
                     "qt_constructor": "QLineEdit",  
                     "c": "textforinput.value", 
                     "textChanged": "textforinput._value = event"
+                },
+                { 
+                    "qt_constructor": "QLabel",  
+                    "c": "'text is :'+str(textforinput.value)" 
                 },
                 { 
                     "qt_constructor": "QPushButton",  
@@ -581,23 +601,8 @@ class Pyqt5_app(QWidget):
 
     def reset_layout(self):
         if(hasattr(self, 'render_layout')):
-
-            # for obj in gc.get_objects():
-            #     if isinstance(obj, QLabel):
-            #         del obj 
             self.deleteItemsOfLayout(self.render_layout)
                 
-        #     self.layout.removeItem(self.render_layout)
-        #     # for i in reversed(range(self.render_layout.count())):
-        #     #     if(self.render_layout.itemAt(i).widget() != None):
-        #     #         self.render_layout.itemAt(i).widget().setParent(None)
-        #     for i in reversed(range(self.render_layout.count())): 
-        #         widgetToRemove = self.render_layout.itemAt(i).widget()
-        #         if(widgetToRemove != None):
-        #             # remove it from the layout list
-        #             self.render_layout.removeWidget(widgetToRemove)
-        #             # remove it from the gui
-        #             widgetToRemove.setParent(None)
 
     def render_render_layout(self):
 
