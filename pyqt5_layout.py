@@ -14,6 +14,7 @@ import types
 import cv2
 import gc
 import inspect
+import weakref
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
@@ -26,6 +27,8 @@ def rgetattr(obj, attr, *args):
 
 
 class Pyqt5_layout_object: 
+    instances = []
+
     qt_layout_class_names = [
         "QHBoxLayout",
         "QVBoxLayout"
@@ -63,6 +66,7 @@ class Pyqt5_layout_object:
     ]
 
     def __init__(self,dict_object, data):
+        self.__class__.instances.append(self)
         self.data = data
         self.dict_object = dict_object
         self.qt_constructor = dict_object["qt_constructor"]
@@ -188,12 +192,16 @@ class Pyqt5_layout_object:
         else:
             return True
 
+    def re_render_qt_object(self):
+        print(self)
+        self.update_evaluated_value_if_existing()
+
 class Pyqt5_layout:
 
     def __init__(self, data):
 
         self.data = data
-        
+        self.rendered_layout = None
         self.layout_json = """
             {
               "qt_constructor" : "QVBoxLayout", 
@@ -345,9 +353,24 @@ class Pyqt5_layout:
 
             }
         """
+    def render_layout_without_reset(self):
+        for instance in Pyqt5_layout_object.instances:
+            instance.re_render_qt_object()
 
-    def render_layout(self):
-        obj = json.loads(self.layout_json)
+        # for obj in gc.get_objects():
+        #     if(hasattr(obj, 'qt_constructor')):
+        #         print(time.time())
+
+        #     if isinstance(obj, Pyqt5_layout_object):
+        #         print(time.time())
+        #         print(obj)
+        #         obj.re_render_qt_object()
+
+    def get_rendered_layout_from_json(self):
+        if(self.rendered_layout != None):
+            obj = self.rendered_layout
+        else: 
+            obj = json.loads(self.layout_json)
 
         if(type(obj) != dict):
             raise Exception('root of layout_json hase to be one single object {...}, not an array')
@@ -355,10 +378,10 @@ class Pyqt5_layout:
             raise Exception('root of layout_json must not contain a "for" property')
         
         pyqt5_layout_object_parent = self.foreach_prop_in_oject(obj)
+        
         return pyqt5_layout_object_parent[0].qt_object
 
     def foreach_prop_in_oject(self, object, pyqt5_layout_object_parent=None):
-
 
         if (
             pyqt5_layout_object_parent != None and 
@@ -562,8 +585,8 @@ class Pyqt5_app(QWidget):
     instances = []
     @staticmethod
     def re_render_layout():
-      for obj in Pyqt5_app.instances:
-        obj.render_render_layout()
+        for obj in Pyqt5_app.instances:
+            obj.render_layout_without_reset()
 
     def __init__(self):
         self.__class__.instances.append(self)
@@ -584,7 +607,7 @@ class Pyqt5_app(QWidget):
         self.pyqt5_layout = Pyqt5_layout(self.data)
         
         self.layout = QHBoxLayout()
-        self.render_render_layout()
+        self.render_layout_from_json()
         self.setLayout(self.layout)
         self.show()
 
@@ -604,13 +627,15 @@ class Pyqt5_app(QWidget):
             self.deleteItemsOfLayout(self.render_layout)
                 
 
-    def render_render_layout(self):
+    def render_layout_without_reset(self):
+        self.pyqt5_layout.render_layout_without_reset()
 
+    def render_layout_from_json(self):
         if(hasattr(self, 'pyqt5_layout')):
             # print('re rendering layout')
             self.reset_layout()
             # del self.layout
-            self.render_layout = self.pyqt5_layout.render_layout()
+            self.render_layout = self.pyqt5_layout.get_rendered_layout_from_json()
             self.layout.addLayout(self.render_layout)
 
 
