@@ -26,7 +26,7 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
-class Pyqt5_layout_object: 
+class Pyqt5_view_object: 
     instances = []
 
     qt_layout_class_names = [
@@ -100,12 +100,12 @@ class Pyqt5_layout_object:
 
         for i in self.dict_object:
             if(hasattr(self.qt_object, i)):
-                function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_layout()"])
+                function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_view()"])
                 is_qt_input_event = False
-                if(i in Pyqt5_layout_object.qt_input_events):
+                if(i in Pyqt5_view_object.qt_input_events):
                     is_qt_input_event = True
                     setattr(self.qt_object, i, function_body)
-                if(i in Pyqt5_layout_object.qt_input_events_special):
+                if(i in Pyqt5_view_object.qt_input_events_special):
                     # function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
                     is_qt_input_event = True
                     # self.qt_object.event = self.qt_object_event_function
@@ -139,12 +139,14 @@ class Pyqt5_layout_object:
         if(self.wants_to_be_evaluated()):
             function_body = self.data.get_return_function_by_string(self.c, self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
             evaluated_return = str(function_body())
+            self.set_evaluated_return(evaluated_return)
 
-            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setText):
-                self.qt_object.setText(evaluated_return)
+    def set_evaluated_return(self, evaluated_return):
+        if(self.qt_class_name in Pyqt5_view_object.qt_class_names_with_setText):
+            self.qt_object.setText(evaluated_return)
 
-            if(self.qt_class_name in Pyqt5_layout_object.qt_class_names_with_setValue):
-                self.qt_object.setValue(int(evaluated_return))
+        if(self.qt_class_name in Pyqt5_view_object.qt_class_names_with_setValue):
+            self.qt_object.setValue(int(evaluated_return))
 
     def get_qt_class_name_by_constructor(self, string):
         parts = string.split('(')
@@ -180,7 +182,7 @@ class Pyqt5_layout_object:
             # self.type = 'wants_to_be_evaluated'
             # wants to be evaluated 
     def is_qt_layout_class_name(self):
-        return self.qt_class_name in Pyqt5_layout_object.qt_layout_class_names
+        return self.qt_class_name in Pyqt5_view_object.qt_layout_class_names
     
     def if_condition_is_true(self):
         # if condition is true or non existsing 
@@ -196,13 +198,16 @@ class Pyqt5_layout_object:
         print(self)
         self.update_evaluated_value_if_existing()
 
-class Pyqt5_layout:
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+class Pyqt5_view:
 
     def __init__(self, data):
 
         self.data = data
-        self.rendered_layout = None
-        self.layout_json = """
+        self.pyqt5_view_object_parent = None
+        self.view_json = """
             {
               "qt_constructor" : "QVBoxLayout", 
               "c": [
@@ -238,12 +243,30 @@ class Pyqt5_layout:
                     "qt_constructor": "QPushButton",  
                     "c": "'click me'", 
                     "mousePressEvent": "test_synced_obj()", 
-                    "mouseMoveEvent" : "print('damn mouse moved')"
+                    "mouseMoveEvent" : "print('damn mouse moved on butto')"
+                },
+                {
+                  "qt_constructor": "QWidget",  
+                  "setStyleSheet": "'background-color: '+random_color()",
+                  "c": [
+                    { 
+                        "qt_constructor_this_wont_be_possible_since_qwidget_cannot_directly_be_child_of_qwidget": "QLabel",  
+                        "c": "'qlabel directly child of qwidget'" 
+                    },
+                    {
+                    "qt_constructor": "QHBoxLayout",  
+                    "c": [
+                        {
+                            "qt_constructor" : "QVBoxLayout"
+                        }
+                    ]
+                    }
+                  ]
                 },
                 { 
                     "qt_constructor": "QPushButton",  
                     "c": "'len(cameras)'+str(len(cameras))", 
-                    "mousePressEvent": "Pyqt5_app.re_render_layout()" ,
+                    "mousePressEvent": "Pyqt5_app.re_render_view()" ,
                     "mousePressEventdisabled": "print('lel whz is this alreadz called')" 
                 },
                 { 
@@ -265,6 +288,10 @@ class Pyqt5_layout:
                     "qt_constructor": "QPushButton",  
                     "c": "'remove from string array'", 
                     "mousePressEvent": "stringarray.pop(1)"       
+                },
+                { 
+                    "qt_constructor": "QLabel",  
+                    "c": "'len(stringarray):'+str(len(stringarray))" 
                 },
                 {
                     "if": "len(cameras) > 0", 
@@ -353,46 +380,49 @@ class Pyqt5_layout:
 
             }
         """
-    def render_layout_without_reset(self):
-        for instance in Pyqt5_layout_object.instances:
+    def render_view_without_reset(self):
+        for instance in Pyqt5_view_object.instances:
             instance.re_render_qt_object()
 
         # for obj in gc.get_objects():
         #     if(hasattr(obj, 'qt_constructor')):
         #         print(time.time())
 
-        #     if isinstance(obj, Pyqt5_layout_object):
+        #     if isinstance(obj, pyqt5_view_object):
         #         print(time.time())
         #         print(obj)
         #         obj.re_render_qt_object()
 
-    def get_rendered_layout_from_json(self):
-        if(self.rendered_layout != None):
-            obj = self.rendered_layout
-        else: 
-            obj = json.loads(self.layout_json)
+    def get_rendered_view_from_json(self):
+        obj = json.loads(self.view_json)
 
         if(type(obj) != dict):
-            raise Exception('root of layout_json hase to be one single object {...}, not an array')
+            raise Exception('root of view_json hase to be one single object {...}, not an array')
         if('for' in obj):
-            raise Exception('root of layout_json must not contain a "for" property')
+            raise Exception('root of view_json must not contain a "for" property')
         
-        pyqt5_layout_object_parent = self.foreach_prop_in_oject(obj)
-        
-        return pyqt5_layout_object_parent[0].qt_object
+        self.pyqt5_view_object_parent = self.foreach_prop_in_oject(obj)
 
-    def foreach_prop_in_oject(self, object, pyqt5_layout_object_parent=None):
+        # print(self.pyqt5_view_object_parent.toJSON())
+        
+        return self.pyqt5_view_object_parent[0].qt_object
+
+    def foreach_prop_in_oject(self, object, pyqt5_view_object_parent=None):
+        if not "qt_constructor" in object:
+            print('skipping object, no qt_constructor property is set!')
+            return False
 
         if (
-            pyqt5_layout_object_parent != None and 
-            'code_statements_before_string_evaluation' in pyqt5_layout_object_parent.dict_object
+            pyqt5_view_object_parent != None and 
+            'code_statements_before_string_evaluation' in pyqt5_view_object_parent.dict_object
             ):
-            code_statements_before_string_evaluation_parent = pyqt5_layout_object_parent.dict_object['code_statements_before_string_evaluation']
+            print(pyqt5_view_object_parent.qt_class_name)
+            code_statements_before_string_evaluation_parent = pyqt5_view_object_parent.dict_object['code_statements_before_string_evaluation']
         else:
             code_statements_before_string_evaluation_parent = []
 
         if('for' in object):
-            pyqt5_layout_objects = []
+            pyqt5_view_objects = []
             parts = str(object['for']).split(' in ')
 
             array_var_name_in_for = parts.pop(len(parts)-1)
@@ -415,37 +445,42 @@ class Pyqt5_layout:
                 
                 single_for_object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation_parent + [str(value_var_name_in_for)+' = '+str(array_var_name_in_for)+'['+str(key)+']']
 
-                pyqt5_layout_object = Pyqt5_layout_object(single_for_object, self.data)
-                pyqt5_layout_objects.append(pyqt5_layout_object)
+                pyqt5_view_object = Pyqt5_view_object(single_for_object, self.data)
+                pyqt5_view_objects.append(pyqt5_view_object)
                 # print(value)
             
         else:
-            pyqt5_layout_objects = [Pyqt5_layout_object(object, self.data)]
+            pyqt5_view_objects = [Pyqt5_view_object(object, self.data)]
 
 
-        for pyqt5_layout_object in pyqt5_layout_objects:
+        for pyqt5_view_object in pyqt5_view_objects:
 
-            # pyqt5_layout_object = Pyqt5_layout_object(object, self.data)
+            # pyqt5_view_object = pyqt5_view_object(object, self.data)
 
-            if(pyqt5_layout_object.has_children()):
-                for obj in pyqt5_layout_object.c:
-                    self.foreach_prop_in_oject(obj, pyqt5_layout_object)
+            if(pyqt5_view_object.has_children()):
+                for obj in pyqt5_view_object.c:
+                    self.foreach_prop_in_oject(obj, pyqt5_view_object)
 
             
             if(
-                pyqt5_layout_object.if_condition_is_true() and
-                pyqt5_layout_object_parent != None
+                pyqt5_view_object.if_condition_is_true() and
+                pyqt5_view_object_parent != None
                 ):
 
-                if(pyqt5_layout_object_parent.qt_class_name == 'QWidget'):                    
-                    pyqt5_layout_object_parent.qt_object.setLayout(pyqt5_layout_object.qt_object)
+                if(pyqt5_view_object_parent.qt_class_name == 'QWidget'):                    
+                    pyqt5_view_object_parent.qt_object.setLayout(pyqt5_view_object.qt_object)
                 else: 
-                    if(pyqt5_layout_object.is_qt_layout_class_name()):
-                        pyqt5_layout_object_parent.qt_object.addLayout(pyqt5_layout_object.qt_object)
+                    if(pyqt5_view_object.is_qt_layout_class_name()):
+                        pyqt5_view_object_parent.qt_object.addLayout(pyqt5_view_object.qt_object)
                     else:
-                        pyqt5_layout_object_parent.qt_object.addWidget(pyqt5_layout_object.qt_object)
+                        pyqt5_view_object_parent.qt_object.addWidget(pyqt5_view_object.qt_object)
 
-        return pyqt5_layout_objects
+        if (
+            pyqt5_view_object_parent != None 
+        ):
+            pyqt5_view_object_parent.pyqt5_view_object_children = pyqt5_view_objects
+
+        return pyqt5_view_objects
 
 class Synced_data_obj():
 
@@ -460,7 +495,7 @@ class Synced_data_obj():
 
         if(name.startswith(Synced_data_obj.intern_propname_prefix) == False):
             super().__setattr__(Synced_data_obj.intern_propname_prefix+name, value)
-            Pyqt5_app.re_render_layout()
+            Pyqt5_app.re_render_view()
         else:
             super().__setattr__(name, value)
 
@@ -473,7 +508,7 @@ class Synced_data_obj():
             return super().__getattribute__(str(Synced_data_obj.intern_propname_prefix+name))
         else: 
             return super().__getattribute__(name)
-        # re rendering is only neccessary when setter is called ... Pyqt5_app.re_render_layout()
+        # re rendering is only neccessary when setter is called ... Pyqt5_app.re_render_view()
 
 
 class Yet_more_nested():
@@ -483,8 +518,6 @@ class Some_deep_nested_shit():
     def __init__(self) -> None:
         self.aha = Synced_data_obj('asdf')
         self.yet_more_nested_array = [
-            Yet_more_nested(),
-            Yet_more_nested(),
             Yet_more_nested(),
             Yet_more_nested()
         ] 
@@ -584,9 +617,9 @@ class Data():
 class Pyqt5_app(QWidget):
     instances = []
     @staticmethod
-    def re_render_layout():
+    def re_render_view():
         for obj in Pyqt5_app.instances:
-            obj.render_layout_without_reset()
+            obj.render_view_without_reset()
 
     def __init__(self):
         self.__class__.instances.append(self)
@@ -604,11 +637,11 @@ class Pyqt5_app(QWidget):
         if(True):
             self.data.cameras.append(Camera())
         
-        self.pyqt5_layout = Pyqt5_layout(self.data)
+        self.pyqt5_view = Pyqt5_view(self.data)
         
-        self.layout = QHBoxLayout()
-        self.render_layout_from_json()
-        self.setLayout(self.layout)
+        self.q_h_box_layout = QHBoxLayout()
+        self.render_view_from_json()
+        self.setLayout(self.q_h_box_layout)
         self.show()
 
 
@@ -622,21 +655,19 @@ class Pyqt5_app(QWidget):
                 else:
                     self.deleteItemsOfLayout(item.layout())
 
-    def reset_layout(self):
-        if(hasattr(self, 'render_layout')):
-            self.deleteItemsOfLayout(self.render_layout)
+    def clear_view(self):
+        if(hasattr(self, 'render_qt_layout')):
+            self.deleteItemsOfLayout(self.render_qt_layout)
                 
 
-    def render_layout_without_reset(self):
-        self.pyqt5_layout.render_layout_without_reset()
+    def render_view_without_reset(self):
+        self.pyqt5_view.render_view_without_reset()
 
-    def render_layout_from_json(self):
-        if(hasattr(self, 'pyqt5_layout')):
-            # print('re rendering layout')
-            self.reset_layout()
-            # del self.layout
-            self.render_layout = self.pyqt5_layout.get_rendered_layout_from_json()
-            self.layout.addLayout(self.render_layout)
+    def render_view_from_json(self):
+        if(hasattr(self, 'pyqt5_view')):
+            self.clear_view()
+            self.render_view = self.pyqt5_view.get_rendered_view_from_json()
+            self.q_h_box_layout.addLayout(self.render_view)
 
 
 if __name__ == '__main__':
@@ -646,40 +677,3 @@ if __name__ == '__main__':
     pyqt5_app = Pyqt5_app()
 
     sys.exit(qApplication.exec_())
-
-
-
-        # object should resolve to multiple objects
-        # if('for' in object):
-        # {
-        #     "for": "val, i in cameras", 
-        #     "c": "'fps val is'+val.fps.value"
-        # }
-        # would be converted to 
-        # {
-        #     "c": "'fps cameras[1] is'+cameras[1].fps.value"
-        # }
-        # {
-        #     "c": "'fps cameras[2] is'+cameras[2].fps.value"
-        # }
-        # ...
-        # so we cretae a property called objectinforloop 
-        # {
-        #     "for": "val, i in cameras", 
-        #     "c": "'fps value is'+value.fps.value"
-        # }
-        # converted to 
-        # {
-        #     "c": "'fps value is'+value.fps.value",
-        #     "varname_value_in_for":"val",
-        #     "index_in_for": "1", 
-        #     "array_var_name_in_for": "cameras"
-        # },
-        # {
-        #     "c": "'fps value is'+value.fps.val",
-        #     "varname_value_in_for":"value",
-        #     "index_in_for": "2", 
-        #     "array_var_name_in_for": "cameras"
-        # }
-        # ...
-        # then when evaluating 
