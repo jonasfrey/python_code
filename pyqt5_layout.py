@@ -75,7 +75,35 @@ class Pyqt5_view_object:
         self.qt_class_name = self.get_qt_class_name_by_constructor(self.qt_constructor)
         # self.qt_object = globals()[self.qt_class_name]()
         self.qt_constructor_instance_varname = "tmp_qt_constructor_instance"
-        self.qt_object = exec(self.qt_constructor_instance_varname+' = '+self.qt_constructor)        
+        self.qt_object = exec(self.qt_constructor_instance_varname+' = '+self.qt_constructor)  
+        # since we cannot set background color or .hide / .show on QHBoxlayout and QVBoxlayout 
+        # we neet a wrapper of this kind
+        # q_layout
+        #   q_widget <- can be visible toggled with .show / .hide , can have bg color with setStylesheet backgroun-color...
+        #       q_layout
+        #           qt_object <- instance of actual object from view.. label or input or layout or widget , 
+
+        # why 4 additional qt_objects ? 
+        # because the qt_object type is dynamic: layout or qwidget 
+        # and qt allows only the following behaviour with addWidget or addLayout or setLayout
+        # -------------------------------
+        # possible      possible
+        # qt_layout     qt_layout
+        #   qt_laout        qt_widget
+        # possible      not possible
+        # qt_widget     qt_widget
+        #   qt_layout       qt_widget
+
+        self.qt_layuout_great_grand_parent = QVBoxLayout()
+        self.qt_widget_grand_parent = QWidget()
+        self.qt_layout_parent = QVBoxLayout()
+        self.qt_layuout_great_grand_parent.addWidget(self.qt_widget_grand_parent)
+        self.qt_widget_grand_parent.setLayout(self.qt_layout_parent)
+        if(self.is_qt_layout_class_name()):
+            self.qt_layout_parent.addLayout(self.qt_object)
+        else:
+            self.qt_layout_parent.addWidget(self.qt_object)
+
         self.qt_object = locals()[self.qt_constructor_instance_varname]
         # self.qt_object = exec(self.qt_constructor)
         self.code_statements_before_string_evaluation = []
@@ -195,9 +223,12 @@ class Pyqt5_view_object:
             return True
 
     def re_render_qt_object(self):
-        print(self)
-        self.update_evaluated_value_if_existing()
 
+        if(self.if_condition_is_true()):
+            self.qt_widget_grand_parent.show()
+        else:
+            self.qt_widget_grand_parent.hide()
+              
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
@@ -294,9 +325,29 @@ class Pyqt5_view:
                     "c": "'len(stringarray):'+str(len(stringarray))" 
                 },
                 {
-                    "if": "len(cameras) > 0", 
-                    "qt_constructor": "QLabel",  
-                    "c": "str(time.time())+'len cameras is bigger 0'"           
+                    "if": "len(cameras) > 2",
+                    "qt_constructor": "QWidget",  
+                    "c":[
+                        {
+                            "qt_constructor":"QVBoxLayout", 
+                            "c":[
+                                {
+                                    "if": "len(cameras) > 3", 
+                                    "qt_constructor": "QLabel",  
+                                    "c": "str(time.time())+' i show because cameras is bigger 3'"           
+                                },
+                                {
+                                    "if": "len(cameras) > 1", 
+                                    "qt_constructor": "QLabel",  
+                                    "c": "str(time.time())+' i show because cameras is bigger 1'"           
+                                },
+                                {
+                                    "qt_constructor": "QLabel",  
+                                    "c": "str(time.time())+' i show because cameras is bigger 2'"           
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                   "qt_constructor": "QLabel",  
@@ -441,7 +492,7 @@ class Pyqt5_view:
             for key in range(0, length):
                 single_for_object = object.copy()
                 
-                del single_for_object['for']
+                # del single_for_object['for']
                 
                 single_for_object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation_parent + [str(value_var_name_in_for)+' = '+str(array_var_name_in_for)+'['+str(key)+']']
 
@@ -463,17 +514,18 @@ class Pyqt5_view:
 
             
             if(
-                pyqt5_view_object.if_condition_is_true() and
+                # pyqt5_view_object.if_condition_is_true() and since we dont clear on re rendering view, the if has to be considered when evaluating the c 
                 pyqt5_view_object_parent != None
                 ):
 
-                if(pyqt5_view_object_parent.qt_class_name == 'QWidget'):                    
-                    pyqt5_view_object_parent.qt_object.setLayout(pyqt5_view_object.qt_object)
-                else: 
-                    if(pyqt5_view_object.is_qt_layout_class_name()):
-                        pyqt5_view_object_parent.qt_object.addLayout(pyqt5_view_object.qt_object)
-                    else:
-                        pyqt5_view_object_parent.qt_object.addWidget(pyqt5_view_object.qt_object)
+                # if(pyqt5_view_object_parent.qt_class_name == 'QWidget'):                    
+                #     pyqt5_view_object_parent.qt_object.setLayout(pyqt5_view_object.qt_object)
+
+                # if(pyqt5_view_object.is_qt_layout_class_name()):
+                #     pyqt5_view_object_parent.qt_object.addLayout(pyqt5_view_object.qt_object)
+                # if(not pyqt5_view_object.is_qt_layout_class_name()):
+                #     pyqt5_view_object_parent.qt_object.addWidget(pyqt5_view_object.qt_object)
+                pyqt5_view_object_parent.qt_layout_parent.addLayout(pyqt5_view_object.qt_layout_parent)
 
         if (
             pyqt5_view_object_parent != None 
@@ -537,6 +589,10 @@ class Data():
         self.stringarray = [
             Synced_data_obj('stringarray text 1'),
             Synced_data_obj('stringarray text 2'),
+            Synced_data_obj('stringarray text 3'),
+            Synced_data_obj('stringarray text 4'),
+            Synced_data_obj('stringarray text 5'),
+            Synced_data_obj('stringarray text 6'),
         ]
         self.some_deep_nested_shits = [
          Some_deep_nested_shit(),
