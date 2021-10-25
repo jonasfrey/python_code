@@ -1,0 +1,92 @@
+{
+    "qt_constructor": "QVBoxLayout",
+    "setStyleSheet": "'background-color: '+random_color()",
+    "c": [
+        {
+            "qt_constructor": "QVBoxLayout",
+            "for": "val1, key in stringarray",
+            "code_statements_before_string_evaluation": [],
+            "rendered_objects": [
+                {
+                    "qt_constructor": "QVBoxLayout",
+                    "c": [
+                        {
+                            "for": "value_asdf_test, key in stringarray",
+                            "qt_constructor": "QLabel",
+                            "code_statements_before_string_evaluation": [],
+                            "rendered_objects": [
+                                {
+                                    "qt_constructor": "QLabel",
+                                    "code_statements_before_string_evaluation": [
+                                        "value_asdf_test = stringarray[0]"
+                                    ],
+                                    "generated_by_for_statement": "value_asdf_test, key in stringarray",
+                                    "array_var_name_in_for_statement": "stringarray",
+                                    "value_var_name_in_for_statement": "value_asdf_test",
+                                    "index_var_name_in_for_statement": "key"
+                                },
+                                {
+                                    "qt_constructor": "QLabel",
+                                    "code_statements_before_string_evaluation": [
+                                        "value_asdf_test = stringarray[1]"
+                                    ],
+                                    "generated_by_for_statement": "value_asdf_test, key in stringarray",
+                                    "array_var_name_in_for_statement": "stringarray",
+                                    "value_var_name_in_for_statement": "value_asdf_test",
+                                    "index_var_name_in_for_statement": "key"
+                                }
+                            ]
+                        }
+                    ],
+                    "code_statements_before_string_evaluation": [
+                        "val1 = stringarray[0]"
+                    ],
+                    "generated_by_for_statement": "val1, key in stringarray",
+                    "array_var_name_in_for_statement": "stringarray",
+                    "value_var_name_in_for_statement": "val1",
+                    "index_var_name_in_for_statement": "key"
+                },
+                {
+                    "qt_constructor": "QVBoxLayout",
+                    "c": [
+                        {
+                            "for": "value_asdf_test, key in stringarray",
+                            "qt_constructor": "QLabel",
+                            "code_statements_before_string_evaluation": [],
+                            "rendered_objects": [
+                                {
+                                    "qt_constructor": "QLabel",
+                                    "code_statements_before_string_evaluation": [
+                                        "value_asdf_test = stringarray[0]"
+                                    ],
+                                    "generated_by_for_statement": "value_asdf_test, key in stringarray",
+                                    "array_var_name_in_for_statement": "stringarray",
+                                    "value_var_name_in_for_statement": "value_asdf_test",
+                                    "index_var_name_in_for_statement": "key"
+                                },
+                                {
+                                    "qt_constructor": "QLabel",
+                                    "code_statements_before_string_evaluation": [
+                                        "value_asdf_test = stringarray[1]"
+                                    ],
+                                    "generated_by_for_statement": "value_asdf_test, key in stringarray",
+                                    "array_var_name_in_for_statement": "stringarray",
+                                    "value_var_name_in_for_statement": "value_asdf_test",
+                                    "index_var_name_in_for_statement": "key"
+                                }
+                            ]
+                        }
+                    ],
+                    "code_statements_before_string_evaluation": [
+                        "val1 = stringarray[1]"
+                    ],
+                    "generated_by_for_statement": "val1, key in stringarray",
+                    "array_var_name_in_for_statement": "stringarray",
+                    "value_var_name_in_for_statement": "val1",
+                    "index_var_name_in_for_statement": "key"
+                }
+            ]
+        }
+    ],
+    "code_statements_before_string_evaluation": []
+}

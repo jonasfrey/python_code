@@ -10,8 +10,8 @@ def window():
 
     # test_layout_widget_parent_child_behaviour(q_main_widget)
     # test_widget_set_two_layouts(q_main_widget)
-    test_layout_set_two_layouts(q_main_widget)
-
+    # test_layout_set_two_layouts(q_main_widget)
+    test_widget_set_multiple_layouts(q_main_widget)
     q_main_widget.setWindowTitle("QLabel Demo")
     q_main_widget.show()
     sys.exit(app.exec_())
@@ -33,6 +33,25 @@ def test_layout_set_two_layouts(q_main_widget):
     main_layout.addLayout(l2)
 
     q_main_widget.setLayout(main_layout) 
+
+
+def test_widget_set_multiple_layouts(q_main_widget):
+    main_layout = QVBoxLayout()
+    q_main_widget.setLayout(main_layout)
+    inner_widget = QWidget()
+    main_layout.addWidget(inner_widget)
+
+    lay1= QVBoxLayout()
+    lay2= QVBoxLayout()
+    l1 = QLabel('asdf1')
+    l2 = QLabel('asdf2')
+    lay1.addWidget(l1)
+    lay2.addWidget(l2)
+    inner_widget.setLayout(lay1)
+    # setting a second layout on a widget wont work
+    # QWidget::setLayout: Attempting to set QLayout "" on QWidget "", which already has a layout
+    inner_widget.setLayout(lay2)
+
 
 def test_layout_widget_parent_child_behaviour(q_main_widget):
     q_widget_2 = QWidget()

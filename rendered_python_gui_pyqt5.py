@@ -26,6 +26,7 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
+
 class Pyqt5_view_object: 
     instances = []
 
@@ -65,11 +66,12 @@ class Pyqt5_view_object:
         "QSlider"
     ]
 
-    def __init__(self,dict_object, data):
+    def __init__(self, dict_object, data):
         self.__class__.instances.append(self)
         self.data = data
         self.dict_object = dict_object
         self.qt_constructor = dict_object["qt_constructor"]
+        self.qt_layout_added = False
         if(self.qt_constructor.find('(') == -1):
             self.qt_constructor = self.qt_constructor + '()'
         self.qt_class_name = self.get_qt_class_name_by_constructor(self.qt_constructor)
@@ -120,6 +122,7 @@ class Pyqt5_view_object:
             self.c = dict_object["c"] # c is shor for children, can be string, or data path
         else:
             self.c = None
+
         if 'code_statements_before_string_evaluation' in self.dict_object:
             self.code_statements_before_string_evaluation = self.dict_object['code_statements_before_string_evaluation']
         if 'code_statements_after_string_evaluation' in self.dict_object:
@@ -262,13 +265,109 @@ class Pyqt5_view_object:
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
+
+class View_object:
+    def __init__(self, parent_view_object, original_object, data):
+        self.child_view_objects = []
+        # self.parent_view_object = parent_view_object
+        self.parent_view_object = None
+        self.original_object = original_object
+        self.data = data
+        self.for_statement = None
+        self.pyqt5_view_objects = []
+        
+        self.update_pyqt5_view_objects()
+
+
+    def get_parent_view_object_pyqt5_view_objects(self):
+        if(self.parent_view_object != None):
+            arr = self.parent_view_object.pyqt5_view_objects
+        else:
+            arr = []
+
+        return arr
+    def handle_for_statement_update_pyqt5_view_objects(self):
+        if('index_in_array' in self.original_object):
+            print("self.original_object['index_in_array']")
+            print(self.original_object['index_in_array'])
+
+        parts = str(self.original_object['for']).split(' in ')
+        self.array_var_name_in_for_statement = parts.pop(len(parts)-1)
+        parts = parts.pop(0).split(',')
+        self.value_var_name_in_for_statement = parts.pop(0).strip()
+        self.index_var_name_in_for_statement = parts.pop(0).strip()
+
+        code_statements_before_string_evaluation = self.get_code_statements_before_string_evaluation_by_array_index(0)
+        print(code_statements_before_string_evaluation)
+
+        evaluated_array_var_len = self.data.get_return_function_by_string(
+            "len("+self.array_var_name_in_for_statement+")", 
+            code_statements_before_string_evaluation
+        )()
+
+        print(str(evaluated_array_var_len)+': length of array_var_name_in_for')
+        print(str(len(self.pyqt5_view_objects))+': length of actual array')
+        if(evaluated_array_var_len == len(self.pyqt5_view_objects)):
+            return False
+        # print(length)
+        # exit()
+
+        for key in range(len(self.pyqt5_view_objects), evaluated_array_var_len):
+            original_object_copy = self.original_object.copy()
+
+            original_object_copy['index_in_array'] = key
+        
+            #  code_statements_before_string_evaluation = self.get_code_statements_before_string_evaluation_by_array_index(key)
+
+            original_object_copy['code_statements_before_string_evaluation'] = (
+                code_statements_before_string_evaluation + 
+                [str(self.value_var_name_in_for_statement)+' = '+str(self.array_var_name_in_for_statement)+'['+str(key)+']']
+                ) 
+
+            pyqt5_view_object = Pyqt5_view_object(original_object_copy, self.data)
+            self.pyqt5_view_objects.append(pyqt5_view_object)
+            # print(value)
+    
+    def has_parent_view_object(self):
+        return self.parent_view_object != None
+
+    def get_code_statements_before_string_evaluation_by_array_index(self, array_index):
+        
+        arr = []
+
+        if self.has_parent_view_object():
+            # print(len(self.parent_view_object.pyqt5_view_objects))
+            parent_view_object_pyqt5_view_object = self.parent_view_object.pyqt5_view_objects[array_index]
+            if 'code_statements_before_string_evaluation' in parent_view_object_pyqt5_view_object.dict_object:
+                # print(parent_view_object_pyqt5_view_object.dict_object['code_statements_before_string_evaluation'])
+                arr = parent_view_object_pyqt5_view_object.dict_object['code_statements_before_string_evaluation']
+        
+        return arr
+
+    def update_pyqt5_view_objects(self):
+        
+        # print('json or original_object')
+        # print(json.dumps(self.original_object))
+        # print(type(self.original_object['qt_constructor']))
+        # if the original_object has a for property we have to handle it here
+        if('for' in self.original_object):
+            self.handle_for_statement_update_pyqt5_view_objects()
+        else: 
+            self.original_object['code_statements_before_string_evaluation'] = self.get_code_statements_before_string_evaluation_by_array_index(0)
+            self.original_object['index_in_array'] = 0
+            self.pyqt5_view_objects = [Pyqt5_view_object(self.original_object, self.data)]
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+
 class Pyqt5_view:
 
     def __init__(self, data):
 
         self.data = data
         self.pyqt5_view_object_parent = None
-        self.view_json = """
+        self.view_json_tmpdisbld = """
             {
                 "qt_constructor" : "QVBoxLayout", 
                 "setStyleSheet": "'background-color: '+random_color()",
@@ -405,73 +504,69 @@ class Pyqt5_view:
                         "c": "'len(stringarray):'+str(len(stringarray))" 
                     },
                     {
-                    "qt_constructor": "QLabel",  
-                    "c": "str(time.time())+'i want to get rendered'"
+                        "qt_constructor": "QLabel",  
+                        "c": "str(time.time())+'i want to get rendered'"
                     },
                     {
-                    "qt_constructor": "QLabel",  
-                    "c": "len(cameras)"
+                        "qt_constructor": "QLabel",  
+                        "c": "len(cameras)"
                     },
                     {
-                    "qt_constructor": "QLabel",  
-                    "for": "value, key in stringarray",
-                    "c": "'string arr value '+str(value.value)"
-
-                    },
-                    {
-                    "qt_constructor": "QVBoxLayout",  
-                    "for": "obj, index in some_deep_nested_shits",
-                    "c": [
-                        {
-                            "qt_constructor":"QLabel",
-                            "for": "obj, index in obj.yet_more_nested_array",
-                            "c": "'yet_more_nested_array'+str(obj.holy_smokes.value)"
-                        },
+                        "qt_constructor": "QHBoxLayout",  
+                        "for": "value_asdf_test, key in stringarray",
+                        "c": [
                             {
-                            "qt_constructor":"QLabel",
-                            "c":"'lol'"
-                        }
-                    ]
-
+                                "qt_constructor":"QLabel", 
+                                "c":"'str arr val '+str(value_asdf_test.value)"
+                            }
+                        ]
                     },
                     {
-                    "qt_constructor": "QLabel",  
-                    "c": "textasdf.value"
+                        "qt_constructor": "QLabel",  
+                        "c": "textasdf.value"
                     },  
                     {
-                    "qt_constructor": "QHBoxLayout",  
-                    "c": [
-                        {
-                            "qt_constructor" : "QVBoxLayout"
-                        }
-                    ]
-                    },
-                    {
-                    "qt_constructor": "QVBoxLayout",  
-                    "c": [
-                        {
-                            "qt_constructor" : "QHBoxLayout", 
-                            "c": [
-                                {
-                                    "qt_constructor" : "QHBoxLayout"
-                                }
-                            ]
-                        },
-                        {
-                            "qt_constructor" : "QHBoxLayout", 
-                            "c": [
-                                {
-                                    "qt_constructor" : "QHBoxLayout"
-                                }
-                            ]
-                        }
-                    ]
+                        "qt_constructor": "QVBoxLayout",  
+                        "c": [
+                            {
+                                "qt_constructor" : "QHBoxLayout", 
+                                "c": [
+                                    {
+                                        "qt_constructor" : "QHBoxLayout"
+                                    }
+                                ]
+                            },
+                            {
+                                "qt_constructor" : "QHBoxLayout", 
+                                "c": [
+                                    {
+                                        "qt_constructor" : "QHBoxLayout"
+                                    }
+                                ]
+                            }
+                        ]
                     }
                 ]
             }
         """
+        self.view_json = """
+            
+                {
+                    "qt_constructor" : "QHBoxLayout", 
+                    "for": "val1, key in stringarray",
+                    "c":[
+                        {
+                            "for": "value_asdf_test, key in stringarray",
+                            "qt_constructor":"QLabel", 
+                            "c":"'str arr val '+str(value_asdf_test.value)"
+                        }
+                    ]
+                }
+            
+        """
+
     def render_view_without_reset(self):
-        self.recursive_update_for_loops(self.pyqt5_view_object_parent[0])
+        # self.recursive_update_for_loops(self.pyqt5_view_object_parent[0])
         for instance in Pyqt5_view_object.instances:
             instance.re_render_qt_object()
 
@@ -485,22 +580,196 @@ class Pyqt5_view:
         #         obj.re_render_qt_object()
 
     def get_rendered_view_from_json(self):
-        obj = json.loads(self.view_json)
+        self.original_object = json.loads(self.view_json)
 
-        if(type(obj) != dict):
-            raise Exception('root of view_json hase to be one single object {...}, not an array')
-        if('for' in obj):
-            raise Exception('root of view_json must not contain a "for" property')
+        # if(type(self.original_object) != dict):
+        #     raise Exception('root of view_json hase to be one single object {...}, not an array')
+        # if('for' in self.original_object):
+        #     raise Exception('root of view_json must not contain a "for" property')
+        self.original_object_copy = (self.original_object).copy()
+
+        newobj = self.recursive_update_rendered_objects(self.original_object_copy)
         
-        self.pyqt5_view_object_parent = self.foreach_prop_in_oject(obj)
+
+        # self.data.stringarray.append(Synced_data_obj('stringarray text 3'))
+        # self.data.stringarray.append(Synced_data_obj('stringarray text 4'))
         
-        # after initialization we have to render once 
-        self.render_view_without_reset()
+        # self.recursive_update_rendered_objects(self.original_object_copy)
+
+        self.recursive_check_rendered_objects(newobj)
+
+        # self.recursive_update_rendered_objects(self.original_object_copy)
+
+        # self.parent_view_object = self.recursive_build_view_objects(self.original_object_copy)
+        # self.recursive_pyqt5_addLayout(self.parent_view_object)
+
+        # # after initialization we have to render once 
+        # self.render_view_without_reset()
 
         # print(self.pyqt5_view_object_parent.toJSON())
         
-        return self.pyqt5_view_object_parent[0].qt_layout_great_grand_parent
+        return self.parent_view_object.pyqt5_view_objects[0].qt_layout_great_grand_parent
+
+    def recursive_check_rendered_objects(self, obj):
+        f = open(str(time.time())+"recursive_check_rendered_objects_json.json", "w")
+        f.write(json.dumps(obj, sort_keys=True, indent=4))
+        f.close()
+
+        print("file written")
+        exit()
+        # print(json.dumps(original_object))
+        # if(len(original_object['rendered_objects']) > 1):
+        #     for obj in original_object['rendered_objects']:
+        #         print((obj['code_statements_before_string_evaluation']))
+        #         self.recursive_check_rendered_objects(obj)
+        # else:
+        #     self.recursive_check_rendered_objects(original_object['rendered_objects'][0])
+
+    def recursive_update_rendered_objects(self, original_object):
+        if not "qt_constructor" in original_object:
+            print('skipping dict_object, no qt_constructor property is set!')
+            return False
+
+        # print("original_object['qt_constructor']")
+        # print(original_object['qt_constructor'])
+
+
+        if( 'code_statements_before_string_evaluation' not in original_object):
+            code_statements_before_string_evaluation = []
+        else:
+            code_statements_before_string_evaluation = original_object['code_statements_before_string_evaluation'].copy()
+
+        # print(code_statements_before_string_evaluation)
+        if('for' in original_object):
+
+            original_object['rendered_objects'] = []
+            
+            parts = str(original_object['for']).split(' in ')
+            array_var_name_in_for_statement = parts.pop(len(parts)-1)
+            parts = parts.pop(0).split(',')
+            value_var_name_in_for_statement = parts.pop(0).strip()
+            index_var_name_in_for_statement = parts.pop(0).strip()
+
+            evaluated_array_var_len = self.data.get_return_function_by_string(
+                "len("+array_var_name_in_for_statement+")",
+                code_statements_before_string_evaluation
+            )()
+
+            for key in range(0, evaluated_array_var_len):
+                
+                # since we are in a for loop we have to copy again
+                original_object_copy =  copy.deepcopy(original_object)
+                # we have to remove the for property now to prevent circular reference
+                del original_object_copy['for']
+                del original_object_copy['rendered_objects']
+               
+
+                # instead we rename the prop to generated_by_for_statement
+                original_object_copy['generated_by_for_statement'] = original_object['for']
+            
+                original_object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
+                original_object_copy['value_var_name_in_for_statement'] = value_var_name_in_for_statement
+                original_object_copy['index_var_name_in_for_statement'] = index_var_name_in_for_statement
+                original_object_copy['index_number_in_for_loop'] = key
+
+                original_object_copy['code_statements_before_string_evaluation'] = (
+                    code_statements_before_string_evaluation + 
+                    [str(value_var_name_in_for_statement)+
+                    ' = '+str(array_var_name_in_for_statement)+
+                    '['+str(key)+']']
+                    ) 
+                
+                print("original_object_copy['code_statements_before_string_evaluation']")
+                print(original_object_copy['code_statements_before_string_evaluation'])
+                print(id(original_object_copy))
+                original_object_copy['python_id'] = id(original_object_copy)
+
+                original_object['rendered_objects'].insert(key, original_object_copy)
+                # print(value)
+        # else: 
+        #     original_object['rendered_objects'].append(original_object_copy)
+
+        if('for' in original_object):
+            if 'c' in original_object:
+                # since we have the rendered_objects[key].c we dont need the c anymore
+                del original_object['c']
+
+        if('for' in original_object):
+            for rendered_object in original_object['rendered_objects']:
+                if 'c' in rendered_object:
+                    stmnts = (rendered_object['code_statements_before_string_evaluation']).copy()
+                    print("stmnts")
+                    print(stmnts)
+                    if(type(rendered_object['c']) == list): 
+                        for child_original_object in rendered_object['c']:
+                            # print(rendered_object['code_statements_before_string_evaluation'])
+                            child_original_object['code_statements_before_string_evaluation'] = stmnts
+                            child_original_object = self.recursive_update_rendered_objects(child_original_object)
+                            
+        else:
+            if 'c' in original_object:
+                if(type(original_object['c']) == list): 
+                    for child_original_object in original_object['c']:
+                        child_original_object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation.copy()
+                        child_original_object = self.recursive_update_rendered_objects(child_original_object)
+
+        # def  asdf(obj , parentobj):
+        #     self.recursive_update_rendered_objects(obj, parentobj)
+        # self.foreach_rendered_object(original_object, asdf)
+
+        return original_object
+
+    def foreach_rendered_object(self, object, callback):
     
+        # a rendered object is either if the object has a for/rendered_objects array
+        # or the object itself
+        if('rendered_objects' in object):
+            for rendered_object in object['rendered_objects']:
+                if 'c' in rendered_object:
+                    if(type(rendered_object['c']) == list): 
+                        for child_original_object in rendered_object['c']:
+                            callback(child_original_object, object)
+                            
+        else:
+            if 'c' in object:
+                if(type(object['c']) == list): 
+                    for child_original_object in object['c']:
+                        callback(child_original_object, object)
+
+
+
+    def recursive_build_view_objects(self, original_object, parent_view_object = None):
+
+        if not "qt_constructor" in original_object:
+            print('skipping dict_object, no qt_constructor property is set!')
+            return False
+
+        view_object = View_object(parent_view_object, original_object, self.data)
+
+        if 'c' in original_object:
+            if(type(original_object['c']) == list): 
+                for child_original_object in original_object['c']:
+                    child_view_object = self.recursive_build_view_objects(
+                        child_original_object, 
+                        view_object
+                        ) 
+                    if(child_view_object):
+                        view_object.child_view_objects.append(
+                            child_view_object
+                        )
+
+        return view_object
+        
+    def recursive_pyqt5_addLayout(self, view_object):
+        if(view_object.parent_view_object != None):
+            for pyqt5_view_object in view_object.pyqt5_view_objects:
+                view_object.parent_view_object.pyqt5_view_objects[0].qt_object.addLayout(
+                    pyqt5_view_object.qt_layout_great_grand_parent
+                    )
+
+        for child_view_object in view_object.child_view_objects:
+            self.recursive_pyqt5_addLayout(child_view_object)
+
     def recursive_update_for_loops(self, pyqt5_view_object):
 
         for instance in Pyqt5_view_object.instances:
@@ -638,14 +907,17 @@ class Synced_data_obj():
 
 
 class Yet_more_nested():
-    def __init__(self) -> None:
-        self.holy_smokes = Synced_data_obj('true dat')
+    def __init__(self, id) -> None:
+        self.id = id
+        self.whichstring = Synced_data_obj('im Yet_more_nested, my id is'+str(self.id))
 class Some_deep_nested_shit():
-    def __init__(self) -> None:
+    def __init__(self, id) -> None:
+        self.id = id
+        self.whichstring = Synced_data_obj('im Some_deep_nested_shit, my id is'+str(self.id))
         self.aha = Synced_data_obj('asdf')
         self.yet_more_nested_array = [
-            Yet_more_nested(),
-            Yet_more_nested()
+            Yet_more_nested(1),
+            Yet_more_nested(2)
         ] 
 class Camera(): 
     def __init__(self) -> None:
@@ -657,22 +929,18 @@ class Camera():
 
 class Data():
     def __init__(self) -> None:
-        self.cameras = []
-        self.textasdf = Synced_data_obj('this is text data')
-        self.textforinput = Synced_data_obj('INIT TEXT')
+        # self.cameras = []
+        # self.textasdf = Synced_data_obj('this is text data')
+        # self.textforinput = Synced_data_obj('INIT TEXT')
         self.stringarray = [
             Synced_data_obj('stringarray text 1'),
             Synced_data_obj('stringarray text 2'),
-            Synced_data_obj('stringarray text 3'),
-            Synced_data_obj('stringarray text 4'),
-            Synced_data_obj('stringarray text 5'),
-            Synced_data_obj('stringarray text 6'),
         ]
-        self.some_deep_nested_shits = [
-         Some_deep_nested_shit(),
-         Some_deep_nested_shit(),
-        ]
-        self.sliderval = Synced_data_obj(1)
+        # self.some_deep_nested_shits = [
+        #  Some_deep_nested_shit(1),
+        #  Some_deep_nested_shit(2),
+        # ]
+        # self.sliderval = Synced_data_obj(1)
 
     def test_synced_obj(self):
         self.textasdf.value = 'test 1'
@@ -764,8 +1032,8 @@ class Pyqt5_app(QWidget):
         
         self.data = Data()
         
-        if(True):
-            self.data.cameras.append(Camera())
+        # if(True):
+        #     self.data.cameras.append(Camera())
         
         self.pyqt5_view = Pyqt5_view(self.data)
         
@@ -807,3 +1075,106 @@ if __name__ == '__main__':
     pyqt5_app = Pyqt5_app()
 
     sys.exit(qApplication.exec_())
+
+"""
+        {
+            "qt_constructor": "QVBoxLayout",  
+            "for": "obj1, index in some_deep_nested_shits",
+            "c": [
+                {
+                    "qt_constructor":"QLabel",
+                    "c":"obj1.whichstring.value"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "for": "obj2, index in obj1.yet_more_nested_array",
+                    "c": "'yet_more_nested_array'+str(obj2.whichstring.value)"
+                },
+            ]
+
+        },
+        lets assume 
+        some_deep_nested_shits = [o1,o2,o3]
+        and
+        yet_more_nested_array = [n1,n2,n3,n4]
+
+        would result in 
+        {
+            "qt_constructor": "QVBoxLayout",  
+            "c": [
+                {
+                    "qt_constructor":"QLabel",
+                    "c":"o1"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n1"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n2"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n3"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n4"
+                },
+            ]
+
+        },
+        {
+            "qt_constructor": "QVBoxLayout",  
+            "c": [
+                {
+                    "qt_constructor":"QLabel",
+                    "c":"o2"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n1"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n2"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n3"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n4"
+                },
+            ]
+
+        },
+        {
+            "qt_constructor": "QVBoxLayout",  
+            "c": [
+                {
+                    "qt_constructor":"QLabel",
+                    "c":"o3"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n1"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n2"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n3"
+                },
+                {
+                    "qt_constructor":"QLabel",
+                    "c": "n4"
+                },
+            ]
+
+        },
+"""
