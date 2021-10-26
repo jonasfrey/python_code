@@ -588,26 +588,35 @@ class Pyqt5_view:
         #     raise Exception('root of view_json must not contain a "for" property')
         self.original_object_copy = (self.original_object).copy()
 
-        newobj = self.recursive_update_rendered_objects(self.original_object_copy)
+        self.recursive_update_for_statement_objects(self.original_object_copy)
         
+        self.recursive_check_rendered_objects(self.original_object_copy)
 
-        # self.data.stringarray.append(Synced_data_obj('stringarray text 3'))
-        # self.data.stringarray.append(Synced_data_obj('stringarray text 4'))
-        
-        # self.recursive_update_rendered_objects(self.original_object_copy)
+        print('testing list.append')
+        self.data.stringarray.append(Synced_data_obj('stringarray text 3'))
+        self.data.stringarray.append(Synced_data_obj('stringarray text 4'))
 
-        self.recursive_check_rendered_objects(newobj)
+        self.recursive_update_for_statement_objects(self.original_object_copy)
+        self.recursive_check_rendered_objects(self.original_object_copy)
 
-        # self.recursive_update_rendered_objects(self.original_object_copy)
+        print('testing list.pop')
+        self.data.stringarray.pop(0)
+        self.data.stringarray.pop(2)
 
-        # self.parent_view_object = self.recursive_build_view_objects(self.original_object_copy)
-        # self.recursive_pyqt5_addLayout(self.parent_view_object)
+        self.recursive_update_for_statement_objects(self.original_object_copy)
+        self.recursive_check_rendered_objects(self.original_object_copy)
 
-        # # after initialization we have to render once 
-        # self.render_view_without_reset()
 
-        # print(self.pyqt5_view_object_parent.toJSON())
-        
+        print('testing list = ... / setattr')
+        self.data.stringarray = [
+            Synced_data_obj('text 1'),
+            Synced_data_obj('text 2'),
+            Synced_data_obj('text 3'),
+        ]
+        self.recursive_update_for_statement_objects(self.original_object_copy)
+        self.recursive_check_rendered_objects(self.original_object_copy)
+
+        exit()
         return self.parent_view_object.pyqt5_view_objects[0].qt_layout_great_grand_parent
 
     def recursive_check_rendered_objects(self, obj):
@@ -616,126 +625,90 @@ class Pyqt5_view:
         f.close()
 
         print("file written")
-        exit()
-        # print(json.dumps(original_object))
-        # if(len(original_object['rendered_objects']) > 1):
-        #     for obj in original_object['rendered_objects']:
-        #         print((obj['code_statements_before_string_evaluation']))
-        #         self.recursive_check_rendered_objects(obj)
-        # else:
-        #     self.recursive_check_rendered_objects(original_object['rendered_objects'][0])
+    
+    def recursive_update_for_statement_objects(self, object, parent_object=None):
 
-    def recursive_update_rendered_objects(self, original_object):
-        if not "qt_constructor" in original_object:
-            print('skipping dict_object, no qt_constructor property is set!')
-            return False
-
-        # print("original_object['qt_constructor']")
-        # print(original_object['qt_constructor'])
-
-
-        if( 'code_statements_before_string_evaluation' not in original_object):
+        if(parent_object == None):
             code_statements_before_string_evaluation = []
         else:
-            code_statements_before_string_evaluation = original_object['code_statements_before_string_evaluation'].copy()
+            code_statements_before_string_evaluation = parent_object['code_statements_before_string_evaluation'].copy()
+        # carry property down the nested objects
+        print(code_statements_before_string_evaluation)
+        object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation.copy()
 
         # print(code_statements_before_string_evaluation)
-        if('for' in original_object):
+        if('for' in object):
 
-            original_object['rendered_objects'] = []
-            
-            parts = str(original_object['for']).split(' in ')
+            if('for_statement_objects' in object):
+                # the for statements were already updated once, but the data array could have changed
+                print('asdf')
+
+            if('for_statement_objects' not in object):
+                
+                object['for_statement_objects'] = []
+
+            # append object that came new into the array/list
+            # get parts of for statements
+            parts = str(object['for']).split(' in ')
             array_var_name_in_for_statement = parts.pop(len(parts)-1)
             parts = parts.pop(0).split(',')
             value_var_name_in_for_statement = parts.pop(0).strip()
             index_var_name_in_for_statement = parts.pop(0).strip()
-
+            
+            # get the evaluated length of data array
             evaluated_array_var_len = self.data.get_return_function_by_string(
                 "len("+array_var_name_in_for_statement+")",
                 code_statements_before_string_evaluation
             )()
+            print("evaluated_array_var_len")
+            print(evaluated_array_var_len)
 
-            for key in range(0, evaluated_array_var_len):
-                
-                # since we are in a for loop we have to copy again
-                original_object_copy =  copy.deepcopy(original_object)
+            print(len(object['for_statement_objects']))
+            for key in range(len(object['for_statement_objects']), evaluated_array_var_len):
+                print("key")
+                print(key)
+                # important use deepcopy to copy the object
+                object_copy = copy.deepcopy(object)
                 # we have to remove the for property now to prevent circular reference
-                del original_object_copy['for']
-                del original_object_copy['rendered_objects']
-               
+                del object_copy['for_statement_objects']
+                # add parts of the for statement
+                object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
+                object_copy['value_var_name_in_for_statement'] = value_var_name_in_for_statement
+                object_copy['index_var_name_in_for_statement'] = index_var_name_in_for_statement
+                object_copy['index_number_in_for_loop'] = key
 
-                # instead we rename the prop to generated_by_for_statement
-                original_object_copy['generated_by_for_statement'] = original_object['for']
-            
-                original_object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
-                original_object_copy['value_var_name_in_for_statement'] = value_var_name_in_for_statement
-                original_object_copy['index_var_name_in_for_statement'] = index_var_name_in_for_statement
-                original_object_copy['index_number_in_for_loop'] = key
-
-                original_object_copy['code_statements_before_string_evaluation'] = (
+                object_copy['code_statements_before_string_evaluation'] = (
                     code_statements_before_string_evaluation + 
                     [str(value_var_name_in_for_statement)+
                     ' = '+str(array_var_name_in_for_statement)+
                     '['+str(key)+']']
                     ) 
                 
-                print("original_object_copy['code_statements_before_string_evaluation']")
-                print(original_object_copy['code_statements_before_string_evaluation'])
-                print(id(original_object_copy))
-                original_object_copy['python_id'] = id(original_object_copy)
+                # insert into for_statement_objects list
+                object['for_statement_objects'].insert(key, object_copy)
 
-                original_object['rendered_objects'].insert(key, original_object_copy)
-                # print(value)
-        # else: 
-        #     original_object['rendered_objects'].append(original_object_copy)
+        # if('for_statement_objects' in object):
+        #     # if the object has children 'c' they will be in each object in the for_statement_objects
+        #     if 'c' in object:
+        #         # since we have the rendered_objects[key].c we dont need the c anymore
+        #         # renaming it to 'disable' it , we still need access later
+        #         object['c'+'_before_function_'+str(current_function_name)] = object['c']
+        #         del object['c']
 
-        if('for' in original_object):
-            if 'c' in original_object:
-                # since we have the rendered_objects[key].c we dont need the c anymore
-                del original_object['c']
-
-        if('for' in original_object):
-            for rendered_object in original_object['rendered_objects']:
-                if 'c' in rendered_object:
-                    stmnts = (rendered_object['code_statements_before_string_evaluation']).copy()
-                    print("stmnts")
-                    print(stmnts)
-                    if(type(rendered_object['c']) == list): 
-                        for child_original_object in rendered_object['c']:
-                            # print(rendered_object['code_statements_before_string_evaluation'])
-                            child_original_object['code_statements_before_string_evaluation'] = stmnts
-                            child_original_object = self.recursive_update_rendered_objects(child_original_object)
-                            
-        else:
-            if 'c' in original_object:
-                if(type(original_object['c']) == list): 
-                    for child_original_object in original_object['c']:
-                        child_original_object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation.copy()
-                        child_original_object = self.recursive_update_rendered_objects(child_original_object)
-
-        # def  asdf(obj , parentobj):
-        #     self.recursive_update_rendered_objects(obj, parentobj)
-        # self.foreach_rendered_object(original_object, asdf)
-
-        return original_object
-
-    def foreach_rendered_object(self, object, callback):
-    
-        # a rendered object is either if the object has a for/rendered_objects array
-        # or the object itself
-        if('rendered_objects' in object):
-            for rendered_object in object['rendered_objects']:
-                if 'c' in rendered_object:
-                    if(type(rendered_object['c']) == list): 
-                        for child_original_object in rendered_object['c']:
-                            callback(child_original_object, object)
-                            
+        
+        if('for_statement_objects' in object):
+            for for_statement_object in object['for_statement_objects']:
+                if 'c' in for_statement_object:
+                    if(type(for_statement_object['c']) == list): 
+                        for child_object in for_statement_object['c']:
+                            child_object = self.recursive_update_for_statement_objects(child_object, for_statement_object)                 
         else:
             if 'c' in object:
                 if(type(object['c']) == list): 
-                    for child_original_object in object['c']:
-                        callback(child_original_object, object)
+                    for child_object in object['c']:
+                        child_object = self.recursive_update_for_statement_objects(child_object, object)
 
+        return object
 
 
     def recursive_build_view_objects(self, original_object, parent_view_object = None):
