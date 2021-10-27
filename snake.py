@@ -135,8 +135,8 @@ class Game:
             width = input("after how many groups of 4 yellow + 1 black moons does the line break ?:")
             width = width * 4
         else:
-            width = 15
-            height = 15
+            width = 20
+            height = 20
         
         self.canvas = Canvas(width, height)
         self.border_pixels = []
@@ -237,8 +237,8 @@ class Game:
                     #print(value.string)
                     self.canvas.addPixel(value.x, value.y, character_set[self.character_set_property_name_utf_8_border])
 
-            print(self.food)
-            exit
+            # print(self.food)
+            # exit
             for value in self.food:
                 
                 if len(list(filter(lambda val: val.type_name == value.type_name, self.food))) > value.co_existance_limit:

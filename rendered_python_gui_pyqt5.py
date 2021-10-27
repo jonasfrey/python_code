@@ -66,7 +66,10 @@ class Pyqt5_view_object:
         "QSlider"
     ]
 
-    def __init__(self, dict_object, data):
+    def __init__(self, dict_object, data, parent_pyqt5_view_object=None):
+        
+        self.parent_pyqt5_view_object = parent_pyqt5_view_object 
+        
         self.__class__.instances.append(self)
         self.data = data
         self.dict_object = dict_object
@@ -132,7 +135,10 @@ class Pyqt5_view_object:
         self.render_function = None
 
         self.init_event_listeners()
+    def remove_from_layout(self):
+        self.qt_layout_great_grand_parent.setParent(None)
 
+        return True
     def init_event_listeners(self):
         
         if(self.is_qt_layout_class_name() == False):
@@ -582,6 +588,9 @@ class Pyqt5_view:
     def get_rendered_view_from_json(self):
         self.original_object = json.loads(self.view_json)
 
+        # recursive update for loops 
+        # recursive update view objects
+
         # if(type(self.original_object) != dict):
         #     raise Exception('root of view_json hase to be one single object {...}, not an array')
         # if('for' in self.original_object):
@@ -639,14 +648,6 @@ class Pyqt5_view:
         # print(code_statements_before_string_evaluation)
         if('for' in object):
 
-            if('for_statement_objects' in object):
-                # the for statements were already updated once, but the data array could have changed
-                print('asdf')
-
-            if('for_statement_objects' not in object):
-                
-                object['for_statement_objects'] = []
-
             # append object that came new into the array/list
             # get parts of for statements
             parts = str(object['for']).split(' in ')
@@ -660,41 +661,43 @@ class Pyqt5_view:
                 "len("+array_var_name_in_for_statement+")",
                 code_statements_before_string_evaluation
             )()
-            print("evaluated_array_var_len")
-            print(evaluated_array_var_len)
+            if('for_statement_object' not in object):
+                object['for_statement_objects'] = []
+                        
+            if(evaluated_array_var_len > len(object['for_statement_objects'])):
 
-            print(len(object['for_statement_objects']))
-            for key in range(len(object['for_statement_objects']), evaluated_array_var_len):
-                print("key")
-                print(key)
-                # important use deepcopy to copy the object
-                object_copy = copy.deepcopy(object)
-                # we have to remove the for property now to prevent circular reference
-                del object_copy['for_statement_objects']
-                # add parts of the for statement
-                object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
-                object_copy['value_var_name_in_for_statement'] = value_var_name_in_for_statement
-                object_copy['index_var_name_in_for_statement'] = index_var_name_in_for_statement
-                object_copy['index_number_in_for_loop'] = key
+                for key in range(len(object['for_statement_objects']), evaluated_array_var_len):
 
-                object_copy['code_statements_before_string_evaluation'] = (
-                    code_statements_before_string_evaluation + 
-                    [str(value_var_name_in_for_statement)+
-                    ' = '+str(array_var_name_in_for_statement)+
-                    '['+str(key)+']']
-                    ) 
-                
-                # insert into for_statement_objects list
-                object['for_statement_objects'].insert(key, object_copy)
+                    # important use deepcopy to copy the object
+                    object_copy = copy.deepcopy(object)
+                    # we have to remove the for property now to prevent circular reference
+                    del object_copy['for_statement_objects']
+                    # add parts of the for statement
+                    object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
+                    object_copy['value_var_name_in_for_statement'] = value_var_name_in_for_statement
+                    object_copy['index_var_name_in_for_statement'] = index_var_name_in_for_statement
+                    object_copy['index_number_in_for_loop'] = key
 
-        # if('for_statement_objects' in object):
-        #     # if the object has children 'c' they will be in each object in the for_statement_objects
-        #     if 'c' in object:
-        #         # since we have the rendered_objects[key].c we dont need the c anymore
-        #         # renaming it to 'disable' it , we still need access later
-        #         object['c'+'_before_function_'+str(current_function_name)] = object['c']
-        #         del object['c']
+                    object_copy['code_statements_before_string_evaluation'] = (
+                        code_statements_before_string_evaluation + 
+                        [str(value_var_name_in_for_statement)+
+                        ' = '+str(array_var_name_in_for_statement)+
+                        '['+str(key)+']']
+                        ) 
+                    
+                    # insert into for_statement_objects list
+                    object['for_statement_objects'].insert(key, object_copy)
+                    # object['created_by_recursive_update_for_statement_objects'] = True
+            else: 
+                for_statement_objects_to_remove = object['for_statement_objects'][evaluated_array_var_len:]
+                for key in for_statement_objects_to_remove:
+                    for_statement_object_to_remove = for_statement_objects_to_remove[key]
 
+                    for_statement_object_to_remove['pyqt5_view_object'].remove_from_layout()
+                    del object['for_statement_objects'][object['for_statement_objects'].index(for_statement_object_to_remove)]# del is fine for items in lists
+
+
+        # we could get rid of the 'c' in this original object with the 'for' , but we need it for future for_statement_objects
         
         if('for_statement_objects' in object):
             for for_statement_object in object['for_statement_objects']:
@@ -702,14 +705,47 @@ class Pyqt5_view:
                     if(type(for_statement_object['c']) == list): 
                         for child_object in for_statement_object['c']:
                             child_object = self.recursive_update_for_statement_objects(child_object, for_statement_object)                 
-        else:
+        
+        if('for_statement_objects' not in object):
             if 'c' in object:
+                # create view view_objects references if not existing
+                if('pyqt5_view_object' not in object):
+                    if(parent_object != None):
+                        parent_pyqt5_view_object = parent_object.pyqt5_view_object
+                        object['pyqt5_view_object'] = Pyqt5_view_object(object, self.data, parent_pyqt5_view_object)
+
                 if(type(object['c']) == list): 
                     for child_object in object['c']:
                         child_object = self.recursive_update_for_statement_objects(child_object, object)
 
         return object
 
+    def recursive_update_pyqt5_view_objects(self, object):
+        return self.recursive_foreach_object(object,self.update_pyqt5_view_objects_callback)
+
+    def update_pyqt5_view_objects_callback(self, object, parent_object):
+        if(parent_object != None):
+            parent_pyqt5_view_object = parent_object.pyqt5_view_object
+        if('pyqt5_view_object' not in object):
+            object['pyqt5_view_object'] = Pyqt5_view_object(object, self.data, parent_pyqt5_view_object)
+
+    def recursive_foreach_object(self, object, callback):
+
+        if('for_statement_objects' in object):
+            for for_statement_object in object['for_statement_objects']:
+                if 'c' in for_statement_object:
+                    if(type(for_statement_object['c']) == list): 
+                        for child_object in for_statement_object['c']:
+                            object = child_object 
+                            parent_object = for_statement_object
+                            callback(self, object, parent_object)                 
+        else:
+            if 'c' in object:
+                if(type(object['c']) == list): 
+                    for child_object in object['c']:
+                        callback(child_object, object)                 
+
+        return object
 
     def recursive_build_view_objects(self, original_object, parent_view_object = None):
 
