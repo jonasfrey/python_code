@@ -15,6 +15,7 @@ import cv2
 import gc
 import inspect
 import weakref
+# cimport jsonpickle
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
@@ -117,6 +118,8 @@ class Pyqt5_view_object:
         else:
             self.qt_layout_parent.addWidget(self.qt_object)
 
+        self.connect_with_parent_pyqt5_view_object()
+
         # self.qt_object = exec(self.qt_constructor)
         self.code_statements_before_string_evaluation = []
         self.code_statements_after_string_evaluation = []
@@ -135,6 +138,13 @@ class Pyqt5_view_object:
         self.render_function = None
 
         self.init_event_listeners()
+
+    def connect_with_parent_pyqt5_view_object(self):
+        if self.parent_pyqt5_view_object != None:
+            self.parent_pyqt5_view_object.qt_object.addLayout(
+                self.qt_layout_great_grand_parent
+            )
+     
     def remove_from_layout(self):
         self.qt_layout_great_grand_parent.setParent(None)
 
@@ -267,7 +277,9 @@ class Pyqt5_view_object:
             self.update_evaluated_properties()
         else:
             self.qt_widget_grand_parent.hide()
-              
+
+    def __repr__(self):
+        return self.toJSON()
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
@@ -556,18 +568,24 @@ class Pyqt5_view:
             }
         """
         self.view_json = """
-            
+        
                 {
-                    "qt_constructor" : "QHBoxLayout", 
-                    "for": "val1, key in stringarray",
-                    "c":[
+                    "qt_constructor": "QVBoxLayout",  
+                    "c": [
                         {
-                            "for": "value_asdf_test, key in stringarray",
-                            "qt_constructor":"QLabel", 
-                            "c":"'str arr val '+str(value_asdf_test.value)"
+                            "qt_constructor" : "QHBoxLayout", 
+                            "for": "val1, key in stringarray",
+                            "c":[
+                                {
+                                    "for": "value_asdf_test, key in stringarray",
+                                    "qt_constructor":"QLabel", 
+                                    "c":"'str arr val '+str(value_asdf_test.value)"
+                                }
+                            ]
                         }
-                    ]
+                        ]
                 }
+
             
         """
 
@@ -591,29 +609,30 @@ class Pyqt5_view:
         # recursive update for loops 
         # recursive update view objects
 
-        # if(type(self.original_object) != dict):
-        #     raise Exception('root of view_json hase to be one single object {...}, not an array')
-        # if('for' in self.original_object):
-        #     raise Exception('root of view_json must not contain a "for" property')
+        if(type(self.original_object) != dict):
+            raise Exception('root of view_json hase to be one single object {...}, not an array')
+        if('for' in self.original_object):
+            raise Exception('root of view_json must not contain a "for" property')
+        
         self.original_object_copy = (self.original_object).copy()
 
         self.recursive_update_for_statement_objects(self.original_object_copy)
         
-        self.recursive_check_rendered_objects(self.original_object_copy)
+        #self.recursive_check_rendered_objects(self.original_object_copy)
 
         print('testing list.append')
         self.data.stringarray.append(Synced_data_obj('stringarray text 3'))
         self.data.stringarray.append(Synced_data_obj('stringarray text 4'))
 
         self.recursive_update_for_statement_objects(self.original_object_copy)
-        self.recursive_check_rendered_objects(self.original_object_copy)
+        # self.recursive_check_rendered_objects(self.original_object_copy)
 
         print('testing list.pop')
         self.data.stringarray.pop(0)
         self.data.stringarray.pop(2)
 
         self.recursive_update_for_statement_objects(self.original_object_copy)
-        self.recursive_check_rendered_objects(self.original_object_copy)
+        # self.recursive_check_rendered_objects(self.original_object_copy)
 
 
         print('testing list = ... / setattr')
@@ -623,26 +642,28 @@ class Pyqt5_view:
             Synced_data_obj('text 3'),
         ]
         self.recursive_update_for_statement_objects(self.original_object_copy)
-        self.recursive_check_rendered_objects(self.original_object_copy)
-
-        exit()
-        return self.parent_view_object.pyqt5_view_objects[0].qt_layout_great_grand_parent
+        # self.recursive_check_rendered_objects(self.original_object_copy)
+        return self.original_object_copy['pyqt5_view_object'].qt_layout_great_grand_parent
 
     def recursive_check_rendered_objects(self, obj):
         f = open(str(time.time())+"recursive_check_rendered_objects_json.json", "w")
-        f.write(json.dumps(obj, sort_keys=True, indent=4))
+
+        f.write(jsonpickle.encode(obj, unpicklable=False))
         f.close()
 
         print("file written")
     
+    def recursive_update_pyqt5_view_objects():
+        return False 
     def recursive_update_for_statement_objects(self, object, parent_object=None):
 
         if(parent_object == None):
             code_statements_before_string_evaluation = []
         else:
             code_statements_before_string_evaluation = parent_object['code_statements_before_string_evaluation'].copy()
+        
         # carry property down the nested objects
-        print(code_statements_before_string_evaluation)
+        # print(code_statements_before_string_evaluation)
         object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation.copy()
 
         # print(code_statements_before_string_evaluation)
@@ -670,8 +691,12 @@ class Pyqt5_view:
 
                     # important use deepcopy to copy the object
                     object_copy = copy.deepcopy(object)
+                    if('pyqt5_view_object' in object_copy):
+                        del object_copy['pyqt5_view_object']
+
                     # we have to remove the for property now to prevent circular reference
                     del object_copy['for_statement_objects']
+
                     # add parts of the for statement
                     object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
                     object_copy['value_var_name_in_for_statement'] = value_var_name_in_for_statement
@@ -696,6 +721,23 @@ class Pyqt5_view:
                     for_statement_object_to_remove['pyqt5_view_object'].remove_from_layout()
                     del object['for_statement_objects'][object['for_statement_objects'].index(for_statement_object_to_remove)]# del is fine for items in lists
 
+        # ----- start create pyqt5_view_object -----
+        # create the pyqt5_view_object instance and reference it on the dict, pass if available parent object pyqt5_view_object reference
+        if('pyqt5_view_object' not in object):
+            try:
+                parent_pyqt5_view_object = parent_object.pyqt5_view_object
+            except:
+                parent_pyqt5_view_object = None 
+
+            if('c' not in object):
+                # only pass parent down 
+                # because it has no children c
+                object['pyqt5_view_object'] = parent_pyqt5_view_object
+            if('c' in object):
+                # create a new pyqt5_view_object instance
+                object['pyqt5_view_object'] = Pyqt5_view_object(object, self.data, parent_pyqt5_view_object)
+        # ----- end  create pyqt5_view_object -----
+
 
         # we could get rid of the 'c' in this original object with the 'for' , but we need it for future for_statement_objects
         
@@ -707,16 +749,15 @@ class Pyqt5_view:
                             child_object = self.recursive_update_for_statement_objects(child_object, for_statement_object)                 
         
         if('for_statement_objects' not in object):
+
             if 'c' in object:
                 # create view view_objects references if not existing
-                if('pyqt5_view_object' not in object):
-                    if(parent_object != None):
-                        parent_pyqt5_view_object = parent_object.pyqt5_view_object
-                        object['pyqt5_view_object'] = Pyqt5_view_object(object, self.data, parent_pyqt5_view_object)
-
                 if(type(object['c']) == list): 
                     for child_object in object['c']:
                         child_object = self.recursive_update_for_statement_objects(child_object, object)
+
+
+
 
         return object
 
