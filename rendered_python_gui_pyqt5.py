@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import forcepoint, pyqtSignal, pyqtSlot, Qt, QThread
 import json
 import sys
+from threading import Timer
 import random
 import functools
 from json.encoder import py_encode_basestring_ascii
@@ -43,18 +44,58 @@ def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
 
-def rgetattr(obj, attr, *args):
-    def _getattr(obj, attr):
-        if(type(obj) is list and attr.isnumeric()):
-            return obj[int(attr)]
-        if(type(obj) is dict):
-            return obj.get(attr, *args)
-        
-        return getattr(obj, attr, *args)
-    return functools.reduce(_getattr, [obj] + attr.split('.'))
 
+def rgetattr(obj, str_attr, *args):
+    """
+    gets you an nested property value with a str , for example 
+    rgetattr(obj_test, 'a.b.0.e.2'), arrays can be accessed via number
+
+    obj_class_or_dict {
+        a : 1, 
+        b : {
+            a: [
+                0,
+                1,
+                2,
+                {
+                    a : True
+                }, 
+                [ 
+                    0, 
+                    1, 
+                    2
+                ]
+            ]
+        }
+    }
+    use it like this
+    
+    rgetattr(obj_class_or_dict, 'a') # returns  a
+    rgetattr(obj_class_or_dict, 'b.a') # returns object
+    rgetattr(obj_class_or_dict, 'b.a.2') # returns 2
+    rgetattr(obj_class_or_dict, 'b.a.3.a') # returns True
+    rgetattr(obj_class_or_dict, 'b.a.3.4.1') # returns 1
+    
+
+    Args:
+        obj: dict or object
+        attr: 
+    Returns:
+        any
+    """
+    def _getattr(obj, str_attr):
+        if(type(obj) is list and str_attr.isnumeric()):
+            return obj[int(str_attr)]
+        if(type(obj) is dict):
+            return obj.get(str_attr, *args)
+        
+        return getattr(obj, str_attr, *args)
+    return functools.reduce(_getattr, [obj] + str_attr.split('.'))
 
 def remove_nested_dicts_or_class_instances_from_dict_or_class_instance(obj):
+    """
+    removes shallow 
+    """
     arr_attrs_to_delete = []
     # obj.__class__.__module__ == 'builtins' checks if obj is user defined class via 'class my_class_name:...'
     if(obj.__class__.__module__ != 'builtins'):
@@ -84,7 +125,7 @@ class Pyqt5_view_object:
     instances = []
 
     @staticmethod
-    def delete_all_instances_where_dotnotation_starting_with_string(string):
+    def delete_instances_object_path_dot_notation_starts_with_string(string):
 
         instances_to_delete = []
         for instance in Pyqt5_view_object.instances:
@@ -288,7 +329,7 @@ class Pyqt5_view_object:
 
         parent_pyqt5_view_object = self.get_parent_pyqt5_view_object()
 
-        Pyqt5_app.deleteItemsOfLayout(self.qt_layout_great_grand_parent)
+        Pyqt5_app.delete_items_of_pyqt5_layout(self.qt_layout_great_grand_parent)
 
 
         # self.qt_layout_great_grand_parent.setParent(None)
@@ -545,19 +586,22 @@ class View_object:
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
 
-class Pyqt5_view:
+class View_template:
+    """
+    1. str_view_json to obj_view_dict
+    2. convert "for" attr in each object into for_statement_objects : [...]
+    3. foreach obj in dict create corresponding pyqt5 object
 
+    """
     def __init__(self, data):
 
         self.data = data
-        self.pyqt5_view_object_parent = None
-        self.view_json = """
+        self.str_view_json = """
             {
                 "qt_constructor" : "QVBoxLayout", 
                 "setStyleSheet": "'background-color: '+random_color()",
                 "setSpacing": "sliderval.value",
                 "setContentMargins": "sliderval.value",
-
                 "c": [
                     {
                         "setStyleSheet": "'background-color: '+random_color()",
@@ -565,18 +609,18 @@ class Pyqt5_view:
                         "c":[
                             { 
                                 "qt_constructor": "QPushButton",  
-                                "c": "'print to console'", 
+                                "c": "arr_button_texts[int(random.random()*len(arr_button_texts))]", 
                                 "mousePressEvent" : "print('printing to console')"
                             },
                             { 
                                 "qt_constructor": "QPushButton",  
-                                "c": "'print to console'", 
+                                "c": "arr_button_texts[0]", 
                                 "mousePressEvent" : "print('printing to console')"
                             },
                             { 
                                 "qt_constructor": "QPushButton",  
-                                "c": "'print to console'", 
-                                "mousePressEvent" : "print('printing to console')"
+                                "c": "str(str_btn_text_by_hy.value)", 
+                                "mousePressEvent" : "by_and_hy(str_btn_text_by_hy)"
                             }
                         ]
                     },
@@ -589,35 +633,47 @@ class Pyqt5_view:
                         "setMinimum" : "1", 
                         "setMaximum" : "10" 
                     },
-                    { 
-                        "qt_constructor": "QLabel", 
-                        "c":"'slider val : '+str(sliderval.value)"
-                    },
-                    { 
-                        "qt_constructor": "QLineEdit",  
-                        "c": "textforinput.value", 
-                        "textChanged": "textforinput._value = event"
-                    },
-                    { 
-                        "qt_constructor": "QLabel",  
-                        "c": "'text is :'+str(textforinput.value)" 
-                    },
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'reset text above'", 
-                        "mousePressEvent" : "textforinput.value = 'reseetet text'"
-                    },
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'print to console'", 
-                        "mousePressEvent" : "print('printing to console')"
-                    },
+                    {
+                        "qt_constructor" : "QHBoxLayout", 
+                        "c":[
+                                { 
+                                    "qt_constructor": "QLabel", 
+                                    "c":"'slider val : '+str(sliderval.value)"
+                                },
+                                { 
+                                    "qt_constructor": "QLineEdit",  
+                                    "c": "textforinput.value", 
+                                    "textChanged": "textforinput._value = event"
+                                },
+                                { 
+                                    "qt_constructor": "QLabel",  
+                                    "c": "'text is :'+str(textforinput.value)" 
+                                },
+                                {
+                                    "qt_constructor" : "QHBoxLayout", 
+                                    "c":[
+                                            { 
+                                                "qt_constructor": "QPushButton",  
+                                                "c": "'reset text above'", 
+                                                "mousePressEvent" : "textforinput.value = 'reseetet text'"
+                                            },
+                                            { 
+                                                "qt_constructor": "QPushButton",  
+                                                "c": "'print to console'", 
+                                                "mousePressEvent" : "print('printing to console')"
+                                            },
 
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'click me'", 
-                        "mousePressEvent": "test_synced_obj()", 
-                        "mouseMoveEvent" : "print('damn mouse moved on butto')"
+                                            { 
+                                                "qt_constructor": "QPushButton",  
+                                                "c": "'click me'", 
+                                                "mousePressEvent": "test_synced_obj()", 
+                                                "mouseMoveEvent" : "print('damn mouse moved on butto')"
+                                            }
+                                    ]
+                                }
+
+
+                        ]
                     },
                     {
                     "qt_constructor_qwidget_is_not_allowed_use_qwdiget_property_to_render_on_widget": "QWidget",  
@@ -643,15 +699,20 @@ class Pyqt5_view:
                         "mousePressEvent": "Pyqt5_app.re_render_view()" ,
                         "mousePressEventdisabled": "print('lel whz is this alreadz called')" 
                     },
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'add cam'", 
-                        "mousePressEvent": "cameras.append(1)"       
-                    },
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'remove cam'", 
-                        "mousePressEvent": "cameras.pop(0)"       
+                    {
+                        "qt_constructor" : "QHBoxLayout", 
+                        "c":[
+                                { 
+                                    "qt_constructor": "QPushButton",  
+                                    "c": "'add cam'", 
+                                    "mousePressEvent": "cameras.append(1)"       
+                                },
+                                { 
+                                    "qt_constructor": "QPushButton",  
+                                    "c": "'remove cam'", 
+                                    "mousePressEvent": "cameras.pop(0)"       
+                                }
+                        ]
                     },
                     {
                         "if": "len(cameras) > 2",
@@ -673,19 +734,34 @@ class Pyqt5_view:
                             }
                         ]
                     },
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'add to string array'", 
-                        "mousePressEvent": "stringarray.append(Synced_data_obj('more txt'+str(len(stringarray))))"       
+                    {
+                        "qt_constructor": "QHBoxLayout", 
+                        "c":[
+                                { 
+                                    "qt_constructor": "QPushButton",  
+                                    "c": "'add to string array'", 
+                                    "mousePressEvent": "stringarray.append(Synced_data_obj('more txt'+str(len(stringarray))))"       
+                                },
+                                { 
+                                    "qt_constructor": "QPushButton",  
+                                    "c": "'remove from string array'", 
+                                    "mousePressEvent": "stringarray.pop(1)"       
+                                }
+
+                        ]
                     },
-                    { 
-                        "qt_constructor": "QPushButton",  
-                        "c": "'remove from string array'", 
-                        "mousePressEvent": "stringarray.pop(1)"       
-                    },
-                    { 
-                        "qt_constructor": "QLabel",  
-                        "c": "'len(stringarray):'+str(len(stringarray))" 
+                    {
+                        "qt_constructor":"QHBoxLayout", 
+                        "c": [
+                                { 
+                                    "qt_constructor": "QLabel",  
+                                    "c": "'len(stringarray):'+str(len(stringarray))" 
+                                },
+                                { 
+                                    "qt_constructor": "QLabel",  
+                                    "c": "'str(stringarray):'+str(str(stringarray))" 
+                                }
+                        ]
                     },
                     {
                         "qt_constructor": "QLabel",  
@@ -696,44 +772,29 @@ class Pyqt5_view:
                         "c": "len(cameras)"
                     },
                     {
-                        "qt_constructor": "QHBoxLayout",  
-                        "for": "value_asdf_test, key in stringarray",
-                        "c": [
-                            {
-                                "qt_constructor":"QLabel", 
-                                "c":"'str arr val '+str(value_asdf_test.value)"
-                            }
-                        ]
-                    },
-                    {
-                        "qt_constructor": "QLabel",  
-                        "c": "textasdf.value"
-                    },  
-                    {
                         "qt_constructor": "QVBoxLayout",  
                         "c": [
                             {
                                 "qt_constructor" : "QHBoxLayout", 
-                                "c": [
+                                "for": "val1, key in stringarray",
+                                "c":[
                                     {
-                                        "qt_constructor" : "QHBoxLayout"
-                                    }
-                                ]
-                            },
-                            {
-                                "qt_constructor" : "QHBoxLayout", 
-                                "c": [
-                                    {
-                                        "qt_constructor" : "QHBoxLayout"
+                                        "for": "value_asdf_test, key in stringarray",
+                                        "qt_constructor":"QLabel", 
+                                        "c":"str(value_asdf_test.value)"
                                     }
                                 ]
                             }
-                        ]
+                            ]
+                    },
+                    {
+                        "qt_constructor": "QLabel",  
+                        "c": "textasdf.value"
                     }
                 ]
             }
         """
-        self.view_json223 = """
+        self.str_view_json_test_arrays = """
         
                 {
                     "qt_constructor": "QVBoxLayout",  
@@ -754,7 +815,7 @@ class Pyqt5_view:
 
             
         """
-        self.view_jssdon = """
+        self.str_view_json_test_nesting = """
         
                 {
                     "qt_constructor": "QVBoxLayout",  
@@ -782,11 +843,10 @@ class Pyqt5_view:
                                     ]
                             }
                         ]
-                }
-
-            
+                }    
         """
-        self.view_jsonasdf = """
+
+        self.str_view_json_test_array_1d = """
         
                 {
                     "qt_constructor": "QVBoxLayout",  
@@ -804,9 +864,8 @@ class Pyqt5_view:
                         ]
                 }
 
-            
         """
-        self.view_jsonasdf = """
+        self.str_view_json_test_array_2d = """
                         {
                     "qt_constructor": "QVBoxLayout",  
                     "c": [
@@ -823,51 +882,50 @@ class Pyqt5_view:
                         }
                         ]
                 }
-                """
-    def render_view_without_reset(self):
-        
-        self.recursive_update_for_statement_objects(self.original_object_copy)
+        """
+        self.obj_view_dict = None 
 
-        # self.recursive_update_for_loops(self.pyqt5_view_object_parent[0])
+    def render_view_without_reset(self):
+        """
+        renders the view without reseting it
+            1. recursive update for statement objects
+            2. foreach pyqt5_view_object instance .re_render_qt_object()
+        """    
+        
+        self.recursive_update_for_statement_objects(self.obj_view_dict)
+
         for instance in Pyqt5_view_object.instances:
             instance.re_render_qt_object()
 
 
-    def get_rendered_view_from_json(self):
-
-        self.original_object = json.loads(self.view_json)
+    def get_rendered_root_pyqt5_qt_object(self):
+        """
+        converts json to dict and renders it 
+            1. convert json to dict
+            2. rendering the view
+        Raises: 
+            Error when str_view_json is not correct 
+        """
+        self.obj_view_dict = json.loads(self.str_view_json)
           
-        if(type(self.original_object) != dict):
-            raise Exception('root of view_json hase to be one single object {...}, not an array')
-        if('for' in self.original_object):
-            raise Exception('root of view_json must not contain a "for" property')
-        
-        self.original_object_copy = (self.original_object).copy()
+        if(type(self.obj_view_dict) != dict):
+            raise Exception('root of str_view_json has to be one single object {...}, not an array')
+        if('for' in self.obj_view_dict):
+            raise Exception('root of str_view_json must not contain a "for" property')
 
-        self.original_object_copy = self.recursive_update_for_statement_objects(self.original_object_copy)
+        self.render_view_without_reset()
+
+        # self.test_recursive_update_for_statement_objects()
      
         root_pyqt5_view_object = Pyqt5_view_object.get_root_instance()
 
         return root_pyqt5_view_object.qt_layout_great_grand_parent
 
+
     def test_recursive_update_for_statement_objects(self):
-
-        self.original_object = json.loads(self.view_json)
-
-        # recursive update for loops 
-        # recursive update view objects
-
-        if(type(self.original_object) != dict):
-            raise Exception('root of view_json hase to be one single object {...}, not an array')
-        if('for' in self.original_object):
-            raise Exception('root of view_json must not contain a "for" property')
-        
-        self.original_object_copy = (self.original_object).copy()
-
-        self.original_object_copy = self.recursive_update_for_statement_objects(self.original_object_copy)
-        self.render_view_without_reset()
-        
-        # self.recursive_check_rendered_objects(self.original_object_copy)
+        """
+        testing the rendering of the for_statement_objects
+        """
 
         print('-------------------')
         print('testing list.append')
@@ -876,11 +934,9 @@ class Pyqt5_view:
         self.data.stringarray.append(Synced_data_obj('stringarray text 3'))
         self.data.stringarray.append(Synced_data_obj('stringarray text 4'))
 
-        self.original_object_copy = self.recursive_update_for_statement_objects(self.original_object_copy)
-        self.recursive_check_rendered_objects(self.original_object_copy)
+        self.write_obj_to_json(self.obj_view_dict)
         self.render_view_without_reset()
 
-        
         print('-------------------')
         print('testing list.pop')
         print('-------------------')
@@ -888,8 +944,7 @@ class Pyqt5_view:
         self.data.stringarray.pop(0)
         self.data.stringarray.pop(2)
 
-        self.original_object_copy = self.recursive_update_for_statement_objects(self.original_object_copy)
-        self.recursive_check_rendered_objects(self.original_object_copy)
+        self.write_obj_to_json(self.obj_view_dict)
         self.render_view_without_reset()
 
         print('-------------------')
@@ -903,16 +958,15 @@ class Pyqt5_view:
             Synced_data_obj('str 3'),
             Synced_data_obj('str 3'),
         ]
-        self.recursive_update_for_statement_objects(self.original_object_copy)
+        self.write_obj_to_json(self.obj_view_dict)
         self.render_view_without_reset()
 
-
-        root_pyqt5_view_object =Pyqt5_view_object.get_root_instance()
-
-        return root_pyqt5_view_object.qt_layout_great_grand_parent
-
-    def recursive_check_rendered_objects(self, obj):
-        f = open(str(time.time())+"recursive_check_rendered_objects_json.json", "w")
+    def write_obj_to_json(self, obj):
+        """
+        writes the object formatted/beautified to json file 
+        filename time.time()+{functionname}.json
+        """
+        f = open(str(time.time())+"write_obj_to_json.json", "w")
 
         f.write(
             json.dumps(
@@ -925,11 +979,40 @@ class Pyqt5_view:
 
         print("file written")
     
-    def recursive_update_pyqt5_view_objects():
-        return False 
-        
-    def recursive_update_for_statement_objects(self, object, parent_object=None, parent_object_path_dot_notation=None):
 
+    def recursive_update_for_statement_objects(self, object, parent_object=None, parent_object_path_dot_notation=None):
+        """
+            updates the "for" attr in every object, 
+            before
+            {
+                ...
+                "for": "num_index, obJ_val in data_array"
+                "a": 1, 
+                "b": 1, 
+                "c": [
+                    {},...
+                ], 
+            }
+            after
+            {
+                ...
+                "for": "num_index, obJ_val in data_array"
+                "a": 1, 
+                "b": 1, 
+                "c": [
+                    {},...
+                ], 
+                "for_statement_objects": [
+                    "a": 1, 
+                    "b": 1, 
+                    "c": [
+                        {},...
+                    ], 
+                ]
+            }
+        Args: 
+
+        """
         if not "qt_constructor" in object:
             print('skipping dict_object, no qt_constructor property is set!')
             return object
@@ -940,18 +1023,12 @@ class Pyqt5_view:
             code_statements_before_string_evaluation = parent_object['code_statements_before_string_evaluation'].copy()
             object_path_dot_notation = parent_object_path_dot_notation
 
-
-        # carry property down the nested objects
-        # print(code_statements_before_string_evaluation)
+        # carry down 
         if('code_statements_before_string_evaluation' not in object):
             object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation
 
-        # print(object['qt_constructor'])
-        # print(code_statements_before_string_evaluation)
         if('for' in object):
 
-            # append object that came new into the array/list
-            # get parts of for statements
             parts = str(object['for']).split(' in ')
             array_var_name_in_for_statement = parts.pop(len(parts)-1)
             parts = parts.pop(0).split(',')
@@ -964,23 +1041,19 @@ class Pyqt5_view:
                 code_statements_before_string_evaluation
             )()
 
-
             if('for_statement_objects' not in object):
                 object['for_statement_objects'] = []
 
-
             if(evaluated_array_var_len > len(object['for_statement_objects'])):
-                # objects were appended to the data array
+                
                 for key in range(len(object['for_statement_objects']), evaluated_array_var_len):
 
                     # important use deepcopy to copy the object
                     object_copy = copy.deepcopy(object)
 
-                    # we have to remove the for property now to prevent circular reference
+                    # remove some attrs to prevent circular reference
                     del object_copy['for_statement_objects']
                     del object_copy['for']
-
-                    # del object_copy['object_path_dot_notation']
 
                     # add parts of the for statement
                     object_copy['array_var_name_in_for_statement'] = array_var_name_in_for_statement
@@ -988,6 +1061,7 @@ class Pyqt5_view:
                     object_copy['index_var_name_in_for_statement'] = index_var_name_in_for_statement
                     object_copy['index_number_in_for_loop'] = key
 
+                    # carry down and extend code_statements_before_string_evaluation
                     object_copy['code_statements_before_string_evaluation'] = (
                         code_statements_before_string_evaluation + 
                         [str(value_var_name_in_for_statement)+
@@ -996,36 +1070,41 @@ class Pyqt5_view:
                         ) 
                     
                     # insert into for_statement_objects list
-                    object['for_statement_objects'].insert(key, object_copy)
-                    # object['created_by_recursive_update_for_statement_objects'] = True
-            else: 
-                obj_for_statement_object_to_delete = []
+                    object['for_statement_objects'].insert(
+                        key,
+                        object_copy
+                        )
+
+            if(evaluated_array_var_len < len(object['for_statement_objects'])):
+                # data_array is smaller than for_statement_object
                 # objects were removed from data array 
+                obj_for_statement_object_to_delete = []
+                
                 for num_index, obj_for_statement_object in enumerate(object['for_statement_objects']):
                     
                     if(num_index >= evaluated_array_var_len):
-                        obj_for_statement_object_to_delete.append(obj_for_statement_object)
-                    else:
-                        print('!@!!@!@!@!@!@!@!@!@!@')
-                        print(obj_for_statement_object['code_statements_before_string_evaluation'])
-                        print(obj_for_statement_object['code_statements_before_string_evaluation'])
+                        obj_for_statement_object_to_delete.append(
+                            obj_for_statement_object
+                            )
 
                 for obj_for_statement_object in obj_for_statement_object_to_delete:
-                    num_index = object['for_statement_objects'].index(obj_for_statement_object)
+                    
+                    num_index = object['for_statement_objects'].index(
+                        obj_for_statement_object
+                        )
                     pyqt5_view_object_to_delete = Pyqt5_view_object.get_instance_by_object_path_dot_notation(
                         obj_for_statement_object['object_path_dot_notation']
                     )
+                    
                     pyqt5_view_object_to_delete.remove_from_layout()
 
-                    Pyqt5_view_object.delete_all_instances_where_dotnotation_starting_with_string(
+                    # to delete all children objects we can delete all instances beginning with the 
+                    Pyqt5_view_object.delete_instances_object_path_dot_notation_starts_with_string(
                         obj_for_statement_object['object_path_dot_notation']
                     )
-                    # del Pyqt5_view_object.instances[Pyqt5_view_object.instances.index(pyqt5_view_object_to_delete)]
+                    
                     del object['for_statement_objects'][num_index]
 
-            print("//// length compare after ////")
-            print(evaluated_array_var_len)
-            print(len(object['for_statement_objects']))
 
         # ----- start create pyqt5_view_object -----
         # create the pyqt5_view_object instance and reference it on the dict, pass if available parent object pyqt5_view_object reference
@@ -1036,45 +1115,41 @@ class Pyqt5_view:
             if('for_statement_objects' not in object):
                 
                 object_copy = copy.deepcopy(object)
-
+                
+                #flag the existance of an instance of Pyqt5_view_object for this obj_dict_view_object
                 object['has_instance_of_pyqt5_view_object'] = True 
 
+                # unfortunately we cannot reference the instance on the obj_dict_view_object 
+                # object['pyqt5_view_object'] = Pyqt5_view_object... # not working
+                # deepcopy makes trouble...
                 Pyqt5_view_object(
                     object_copy,
                     self.data
                 )
-                
 
-        # print(object['code_statements_before_string_evaluation'])
-        #time.sleep(1)
         # ----- end  create pyqt5_view_object -----
 
-        # we could get rid of the 'c' in this original object with the 'for' , but we need it for future for_statement_objects
+        # we could get rid of the 'c' in this original object with the 'for' , but we need it for future for_statement_objects, since we make deepcopy for new data_array objects 
         if('for_statement_objects' in object):
+
             for fstoindex, for_statement_object in enumerate(object['for_statement_objects']):
+                # carry down and extend object_path_dot_notation
                 for_statement_object['object_path_dot_notation'] = object['object_path_dot_notation'] + '.for_statement_objects' + '.' + str(fstoindex)
+
                 for_statement_object = self.recursive_update_for_statement_objects(
                     for_statement_object, 
                     object, 
                     for_statement_object['object_path_dot_notation'] 
                 )
                 
-                # if 'c' in for_statement_object:
-                #     if(type(for_statement_object['c']) == list): 
-                #         for oindex, child_object in enumerate(for_statement_object['c']):
-                #             object_path_dot_notation_o = str(for_statement_object['object_path_dot_notation'] + '.c' + '.' + str(oindex))
-                #             child_object = self.recursive_update_for_statement_objects(
-                #                 child_object, 
-                #                 for_statement_object,
-                #                 object_path_dot_notation_o
-                #                 )                 
         
         if('for_statement_objects' not in object):
 
             if 'c' in object:
-                # create view view_objects references if not existing
+
                 if(type(object['c']) == list): 
                     for oindex, child_object in enumerate(object['c']):
+                        # carry down and extend object_path_dot_notation
                         object_path_dot_notation_o = object['object_path_dot_notation'] + '.c' + '.' + str(oindex)
                         child_object = self.recursive_update_for_statement_objects(
                             child_object, 
@@ -1082,211 +1157,89 @@ class Pyqt5_view:
                             object_path_dot_notation_o
                             )
 
-
-
-
         return object
 
-    def recursive_update_pyqt5_view_objects(self, object):
-        return self.recursive_foreach_object(object,self.update_pyqt5_view_objects_callback)
 
-    def update_pyqt5_view_objects_callback(self, object, parent_object):
-        if(parent_object != None):
-            parent_pyqt5_view_object = parent_object.pyqt5_view_object
-        if('pyqt5_view_object' not in object):
-            object['pyqt5_view_object'] = Pyqt5_view_object(object, self.data, parent_pyqt5_view_object)
+    # def recursive_foreach_object(self, object, callback):
+        # """
+        # loop over each object that has a corresponding pyqt5_view_object
+        # this could be used if the object_path_dot_notation would not have to be set
+        # """
+    #     if('for_statement_objects' in object):
+    #         for for_statement_object in object['for_statement_objects']:
+    #             if 'c' in for_statement_object:
+    #                 if(type(for_statement_object['c']) == list): 
+    #                     for child_object in for_statement_object['c']:
+    #                         object = child_object 
+    #                         parent_object = for_statement_object
+    #                         callback(self, object, parent_object)                 
+    #     else:
+    #         if 'c' in object:
+    #             if(type(object['c']) == list): 
+    #                 for child_object in object['c']:
+    #                     callback(child_object, object)                 
 
-    def recursive_foreach_object(self, object, callback):
+    #     return object
 
-        if('for_statement_objects' in object):
-            for for_statement_object in object['for_statement_objects']:
-                if 'c' in for_statement_object:
-                    if(type(for_statement_object['c']) == list): 
-                        for child_object in for_statement_object['c']:
-                            object = child_object 
-                            parent_object = for_statement_object
-                            callback(self, object, parent_object)                 
-        else:
-            if 'c' in object:
-                if(type(object['c']) == list): 
-                    for child_object in object['c']:
-                        callback(child_object, object)                 
-
-        return object
-
-    def recursive_build_view_objects(self, original_object, parent_view_object = None):
-
-        if not "qt_constructor" in original_object:
-            print('skipping dict_object, no qt_constructor property is set!')
-            return False
-
-        view_object = View_object(parent_view_object, original_object, self.data)
-
-        if 'c' in original_object:
-            if(type(original_object['c']) == list): 
-                for child_original_object in original_object['c']:
-                    child_view_object = self.recursive_build_view_objects(
-                        child_original_object, 
-                        view_object
-                        ) 
-                    if(child_view_object):
-                        view_object.child_view_objects.append(
-                            child_view_object
-                        )
-
-        return view_object
-        
-    def recursive_pyqt5_addLayout(self, view_object):
-        if(view_object.parent_view_object != None):
-            for pyqt5_view_object in view_object.pyqt5_view_objects:
-                view_object.parent_view_object.pyqt5_view_objects[0].qt_object.addLayout(
-                    pyqt5_view_object.qt_layout_great_grand_parent
-                    )
-
-        for child_view_object in view_object.child_view_objects:
-            self.recursive_pyqt5_addLayout(child_view_object)
-
-    def recursive_update_for_loops(self, pyqt5_view_object):
-
-        for instance in Pyqt5_view_object.instances:
-            if(hasattr(instance, 'pyqt5_view_object_children')):
-                print(len(instance.pyqt5_view_object_children))
-        # sometimes the array data object loses or gains some children
-            # print(len(pyqt5_view_object.pyqt5_view_object_children))
-            # if(len(pyqt5_view_object.pyqt5_view_object_children) > 1):
-            #     self.append_pyqt5_view_object_children(
-            #         pyqt5_view_object,
-            #         pyqt5_view_object.dict_object,
-            #         pyqt5_view_object.pyqt5_view_object_children)
-            #     # for pyqt5_view_object_child in enumerate(pyqt5_view_object.pyqt5_view_object_children):
-            #     #     # print(pyqt5_view_object_child)
-            #     #     self.recursive_update_for_loops(pyqt5_view_object_child)
-            # print(len(pyqt5_view_object.pyqt5_view_object_children))
-            # for pyqt5_view_object in pyqt5_view_object.pyqt5_view_object_children:
-            #     self.recursive_update_for_loops(pyqt5_view_object)
-
-    def append_pyqt5_view_object_children(
-        self,
-        pyqt5_view_object_parent,
-        dict_object,
-        pyqt5_view_object_children):
-        if (
-            pyqt5_view_object_parent != None and 
-            'code_statements_before_string_evaluation' in pyqt5_view_object_parent.dict_object
-            ):
-            print(pyqt5_view_object_parent.qt_class_name)
-            code_statements_before_string_evaluation_parent = pyqt5_view_object_parent.dict_object['code_statements_before_string_evaluation']
-        else:
-            code_statements_before_string_evaluation_parent = []
-        
-        parts = str(dict_object['for']).split(' in ')
-
-        array_var_name_in_for = parts.pop(len(parts)-1)
-        parts = parts.pop(0).split(',')
-        value_var_name_in_for = parts.pop(0).strip()
-        index_var_name_in_for = parts.pop(0).strip()
-        # print(array_var_name_in_for)
-
-        length = self.data.get_return_function_by_string(
-            "len("+array_var_name_in_for+")", 
-            code_statements_before_string_evaluation_parent
-        )()
-        print(str(length)+': length of array_var_name_in_for')
-        print(str(len(pyqt5_view_object_children))+': length of actual array')
-        if(length == len(pyqt5_view_object_children)):
-            return False
-        # print(length)
-        # exit()
-
-        for key in range(len(pyqt5_view_object_children), length):
-            single_for_object = dict_object.copy()
-            
-            # del single_for_object['for']
-            
-            single_for_object['code_statements_before_string_evaluation'] = code_statements_before_string_evaluation_parent + [str(value_var_name_in_for)+' = '+str(array_var_name_in_for)+'['+str(key)+']']
-
-            pyqt5_view_object = Pyqt5_view_object(single_for_object, self.data)
-            pyqt5_view_object_children.append(pyqt5_view_object)
-            # print(value)
-
-        return pyqt5_view_object_children
-
-    def foreach_prop_in_oject(self, dict_object, pyqt5_view_object_parent=None):
-        if not "qt_constructor" in dict_object:
-            print('skipping dict_object, no qt_constructor property is set!')
-            return False
-
-        if('for' in dict_object):
-
-            pyqt5_view_object_children = []
-            pyqt5_view_object_children = self.append_pyqt5_view_object_children(
-                pyqt5_view_object_parent,
-                dict_object,
-                pyqt5_view_object_children)
-            
-        else:
-            pyqt5_view_object_children = [Pyqt5_view_object(dict_object, self.data)]
-
-
-        for pyqt5_view_object in pyqt5_view_object_children:
-
-            # pyqt5_view_object = pyqt5_view_object(object, self.data)
-
-            if(pyqt5_view_object.has_children()):
-                for obj in pyqt5_view_object.c:
-                    self.foreach_prop_in_oject(obj, pyqt5_view_object)
-
-            
-            if(
-                # pyqt5_view_object.if_condition_is_true() and since we dont clear on re rendering view, the if has to be considered when evaluating the c 
-                pyqt5_view_object_parent != None
-                ):
-
-                print(pyqt5_view_object_parent.qt_constructor)
-
-                pyqt5_view_object_parent.qt_object.addLayout(pyqt5_view_object.qt_layout_great_grand_parent)
-                # if(pyqt5_view_object.is_qt_layout_class_name()):
-                # else:
-                #     pyqt5_view_object_parent.qt_object.addWidget(pyqt5_view_object.qt_object)
-        if (pyqt5_view_object_parent != None ):
-            pyqt5_view_object_parent.pyqt5_view_object_children = pyqt5_view_object_children
-        
-        return pyqt5_view_object_children
-
+    
 class Synced_data_obj():
+    """
+    used to have a observed object 
+    when .value changes, the corresponding pyqt5_view_objects have to be updated
+    as an easy but more resource hungry solution for now 
+    just every pyqt5_view_object is being re rendered / re evaluated
+    
+    test = Synced_data_obj('example value str')
+    test.value # returns 'example value str' 
 
+    Attrs:
+        value: any datatype 
+    
+    """
+    
     intern_propname_prefix = '_'
+    
     def __init__(self, value):
         self._value = value
 
-    def __setattr__(self, name, value) -> None:
-        
-        # print('Synced_data_obj.setattr value')
-        # print(value)
-
-        if(name.startswith(Synced_data_obj.intern_propname_prefix) == False):
-            super().__setattr__(Synced_data_obj.intern_propname_prefix+name, value)
+    def __setattr__(self, str_attr, value) -> None:
+        """
+        before
+        setattr(obj, 'test') or obj.test = ...
+        after 
+        setattr(obj, '_test') or obj._test = ...
+        """
+        if(str_attr.startswith(Synced_data_obj.intern_propname_prefix) == False):
+            super().__setattr__(Synced_data_obj.intern_propname_prefix+str_attr, value)
             Pyqt5_app.re_render_view()
         else:
-            super().__setattr__(name, value)
+            super().__setattr__(str_attr, value)
 
-    def __getattribute__(self, name):
-
-        # print('Synced_data_obj.getattr name')
-        # print(name)
-
-        if(name.startswith(Synced_data_obj.intern_propname_prefix) == False):
-            return super().__getattribute__(str(Synced_data_obj.intern_propname_prefix+name))
+    def __getattribute__(self, str_attr):
+        """
+        before
+        getattr(obj, 'test')
+        after 
+        getattr(obj, '_test')
+        """
+        if(str_attr.startswith(Synced_data_obj.intern_propname_prefix) == False):
+            return super().__getattribute__(str(Synced_data_obj.intern_propname_prefix+str_attr))
         else: 
-            return super().__getattribute__(name)
+            return super().__getattribute__(str_attr)
         # re rendering is only neccessary when setter is called ... Pyqt5_app.re_render_view()
 
 
 class Yet_more_nested():
+    """
+    test class
+    """
     def __init__(self, id) -> None:
         self.id = id
         self.whichstring = Synced_data_obj('im Yet_more_nested, my id is'+str(self.id))
 class Some_deep_nested_shit():
+    """
+    test class
+    """
     def __init__(self, id) -> None:
         self.id = id
         self.whichstring = Synced_data_obj('im Some_deep_nested_shit, my id is'+str(self.id))
@@ -1295,7 +1248,11 @@ class Some_deep_nested_shit():
             Yet_more_nested(1),
             Yet_more_nested(2)
         ]
+
 class Camera(): 
+    """
+    test class
+    """
     def __init__(self) -> None:
         self.fps = Synced_data_obj(100) # will be data.cameras.fps.value 
         # self.xyz = ... 
@@ -1304,10 +1261,32 @@ class Camera():
         # and so on
 
 class Data():
+    """
+    the data class 
+    all data for the application has to be referenced here
+    to syncronize an object with a view_object 
+    Synced_data_obj has to be used
+
+    the class can contain function which can be accessed via their name 
+    """
     def __init__(self) -> None:
         self.cameras = []
         self.textasdf = Synced_data_obj('this is text data')
         self.textforinput = Synced_data_obj('INIT TEXT')
+        self.arr_button_texts = [
+            'Push me!', 
+            'Smash me!', 
+            'Click me!', 
+            'Hit me!', 
+            'Press me!', 
+            'clink me!',
+            'clack me!',
+            'chink me!',
+            'snick me!',
+            'tick me!',
+            'snap me!'
+        ]
+        self.str_btn_text_by_hy = Synced_data_obj('Try me!')
         self.stringarray = [
             Synced_data_obj('stringarray text 1'),
             Synced_data_obj('stringarray text 2'),
@@ -1319,6 +1298,10 @@ class Data():
         self.sliderval = Synced_data_obj(1)
 
     def test_synced_obj(self):
+        """
+        testing rendering behaviour 
+        when using time.sleep()
+        """
         self.textasdf.value = 'test 1'
         time.sleep(1)
         self.textasdf.value = 'test 2'
@@ -1327,6 +1310,20 @@ class Data():
         time.sleep(1)
         self.textasdf.value = 'test 4'
         time.sleep(1)
+
+    def by_and_hy(self, synced_obj): 
+        
+
+        synced_obj.value = 'by by ...'
+
+        def hy(arg1, synced_obj):
+            print(arg1)
+            synced_obj.value = 'Hy, im back ;->'
+            print("")
+
+        
+        r = Timer(1.0, hy, ("has_to_be_passed_idk_why", synced_obj))
+        r.start()
 
     def random_color(self):
         r = lambda: random.randint(0,255)
@@ -1340,58 +1337,72 @@ class Data():
         return self.get_function_by_string(string, False, code_statements_before_string_evaluation, code_statements_after_string_evaluation)
         
     def get_function_by_string(self, string, return_evaluated=False, code_statements_before_string_evaluation=[],code_statements_after_string_evaluation=[]):
+        """
+        creates a function by string, 
+        provides every attribute as a local reference 
+        this makes it more convenient to get access to a data attribute 
+        for example 
+        self.test_arr[2].test_data -> test_arr[2].test_data
+        
+        Attrs:
+            string: string is one single statement 
+            code_statements_before_string_evaluation: array multiple code statements 
+            code_statements_after_string_evaluation: array multiple code statements 
+        """
+        str_funname = 'fun_'+str((int(time.time())))
+        str_fun_str = ''
+        arr_fun_str_lines = []
+        arr_fun_str_lines.append('def '+str(str_funname)+'(self,event=None,**kvargs):')
+        
 
-        funname = 'fun_'+str((int(time.time())))
-        funstr = ''
-        funstrlines = []
-        funstrlines.append('def '+str(funname)+'(self,event=None,**kvargs):')
-        # kvargs => key value args
+        arr_fun_str_lines.append('    for key, value in kvargs.items():')
+        arr_fun_str_lines.append('        exec(key+\'=value\')')           
 
-
-        funstrlines.append('    for key, value in kvargs.items():')
-        funstrlines.append('        exec(key+\'=value\')')           
-
+        # provide attributes as local scope references
         for property in dir(self):
-            # print(property)
-            funstrlines.append('    '+property+'='+'self.'+property)           
-            # print(property, ":", value)
+            arr_fun_str_lines.append('    '+property+'='+'self.'+property)           
         
         for statement in code_statements_before_string_evaluation:
-            funstrlines.append('    '+str(statement))
-
+            arr_fun_str_lines.append('    '+str(statement))
+        
+        # create a unique temporary variable name 
         if(return_evaluated):
-
-            varname = 'var_'+str((int(time.time())))
-            funstrlines.append('    '+varname+'='+string)
+            str_varname = 'var_'+str((int(time.time())))
+            arr_fun_str_lines.append('    '+str_varname+'='+string)
         else:
-            funstrlines.append('    '+string)
+            arr_fun_str_lines.append('    '+string)
 
             
         for statement in code_statements_after_string_evaluation:
-            funstrlines.append('    '+str(statement))
+            arr_fun_str_lines.append('    '+str(statement))
 
         if(return_evaluated):
-            funstrlines.append('    return '+'('+varname+')')
+            arr_fun_str_lines.append('    return '+'('+str_varname+')')
 
-        funstr = "\n".join(funstrlines)
-        #print(funstr) 
-        exec(funstr)
-        functionbody = locals()[funname]
+        str_fun_str = "\n".join(arr_fun_str_lines)
+        
+        exec(str_fun_str)
+        
+        functionbody = locals()[str_funname]
         # we have to bind the method to the class in order to automatically
         # get the first parameter 'self'
         # simply setattr wont work
         # setattr(self, fname, lambda: functionbody(self))
         # this will bind the method to the self
-        setattr(self, funname, types.MethodType( functionbody, self ))
+        setattr(self, str_funname, types.MethodType( functionbody, self ))
 
-        return getattr(self, funname)
-            
-
+        return getattr(self, str_funname)
+    
 
 class Pyqt5_app(QWidget):
-    instances = []    
+    arr_instances = []    
     @staticmethod
-    def deleteItemsOfLayout(layout):
+    def delete_items_of_pyqt5_layout(layout):
+        """
+        og: https://stackoverflow.com/questions/37564728/pyqt-how-to-remove-a-layout-from-a-layout
+        user: TheTrowser
+        recursively deletes every item of pyqt5 layout
+        """
         if layout is not None:
             while layout.count():
                 item = layout.takeAt(0)
@@ -1399,15 +1410,19 @@ class Pyqt5_app(QWidget):
                 if widget is not None:
                     widget.setParent(None)
                 else:
-                    Pyqt5_app.deleteItemsOfLayout(item.layout())
+                    Pyqt5_app.delete_items_of_pyqt5_layout(item.layout())
 
     @staticmethod
     def re_render_view():
-        for obj in Pyqt5_app.instances:
+        """
+        foreach instance
+        render_view_without_reset 
+        """
+        for obj in Pyqt5_app.arr_instances:
             obj.render_view_without_reset()
 
     def __init__(self):
-        self.__class__.instances.append(self)
+        self.__class__.arr_instances.append(self)
 
         super().__init__()
 
@@ -1415,37 +1430,26 @@ class Pyqt5_app(QWidget):
 
     def initialize_gui(self):
 
-        self.setWindowTitle('asdf')
+        self.setWindowTitle('Object Sync')
         
         self.data = Data()
         
-        # if(True):
-        #     self.data.cameras.append(Camera())
+        # initialize pyqt5_view
+        self.view_template = View_template(self.data)
         
-        self.pyqt5_view = Pyqt5_view(self.data)
-        
+        # most outer layout , is not affected by rendering of view
         self.q_h_box_layout = QHBoxLayout()
-        self.render_view_from_json()
+        # 
+        self.render_view = self.view_template.get_rendered_root_pyqt5_qt_object()
+        
+        self.q_h_box_layout.addLayout(self.render_view)
+
         self.setLayout(self.q_h_box_layout)
         self.show()
 
-
-
-
-    def clear_view(self):
-        if(hasattr(self, 'render_qt_layout')):
-            self.deleteItemsOfLayout(self.render_qt_layout)
-                
     
     def render_view_without_reset(self):
-        self.pyqt5_view.render_view_without_reset()
-
-    def render_view_from_json(self):
-        if(hasattr(self, 'pyqt5_view')):
-            self.clear_view()
-            self.render_view = self.pyqt5_view.get_rendered_view_from_json()
-            self.q_h_box_layout.addLayout(self.render_view)
-
+        self.view_template.render_view_without_reset()
 
 if __name__ == '__main__':
 
