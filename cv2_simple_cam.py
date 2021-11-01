@@ -36,38 +36,73 @@ class Imagemanipulation_functions_object:
 
          
         return last_np_array
+
+    def frame_fourth_dimension_time_two(self, a_np_frames):
+        
+        n_slices_len = 50
+
+        a_last_np_frame = a_np_frames[-1].copy()
+
+        height, width, asdf = a_last_np_frame.shape
+
+        for i in range(0, n_slices_len):
+
+            n_from = (i)*int(width/n_slices_len)
+            n_to = (i+1)*int(width/n_slices_len)
+            a_last_np_frame[n_from:n_to] = (
+                a_np_frames[(len(a_np_frames)-2)-i][(i)*int(width/n_slices_len):(i+1)*int(width/n_slices_len)]
+            )
+
+         
+        return a_last_np_frame
+
     
-    # def brightness(self, array_np_arrays):
-    #     #print( (mouse.get_position()[1] / 1080))
-    #     # return np_array + (mouse.get_position()[1] / 1080)
-    #     np_array = np.apply_along_axis(lambda x: (x+(mouse.get_position()[1] / 1080)), 0, array_np_arrays[-1])
-    #     np_array = np.apply_along_axis(lambda x: (x+(mouse.get_position()[1] / 1080)), 1, np_array)
-    #     return np_array
+    def radial_expanding_matrix_transformation_scale(self, a_np_frames):
+        
+        n_radius_min = 0
+        n_radius_max = 50 
+        n_step_per_radius = 10
 
-    # """todo"""
-    # def multiplied_by_itself_mouse(self, array_np_arrays):
-    #     return array_np_arrays[-1] * array_np_arrays[-1] * (mouse.get_position()[1] / 1080)
+        for n_radius_i in range(n_radius_min, n_radius_max): 
+            n_radius_current = n_radius_i * n_step_per_radius
+            n_width = n_radius_current
+            n_height = n_radius_current
+            
+         
+        return a_last_np_frame
+    
+    def brightness(self, array_np_arrays):
+        #print( (mouse.get_position()[1] / 1080))
+        # return np_array + (mouse.get_position()[1] / 1080)
+        np_array = np.apply_along_axis(lambda x: (x+(mouse.get_position()[1] / 1080)), 0, array_np_arrays[-1])
+        np_array = np.apply_along_axis(lambda x: (x+(mouse.get_position()[1] / 1080)), 1, np_array)
+        return np_array
 
-    # def multiply_array_with_random(self, array_np_arrays):
-    #     return array_np_arrays[-1] * (mouse.get_position()[1] / 1080) * random.random() 
+    """todo"""
+    def multiplied_by_itself_mouse(self, array_np_arrays):
+        return array_np_arrays[-1] * array_np_arrays[-1] * (mouse.get_position()[1] / 1080)
 
-    # def mirror_x(self, array_np_arrays):
-    #     npacp = array_np_arrays[-1].copy()
-    #     np_array_flipped = npacp[::, ::-1]
+    def multiply_array_with_random(self, array_np_arrays):
+        return array_np_arrays[-1] * (mouse.get_position()[1] / 1080) * random.random() 
 
-    #     height, width, channel = array_np_arrays[-1].shape
+    def mirror_x(self, array_np_arrays):
 
-    #     array_np_arrays[-1][::, int(width/2):] =  (
-    #         np_array_flipped[::, int(width/2):]
-    #     )
-    #     # np_array[int(height/2)::] = 0
-    #     return array_np_arrays[-1]
+        npacp = array_np_arrays[-1].copy()
+        np_array_flipped = npacp[::, ::-1]
+
+        height, width = array_np_arrays[-1].shape[:2]
+
+        array_np_arrays[-1][::, int(width/2):] =  (
+            np_array_flipped[::, int(width/2):]
+        )
+        # np_array[int(height/2)::] = 0
+        return array_np_arrays[-1]
 
     # def mirror_y(self, array_np_arrays):
     #     npacp = array_np_arrays[-1].copy()
     #     np_array_flipped = npacp[::-1, ::]
 
-    #     height, width, channel = array_np_arrays[-1].shape
+    #     height = array_np_arrays[-1].shape[:1]
 
     #     array_np_arrays[-1][int(height/2):, ::] =  (
     #         np_array_flipped[int(height/2):, ::]
@@ -80,22 +115,22 @@ class Imagemanipulation_functions_object:
     #     mirrored_y = self.mirror_y(mirrored_x)
     #     return mirrored_y
 
-    # # def gaussian_blur(self, array_np_arrays):
+    # def gaussian_blur(self, array_np_arrays):
         
-    # #     kernel = np.array([
-    # #         [ 1.0, 2.0, 1.0 ], 
-    # #         [ 2.0, 4.0, 2.0 ], 
-    # #         [ 1.0, 2.0, 1.0 ]
-    # #         ]
-    # #     ) # Here you would insert your actual kernel of any size
-    # #     np_array = np.apply_along_axis(lambda x: np.convolve(x, kernel, mode='same'), 0, np_array)
-    # #     np_array = np.apply_along_axis(lambda x: np.convolve(x, kernel, mode='same'), 1, np_array)
-    # #     return np_array
-
-    # def cv2_blur(self, array_np_arrays):
-    #     ksize=int(22 *(mouse.get_position()[1] / 1080)) | 1
-    #     np_array = cv2.blur(array_np_arrays[-1], (ksize, ksize)) 
+    #     kernel = np.array([
+    #         [ 1.0, 2.0, 1.0 ], 
+    #         [ 2.0, 4.0, 2.0 ], 
+    #         [ 1.0, 2.0, 1.0 ]
+    #         ]
+    #     ) # Here you would insert your actual kernel of any size
+    #     np_array = np.apply_along_axis(lambda x: np.convolve(x, kernel, mode='same'), 0, np_array)
+    #     np_array = np.apply_along_axis(lambda x: np.convolve(x, kernel, mode='same'), 1, np_array)
     #     return np_array
+
+    def cv2_blur(self, array_np_arrays):
+        ksize=int(22 *(mouse.get_position()[1] / 1080)) | 1
+        np_array = cv2.blur(array_np_arrays[-1], (ksize, ksize)) 
+        return np_array
     # def gaussian_blur_fft(self, array_np_arrays):
 
     #     t = np.linspace(-10, 10, 30)
@@ -117,15 +152,14 @@ class Imagemanipulation_functions_object:
     #     img2 = np.clip(img2, 0, 1)
     #     return img2
 
-    # def apply_along_axis(self, array_np_arrays):
-    #     np_array = np.apply_along_axis(lambda x: x+random.random(), 0, array_np_arrays[-1])
-    #     return np_array
+    def apply_along_axis(self, array_np_arrays):
+        np_array = np.apply_along_axis(lambda x: x+random.random(), 0, array_np_arrays[-1])
+        return np_array
 
 
 class Frame:
     imagemanipulation_function_name_prefix_separator='_'
     def __init__(self, data):
-
 
         self.array_np_arrays = []
         self.array_np_arrays_max_len = 100
@@ -166,7 +200,7 @@ class Frame:
         return True
   
 
-cap = cv2.VideoCapture(3)
+cap = cv2.VideoCapture(0)
 
 f = Frame(np.zeros((10,10),np.uint8))
 

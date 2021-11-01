@@ -11,7 +11,6 @@ import time
 import copy
 import types
 
-
 import cv2
 
 def rsetattr(obj, attr, val):
@@ -101,8 +100,7 @@ class Gui_object():
         for event_name_alias, event_name_qt in Gui_object.event_aliases.items(): 
           if(name == event_name_alias):
             for q_object in self.q_objects:
-              setattr(q_object, event_name_qt, value )
-
+              setattr(q_object, event_name_qt, value)
 
     def q_objects_set_value(self, value):
       for q_object in self.q_objects:
