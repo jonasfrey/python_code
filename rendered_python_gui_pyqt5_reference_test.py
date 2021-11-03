@@ -48,9 +48,9 @@ def rsetattr(obj, attr, val):
 def rgetattr(obj, str_attr, *args):
     """
     gets you an nested property value with a str , for example 
-    rgetattr(o_test, 'a.b.0.e.2'), arrays can be accessed via number
+    rgetattr(obj_test, 'a.b.0.e.2'), arrays can be accessed via number
 
-    o_class_or_dict {
+    obj_class_or_dict {
         a : 1, 
         b : {
             a: [
@@ -70,11 +70,11 @@ def rgetattr(obj, str_attr, *args):
     }
     use it like this
     
-    rgetattr(o_class_or_dict, 'a') # returns  a
-    rgetattr(o_class_or_dict, 'b.a') # returns object
-    rgetattr(o_class_or_dict, 'b.a.2') # returns 2
-    rgetattr(o_class_or_dict, 'b.a.3.a') # returns True
-    rgetattr(o_class_or_dict, 'b.a.3.4.1') # returns 1
+    rgetattr(obj_class_or_dict, 'a') # returns  a
+    rgetattr(obj_class_or_dict, 'b.a') # returns object
+    rgetattr(obj_class_or_dict, 'b.a.2') # returns 2
+    rgetattr(obj_class_or_dict, 'b.a.3.a') # returns True
+    rgetattr(obj_class_or_dict, 'b.a.3.4.1') # returns 1
     
 
     Args:
@@ -207,9 +207,7 @@ class Pyqt5_view_object:
 
         self.data = data
 
-        # prevent pyqt5 error 'QLayout::addChildLayout: layout "" already has a parent'
-        self.connect_with_parent_pyqt5_view_object_executed = False 
-        
+
         # we only must use the first dimension of this dict_object
         remove_nested_dicts_or_class_instances_from_dict_or_class_instance(dict_object)
         self.dict_object = dict_object
@@ -272,7 +270,7 @@ class Pyqt5_view_object:
         if 'code_statements_after_string_evaluation' in self.dict_object:
             self.code_statements_after_string_evaluation = self.dict_object['code_statements_after_string_evaluation']
 
-        self.synced_o_data_path = None 
+        self.synced_obj_data_path = None 
         self.render_function = None
 
         self.init_event_listeners()
@@ -315,20 +313,16 @@ class Pyqt5_view_object:
         # )
 
     def connect_with_parent_pyqt5_view_object(self):
-        # prevent pyqt5 error 'QLayout::addChildLayout: layout "" already has a parent'
-        if(not self.connect_with_parent_pyqt5_view_object_executed or True):
 
-            self.connect_with_parent_pyqt5_view_object_executed = True
-
-            parent_pyqt5_view_object = self.get_parent_pyqt5_view_object()
+        parent_pyqt5_view_object = self.get_parent_pyqt5_view_object()
 
 
-            if(parent_pyqt5_view_object == None):
-                return True
+        if(parent_pyqt5_view_object == None):
+            return True
 
-            parent_pyqt5_view_object.qt_object.addLayout(
-                self.qt_layout_great_grand_parent
-            )
+        parent_pyqt5_view_object.qt_object.addLayout(
+            self.qt_layout_great_grand_parent
+        )
         
     def remove_from_layout(self):
         self.c = '""'
@@ -594,7 +588,7 @@ class View_object:
 
 class View_template:
     """
-    1. str_view_json to o_view_dict
+    1. str_view_json to obj_view_dict
     2. convert "for" attr in each object into for_statement_objects : [...]
     3. foreach obj in dict create corresponding pyqt5 object
 
@@ -606,8 +600,8 @@ class View_template:
             {
                 "qt_constructor" : "QVBoxLayout", 
                 "setStyleSheet": "'background-color: '+random_color()",
-                "setSpacing": "n_slider_val.value",
-                "setContentMargins": "n_slider_val.value",
+                "setSpacing": "sliderval.value",
+                "setContentMargins": "sliderval.value",
                 "c": [
                     {
                         "setStyleSheet": "'background-color: '+random_color()",
@@ -615,57 +609,45 @@ class View_template:
                         "c":[
                             { 
                                 "qt_constructor": "QPushButton",  
-                                "c": "a_button_texts[int(random.random()*len(a_button_texts))]", 
+                                "c": "arr_button_texts[int(random.random()*len(arr_button_texts))]", 
                                 "mousePressEvent" : "print('printing to console')"
                             },
                             { 
                                 "qt_constructor": "QPushButton",  
-                                "c": "a_button_texts[0]", 
+                                "c": "arr_button_texts[0]", 
                                 "mousePressEvent" : "print('printing to console')"
                             },
                             { 
                                 "qt_constructor": "QPushButton",  
-                                "c": "str(s_btn_text_by_hy.value)", 
-                                "mousePressEvent" : "by_and_hy(s_btn_text_by_hy)"
+                                "c": "str(str_btn_text_by_hy.value)", 
+                                "mousePressEvent" : "by_and_hy(str_btn_text_by_hy)"
                             }
                         ]
                     },
-                    {
-                        "qt_constructor" : "QHBoxLayout", 
-                        "c":[
-
-                                { 
-                                    "qt_constructor": "QSlider(Qt.Horizontal)", 
-                                    "c": "n_slider_val.value",
-                                    "valueChangedasdf": "print('value '+str(event)+' changed at:'+str(time.time()))",
-                                    "valueChanged": "n_slider_val._value = event",
-                                    "sliderMovedasdf": "print('value '+str(event)+' changed at:'+str(time.time()))",
-                                    "setMinimum" : "1", 
-                                    "setMaximum" : "10" 
-                                },
-                                { 
-                                    "qt_constructor": "QLabel", 
-                                    "c":"'slider val : '+str(n_slider_val.value)"
-                                }, 
-                                { 
-                                    "qt_constructor": "QPushButton",  
-                                    "c": "'reset slider val to 5'", 
-                                    "mousePressEvent" : "n_slider_val.value = 5"
-                                }
-
-                        ]
+                    { 
+                        "qt_constructor": "QSlider(Qt.Horizontal)", 
+                        "c": "sliderval.value",
+                        "valueChangedasdf": "print('value '+str(event)+' changed at:'+str(time.time()))",
+                        "valueChanged": "sliderval._value = event",
+                        "sliderMovedasdf": "print('value '+str(event)+' changed at:'+str(time.time()))",
+                        "setMinimum" : "1", 
+                        "setMaximum" : "10" 
                     },
                     {
                         "qt_constructor" : "QHBoxLayout", 
                         "c":[
                                 { 
+                                    "qt_constructor": "QLabel", 
+                                    "c":"'slider val : '+str(sliderval.value)"
+                                },
+                                { 
                                     "qt_constructor": "QLineEdit",  
-                                    "c": "s_input_text.value", 
-                                    "textChanged": "s_input_text._value = event"
+                                    "c": "textforinput.value", 
+                                    "textChanged": "textforinput._value = event"
                                 },
                                 { 
                                     "qt_constructor": "QLabel",  
-                                    "c": "'text is :'+str(s_input_text.value)" 
+                                    "c": "'text is :'+str(textforinput.value)" 
                                 },
                                 {
                                     "qt_constructor" : "QHBoxLayout", 
@@ -673,7 +655,7 @@ class View_template:
                                             { 
                                                 "qt_constructor": "QPushButton",  
                                                 "c": "'reset text above'", 
-                                                "mousePressEvent" : "s_input_text.value = 'reseetet text'"
+                                                "mousePressEvent" : "textforinput.value = 'reseetet text'"
                                             },
                                             { 
                                                 "qt_constructor": "QPushButton",  
@@ -758,12 +740,12 @@ class View_template:
                                 { 
                                     "qt_constructor": "QPushButton",  
                                     "c": "'add to string array'", 
-                                    "mousePressEvent": "a_strings.append(Synced_data_obj('more txt'+str(len(a_strings))))"       
+                                    "mousePressEvent": "stringarray.append(Synced_data_obj('more txt'+str(len(stringarray))))"       
                                 },
                                 { 
                                     "qt_constructor": "QPushButton",  
                                     "c": "'remove from string array'", 
-                                    "mousePressEvent": "a_strings.pop(1)"       
+                                    "mousePressEvent": "stringarray.pop(1)"       
                                 }
 
                         ]
@@ -773,11 +755,11 @@ class View_template:
                         "c": [
                                 { 
                                     "qt_constructor": "QLabel",  
-                                    "c": "'len(a_strings):'+str(len(a_strings))" 
+                                    "c": "'len(stringarray):'+str(len(stringarray))" 
                                 },
                                 { 
                                     "qt_constructor": "QLabel",  
-                                    "c": "'str(a_strings):'+str(str(a_strings))" 
+                                    "c": "'str(stringarray):'+str(str(stringarray))" 
                                 }
                         ]
                     },
@@ -794,10 +776,10 @@ class View_template:
                         "c": [
                             {
                                 "qt_constructor" : "QHBoxLayout", 
-                                "for": "val1, key in a_strings",
+                                "for": "val1, key in stringarray",
                                 "c":[
                                     {
-                                        "for": "value_asdf_test, key in a_strings",
+                                        "for": "value_asdf_test, key in stringarray",
                                         "qt_constructor":"QLabel", 
                                         "c":"str(value_asdf_test.value)"
                                     }
@@ -807,7 +789,7 @@ class View_template:
                     },
                     {
                         "qt_constructor": "QLabel",  
-                        "c": "s_text.value"
+                        "c": "textasdf.value"
                     }
                 ]
             }
@@ -819,10 +801,10 @@ class View_template:
                     "c": [
                         {
                             "qt_constructor" : "QHBoxLayout", 
-                            "for": "val1, key in a_strings",
+                            "for": "val1, key in stringarray",
                             "c":[
                                 {
-                                    "for": "value_asdf_test, key in a_strings",
+                                    "for": "value_asdf_test, key in stringarray",
                                     "qt_constructor":"QLabel", 
                                     "c":"'str arr val '+str(value_asdf_test.value)"
                                 }
@@ -871,7 +853,7 @@ class View_template:
                     "c": [
                             {
                                 "qt_constructor" : "QHBoxLayout", 
-                                "for": "val1, key in a_strings",
+                                "for": "val1, key in stringarray",
                                 "c": [
                                     {
                                         "qt_constructor": "QLabel",  
@@ -889,10 +871,10 @@ class View_template:
                     "c": [
                         {
                             "qt_constructor" : "QHBoxLayout", 
-                            "for": "val1, key in a_strings",
+                            "for": "val1, key in stringarray",
                             "c":[
                                 {
-                                    "for": "value_asdf_test, key in a_strings",
+                                    "for": "value_asdf_test, key in stringarray",
                                     "qt_constructor":"QLabel", 
                                     "c":"'for loop 2 '+str(value_asdf_test.value)"
                                 }
@@ -901,7 +883,7 @@ class View_template:
                         ]
                 }
         """
-        self.o_view_dict = None 
+        self.obj_view_dict = None 
 
     def render_view_without_reset(self):
         """
@@ -910,7 +892,7 @@ class View_template:
             2. foreach pyqt5_view_object instance .re_render_qt_object()
         """    
         
-        self.recursive_update_for_statement_objects(self.o_view_dict)
+        self.recursive_update_for_statement_objects(self.obj_view_dict)
 
         for instance in Pyqt5_view_object.instances:
             instance.re_render_qt_object()
@@ -924,11 +906,11 @@ class View_template:
         Raises: 
             Error when str_view_json is not correct 
         """
-        self.o_view_dict = json.loads(self.str_view_json)
+        self.obj_view_dict = json.loads(self.str_view_json)
           
-        if(type(self.o_view_dict) != dict):
+        if(type(self.obj_view_dict) != dict):
             raise Exception('root of str_view_json has to be one single object {...}, not an array')
-        if('for' in self.o_view_dict):
+        if('for' in self.obj_view_dict):
             raise Exception('root of str_view_json must not contain a "for" property')
 
         self.render_view_without_reset()
@@ -949,42 +931,43 @@ class View_template:
         print('testing list.append')
         print('-------------------')
         print('')
-        self.data.a_strings.append(Synced_data_obj('a_strings text 3'))
-        self.data.a_strings.append(Synced_data_obj('a_strings text 4'))
+        self.data.stringarray.append(Synced_data_obj('stringarray text 3'))
+        self.data.stringarray.append(Synced_data_obj('stringarray text 4'))
 
-        self.write_o_view_dict_to_json(self.o_view_dict)
+        self.write_obj_to_json(self.obj_view_dict)
         self.render_view_without_reset()
 
         print('-------------------')
         print('testing list.pop')
         print('-------------------')
         print('')
-        self.data.a_strings.pop(0)
-        self.data.a_strings.pop(2)
+        self.data.stringarray.pop(0)
+        self.data.stringarray.pop(2)
 
-        self.write_o_view_dict_to_json(self.o_view_dict)
+        self.write_obj_to_json(self.obj_view_dict)
         self.render_view_without_reset()
 
         print('-------------------')
         print('testing list = ... / setattr')
         print('-------------------')
         print('')
-        self.data.a_strings = [
+        self.data.stringarray = [
             Synced_data_obj('txt 1'),
             Synced_data_obj('text 2'),
             Synced_data_obj('str 3'),
             Synced_data_obj('str 3'),
             Synced_data_obj('str 3'),
         ]
-        self.write_o_view_dict_to_json(self.o_view_dict)
+        self.write_obj_to_json(self.obj_view_dict)
         self.render_view_without_reset()
 
-    def write_o_view_dict_to_json(self, obj):
+    def write_obj_to_json(self, obj):
+        return False
         """
         writes the object formatted/beautified to json file 
         filename time.time()+{functionname}.json
         """
-        f = open(str(time.time())+"write_o_view_dict_to_json.json", "w")
+        f = open(str(time.time())+"write_obj_to_json.json", "w")
 
         f.write(
             json.dumps(
@@ -1004,7 +987,7 @@ class View_template:
             before
             {
                 ...
-                "for": "num_index, o_val in data_array"
+                "for": "num_index, obJ_val in data_array"
                 "a": 1, 
                 "b": 1, 
                 "c": [
@@ -1014,7 +997,7 @@ class View_template:
             after
             {
                 ...
-                "for": "num_index, o_val in data_array"
+                "for": "num_index, obJ_val in data_array"
                 "a": 1, 
                 "b": 1, 
                 "c": [
@@ -1096,29 +1079,29 @@ class View_template:
             if(evaluated_array_var_len < len(object['for_statement_objects'])):
                 # data_array is smaller than for_statement_object
                 # objects were removed from data array 
-                o_for_statement_object_to_delete = []
+                obj_for_statement_object_to_delete = []
                 
-                for num_index, o_for_statement_object in enumerate(object['for_statement_objects']):
+                for num_index, obj_for_statement_object in enumerate(object['for_statement_objects']):
                     
                     if(num_index >= evaluated_array_var_len):
-                        o_for_statement_object_to_delete.append(
-                            o_for_statement_object
+                        obj_for_statement_object_to_delete.append(
+                            obj_for_statement_object
                             )
 
-                for o_for_statement_object in o_for_statement_object_to_delete:
+                for obj_for_statement_object in obj_for_statement_object_to_delete:
                     
                     num_index = object['for_statement_objects'].index(
-                        o_for_statement_object
+                        obj_for_statement_object
                         )
                     pyqt5_view_object_to_delete = Pyqt5_view_object.get_instance_by_object_path_dot_notation(
-                        o_for_statement_object['object_path_dot_notation']
+                        obj_for_statement_object['object_path_dot_notation']
                     )
                     
                     pyqt5_view_object_to_delete.remove_from_layout()
 
                     # to delete all children objects we can delete all instances beginning with the 
                     Pyqt5_view_object.delete_instances_object_path_dot_notation_starts_with_string(
-                        o_for_statement_object['object_path_dot_notation']
+                        obj_for_statement_object['object_path_dot_notation']
                     )
                     
                     del object['for_statement_objects'][num_index]
@@ -1134,13 +1117,14 @@ class View_template:
                 
                 object_copy = copy.deepcopy(object)
                 
-                #flag the existance of an instance of Pyqt5_view_object for this o_dict_view_object
+                #flag the existance of an instance of Pyqt5_view_object for this obj_dict_view_object
                 object['has_instance_of_pyqt5_view_object'] = True 
 
-                # unfortunately we cannot reference the instance on the o_dict_view_object 
+                # unfortunately we cannot reference the instance on the obj_dict_view_object 
                 # object['pyqt5_view_object'] = Pyqt5_view_object... # not working
                 # deepcopy makes trouble...
-                Pyqt5_view_object(
+                # so the below will throw an error
+                object['has_instance_of_pyqt5_view_object'] = Pyqt5_view_object(
                     object_copy,
                     self.data
                 )
@@ -1289,9 +1273,9 @@ class Data():
     """
     def __init__(self) -> None:
         self.cameras = []
-        self.s_text = Synced_data_obj('this is text data')
-        self.s_input_text = Synced_data_obj('INIT TEXT')
-        self.a_button_texts = [
+        self.textasdf = Synced_data_obj('this is text data')
+        self.textforinput = Synced_data_obj('INIT TEXT')
+        self.arr_button_texts = [
             'Push me!', 
             'Smash me!', 
             'Click me!', 
@@ -1304,29 +1288,29 @@ class Data():
             'tick me!',
             'snap me!'
         ]
-        self.s_btn_text_by_hy = Synced_data_obj('Try me!')
-        self.a_strings = [
-            Synced_data_obj('a_strings text 1'),
-            Synced_data_obj('a_strings text 2'),
+        self.str_btn_text_by_hy = Synced_data_obj('Try me!')
+        self.stringarray = [
+            Synced_data_obj('stringarray text 1'),
+            Synced_data_obj('stringarray text 2'),
         ]
-        self.a_some_deep_nested_shits = [
-            Some_deep_nested_shit(1),
-            Some_deep_nested_shit(2),
+        self.some_deep_nested_shits = [
+         Some_deep_nested_shit(1),
+         Some_deep_nested_shit(2),
         ]
-        self.n_slider_val = Synced_data_obj(1)
+        self.sliderval = Synced_data_obj(1)
 
     def test_synced_obj(self):
         """
         testing rendering behaviour 
         when using time.sleep()
         """
-        self.s_text.value = 'test 1'
+        self.textasdf.value = 'test 1'
         time.sleep(1)
-        self.s_text.value = 'test 2'
+        self.textasdf.value = 'test 2'
         time.sleep(1)
-        self.s_text.value = 'test 3'
+        self.textasdf.value = 'test 3'
         time.sleep(1)
-        self.s_text.value = 'test 4'
+        self.textasdf.value = 'test 4'
         time.sleep(1)
 
     def by_and_hy(self, synced_obj): 
@@ -1480,7 +1464,7 @@ if __name__ == '__main__':
 """
         {
             "qt_constructor": "QVBoxLayout",  
-            "for": "obj1, index in a_some_deep_nested_shits",
+            "for": "obj1, index in some_deep_nested_shits",
             "c": [
                 {
                     "qt_constructor":"QLabel",
@@ -1495,7 +1479,7 @@ if __name__ == '__main__':
 
         },
         lets assume 
-        a_some_deep_nested_shits = [o1,o2,o3]
+        some_deep_nested_shits = [o1,o2,o3]
         and
         yet_more_nested_array = [n1,n2,n3,n4]
 

@@ -18,6 +18,7 @@ import inspect
 import weakref
 import jsonpickle
 import pprint
+from munch import *
 """
 naming conventions 
 s... string
@@ -247,9 +248,11 @@ class Pyqt5_view_object:
         self.qt_layout_great_grand_parent.addWidget(self.qt_widget_grand_parent)
         self.qt_widget_grand_parent.setLayout(self.qt_layout_parent)
         
+        self.qt_layout_great_grand_parent.setContentsMargins(0, 0, 0, 0)
         self.qt_layout_great_grand_parent.setSpacing(0)
+
         # self.qt_layout_great_grand_parent.setMargin(0)
-        
+        self.qt_layout_parent.setContentsMargins(0, 0, 0, 0)
         self.qt_layout_parent.setSpacing(0)
         # self.qt_layout_parent.setMargin(0)
 
@@ -316,7 +319,7 @@ class Pyqt5_view_object:
 
     def connect_with_parent_pyqt5_view_object(self):
         # prevent pyqt5 error 'QLayout::addChildLayout: layout "" already has a parent'
-        if(not self.connect_with_parent_pyqt5_view_object_executed or True):
+        if(not self.connect_with_parent_pyqt5_view_object_executed):
 
             self.connect_with_parent_pyqt5_view_object_executed = True
 
@@ -346,35 +349,47 @@ class Pyqt5_view_object:
         if(self.is_qt_layout_class_name() == False):
             self.qt_object.setMouseTracking(True)
 
-        for i in self.dict_object:
-            if(hasattr(self.qt_object, i)):
-                function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_view()"])
+        for s_attr in self.dict_object:
+            if(hasattr(self.qt_object, s_attr)):
+                # adding Pyqt5_app.re_render_view because after an user gui interaction event the view has to be re rendered
+                function_body = self.data.get_void_function_by_string(
+                    self.dict_object[s_attr],
+                    self.code_statements_before_string_evaluation,
+                    self.code_statements_after_string_evaluation+["Pyqt5_app.re_render_view()"]
+                    )
                 is_qt_input_event = False
-                if(i in Pyqt5_view_object.qt_input_events):
+                if(s_attr in Pyqt5_view_object.qt_input_events):
                     is_qt_input_event = True
-                    setattr(self.qt_object, i, function_body)
-                if(i in Pyqt5_view_object.qt_input_events_special):
+                    setattr(self.qt_object, s_attr, function_body)
+                if(s_attr in Pyqt5_view_object.qt_input_events_special):
                     # function_body = self.data.get_void_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
                     is_qt_input_event = True
                     # self.qt_object.event = self.qt_object_event_function
-                    localattrname = 'i_cannot_connect_this_function_directly_thats_why_i_set_this_attribute_'+str(i)
+                    localattrname = 'i_cannot_connect_this_function_directly_thats_why_i_set_this_attribute_'+str(s_attr)
                     setattr(self.qt_object, localattrname, function_body)
-                    qt_event_function = getattr(self.qt_object, i)
+                    qt_event_function = getattr(self.qt_object, s_attr)
                     qt_event_function.connect(getattr(self.qt_object, localattrname))
                     # self.qt_object.valueChanged.connect(
                     #     lambda val: function_body(val)
                     # )
                     # qt_object_fun = getattr(self.qt_object, i)
                     # qt_object_fun.connect(getattr(self.qt_object, localattrname))
-                    
+
+                # rendering of additional properties happens in update_evaluated_properties_for_parent_widget_or_layout                    
                 if(is_qt_input_event == False):
-                    function_body = self.data.get_return_function_by_string(self.dict_object[i], self.code_statements_before_string_evaluation, self.code_statements_after_string_evaluation)
-                    attr = getattr(self.qt_object, i)
-                    if(callable(attr)):
-                        function_return = function_body()
-                        # print(attr)
-                        attr(function_return)
-                        # print(attr)
+                    self.update_evaluated_properties_for_parent_widget_or_layout(self.qt_object)
+
+                    # function_body = self.data.get_return_function_by_string(
+                    #     self.dict_object[s_attr],
+                    #     self.code_statements_before_string_evaluation,
+                    #     self.code_statements_after_string_evaluation
+                    #     )
+                    # qt_object_attr = getattr(self.qt_object, s_attr)
+                    # if(callable(qt_object_attr)):
+                    #     function_return = function_body()
+                    #     # print(attr)
+                    #     qt_object_attr(function_return)
+                    #     # print(attr)
 
 
     def update_evaluated_properties_for_parent_widget_or_layout(self, qt_widget_or_layout):
@@ -385,11 +400,29 @@ class Pyqt5_view_object:
             else:      
                 if(hasattr(qt_widget_or_layout, i)):
                     qt_function_or_property = getattr(qt_widget_or_layout, i)
-
+                    
                     evaluated_return = self.get_evaluated_return_by_string(self.dict_object[i])
 
                     if(callable(qt_function_or_property)):
-                        qt_function_or_property(evaluated_return)
+                        if(i == 'setContentsMargins'): 
+
+                            a_args = self.dict_object[i].split(',')
+                            print(a_args)
+                            # a_evaluated_a_args_return = [] 
+                            # for s_arg in a_args:
+                            #     function_body = self.data.get_return_function_by_string(
+                            #     s_arg,
+                            #     self.code_statements_before_string_evaluation,
+                            #     self.code_statements_after_string_evaluation, 
+                            #     True
+                            #     )
+                            #     a_evaluated_a_args_return.append(
+                            #         function_body()
+                            #     )
+                            # print(a_evaluated_a_args_return)
+                            # exit()
+                            print('nl;sdfkjL')
+                            # qt_function_or_property(0)
                     else:
                         setattr(qt_widget_or_layout, i, evaluated_return)
 
@@ -450,6 +483,8 @@ class Pyqt5_view_object:
             # self.type = 'has_children'
             # has children 
     def wants_to_be_synced(self):
+        #tmp retunr false 
+        return False
         try:
             rgetattr(self.data, self.c)
             return True
@@ -592,9 +627,9 @@ class View_object:
         return json.dumps(self, default=lambda o: o.__dict__, 
             sort_keys=True, indent=4)
 
-class View_template:
+class Gui_tree:
     """
-    1. str_view_json to o_view_dict
+    1. str_json to o_view_dict
     2. convert "for" attr in each object into for_statement_objects : [...]
     3. foreach obj in dict create corresponding pyqt5 object
 
@@ -602,12 +637,14 @@ class View_template:
     def __init__(self, data):
 
         self.data = data
-        self.str_view_json = """
+        self.o_root = object()
+        self.o_root_dict = None 
+        self.str_json = """
             {
                 "qt_constructor" : "QVBoxLayout", 
                 "setStyleSheet": "'background-color: '+random_color()",
                 "setSpacing": "n_slider_val.value",
-                "setContentMargins": "n_slider_val.value",
+                "setContentsMargins": "n_slider_val.value,n_slider_val.value,n_slider_val.value,n_slider_val.value",
                 "c": [
                     {
                         "setStyleSheet": "'background-color: '+random_color()",
@@ -650,7 +687,7 @@ class View_template:
                                 { 
                                     "qt_constructor": "QPushButton",  
                                     "c": "'reset slider val to 5'", 
-                                    "mousePressEvent" : "n_slider_val.value = 5"
+                                    "mousePressEvent" : "n_slider_val._value = 5"
                                 }
 
                         ]
@@ -753,6 +790,25 @@ class View_template:
                         ]
                     },
                     {
+                        "qt_constructor": "QHBoxLayout",
+                        "for" : "i, val in range(0, n_slider_val.value)",
+                        "setStyleSheet": "'background-color: '+random_color()",
+                        "c":[
+                                { 
+                                    "for" : "j, val in range(0, n_slider_val.value)",
+                                    "setStyleSheet": "'background-color: '+random_color()",
+                                    "qt_constructor": "QVBoxLayout", 
+                                    "c":[
+                                        { 
+                                            "setStyleSheet": "'background-color: '+random_color()",
+                                            "qt_constructor": "QLabel", 
+                                            "c":"a_range_ten[int(j)]"
+                                        }
+                                    ]
+                                }
+                            ]
+                    },                       
+                    {
                         "qt_constructor": "QHBoxLayout", 
                         "c":[
                                 { 
@@ -812,7 +868,7 @@ class View_template:
                 ]
             }
         """
-        self.str_view_json_test_arrays = """
+        self.str_json_test_arrays = """
         
                 {
                     "qt_constructor": "QVBoxLayout",  
@@ -833,7 +889,7 @@ class View_template:
 
             
         """
-        self.str_view_json_test_nesting = """
+        self.str_json_test_nesting = """
         
                 {
                     "qt_constructor": "QVBoxLayout",  
@@ -864,7 +920,7 @@ class View_template:
                 }    
         """
 
-        self.str_view_json_test_array_1d = """
+        self.str_json_test_array_1d = """
         
                 {
                     "qt_constructor": "QVBoxLayout",  
@@ -883,7 +939,7 @@ class View_template:
                 }
 
         """
-        self.str_view_json_test_array_2d = """
+        self.str_json_test_array_2d = """
                         {
                     "qt_constructor": "QVBoxLayout",  
                     "c": [
@@ -901,16 +957,16 @@ class View_template:
                         ]
                 }
         """
-        self.o_view_dict = None 
 
-    def render_view_without_reset(self):
+
+    def render_without_clear(self):
         """
-        renders the view without reseting it
+        renders the view without clearing it, which prevents the loss of focus
             1. recursive update for statement objects
             2. foreach pyqt5_view_object instance .re_render_qt_object()
         """    
         
-        self.recursive_update_for_statement_objects(self.o_view_dict)
+        self.recursive_update_for_statement_objects(self.o_root)
 
         for instance in Pyqt5_view_object.instances:
             instance.re_render_qt_object()
@@ -922,19 +978,24 @@ class View_template:
             1. convert json to dict
             2. rendering the view
         Raises: 
-            Error when str_view_json is not correct 
+            Error when str_json is not correct 
         """
-        self.o_view_dict = json.loads(self.str_view_json)
-          
-        if(type(self.o_view_dict) != dict):
-            raise Exception('root of str_view_json has to be one single object {...}, not an array')
-        if('for' in self.o_view_dict):
-            raise Exception('root of str_view_json must not contain a "for" property')
+        self.o_root = json.loads(self.str_json)
 
-        self.render_view_without_reset()
+        # im afraid i will loose performance with this           
+        # self.o_root = (
+        #     DefaultMunch.fromDict(self.o_root_dict, self.o_root)
+        # )
+
+        if('for' in self.o_root):
+            raise Exception('root of str_json must not contain a "for" property')
+
+        
+        self.render_without_clear()
 
         # self.test_recursive_update_for_statement_objects()
-     
+
+
         root_pyqt5_view_object = Pyqt5_view_object.get_root_instance()
 
         return root_pyqt5_view_object.qt_layout_great_grand_parent
@@ -952,8 +1013,8 @@ class View_template:
         self.data.a_strings.append(Synced_data_obj('a_strings text 3'))
         self.data.a_strings.append(Synced_data_obj('a_strings text 4'))
 
-        self.write_o_view_dict_to_json(self.o_view_dict)
-        self.render_view_without_reset()
+        self.write_o_root_to_json(self.o_root)
+        self.render_without_clear()
 
         print('-------------------')
         print('testing list.pop')
@@ -962,8 +1023,8 @@ class View_template:
         self.data.a_strings.pop(0)
         self.data.a_strings.pop(2)
 
-        self.write_o_view_dict_to_json(self.o_view_dict)
-        self.render_view_without_reset()
+        self.write_o_root_to_json(self.o_root)
+        self.render_without_clear()
 
         print('-------------------')
         print('testing list = ... / setattr')
@@ -976,15 +1037,15 @@ class View_template:
             Synced_data_obj('str 3'),
             Synced_data_obj('str 3'),
         ]
-        self.write_o_view_dict_to_json(self.o_view_dict)
-        self.render_view_without_reset()
+        self.write_o_root_to_json(self.o_root)
+        self.render_without_clear()
 
-    def write_o_view_dict_to_json(self, obj):
+    def write_o_root_to_json(self, obj):
         """
         writes the object formatted/beautified to json file 
         filename time.time()+{functionname}.json
         """
-        f = open(str(time.time())+"write_o_view_dict_to_json.json", "w")
+        f = open(str(time.time())+"write_o_root_to_json.json", "w")
 
         f.write(
             json.dumps(
@@ -1056,7 +1117,8 @@ class View_template:
             # get the evaluated length of data array
             evaluated_array_var_len = self.data.get_return_function_by_string(
                 "len("+array_var_name_in_for_statement+")",
-                code_statements_before_string_evaluation
+                code_statements_before_string_evaluation, 
+                []
             )()
 
             if('for_statement_objects' not in object):
@@ -1305,6 +1367,7 @@ class Data():
             'snap me!'
         ]
         self.s_btn_text_by_hy = Synced_data_obj('Try me!')
+        self.a_range_ten = ['1'] * 10
         self.a_strings = [
             Synced_data_obj('a_strings text 1'),
             Synced_data_obj('a_strings text 2'),
@@ -1354,7 +1417,7 @@ class Data():
     def get_void_function_by_string(self, string, code_statements_before_string_evaluation=[], code_statements_after_string_evaluation=[]):
         return self.get_function_by_string(string, False, code_statements_before_string_evaluation, code_statements_after_string_evaluation)
         
-    def get_function_by_string(self, string, return_evaluated=False, code_statements_before_string_evaluation=[],code_statements_after_string_evaluation=[]):
+    def get_function_by_string(self, string, return_evaluated=False, code_statements_before_string_evaluation=[],code_statements_after_string_evaluation=[], b_self_as_first_arg = True):
         """
         creates a function by string, 
         provides every attribute as a local reference 
@@ -1407,7 +1470,12 @@ class Data():
         # simply setattr wont work
         # setattr(self, fname, lambda: functionbody(self))
         # this will bind the method to the self
-        setattr(self, str_funname, types.MethodType( functionbody, self ))
+
+        if(b_self_as_first_arg):
+            setattr(self, str_funname, types.MethodType( functionbody, self ))
+        else:
+            setattr(self, str_funname, lambda: functionbody(self))
+
 
         return getattr(self, str_funname)
     
@@ -1434,10 +1502,10 @@ class Pyqt5_app(QWidget):
     def re_render_view():
         """
         foreach instance
-        render_view_without_reset 
+        render_without_clear 
         """
         for obj in Pyqt5_app.arr_instances:
-            obj.render_view_without_reset()
+            obj.render_without_clear()
 
     def __init__(self):
         self.__class__.arr_instances.append(self)
@@ -1453,12 +1521,12 @@ class Pyqt5_app(QWidget):
         self.data = Data()
         
         # initialize pyqt5_view
-        self.view_template = View_template(self.data)
+        self.Gui_tree = Gui_tree(self.data)
         
         # most outer layout , is not affected by rendering of view
         self.q_h_box_layout = QHBoxLayout()
         # 
-        self.render_view = self.view_template.get_rendered_root_pyqt5_qt_object()
+        self.render_view = self.Gui_tree.get_rendered_root_pyqt5_qt_object()
         
         self.q_h_box_layout.addLayout(self.render_view)
 
@@ -1466,8 +1534,8 @@ class Pyqt5_app(QWidget):
         self.show()
 
     
-    def render_view_without_reset(self):
-        self.view_template.render_view_without_reset()
+    def render_without_clear(self):
+        self.Gui_tree.render_without_clear()
 
 if __name__ == '__main__':
 

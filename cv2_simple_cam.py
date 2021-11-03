@@ -57,19 +57,69 @@ class Imagemanipulation_functions_object:
         return a_last_np_frame
 
     
-    def radial_expanding_matrix_transformation_scale(self, a_np_frames):
-        
-        n_radius_min = 0
-        n_radius_max = 50 
-        n_step_per_radius = 10
+    # def radial_expanding_matrix_transformation_scale(self, a_np_frames):
+    #     # rad = radius , min = minimum, max = maximum
+    #     n_rad_min = 0
+    #     n_rad_max = 50 
+    #     n_step_per_rad = 10
+    #     a_last_np_frame = a_np_frames[-1]
 
-        for n_radius_i in range(n_radius_min, n_radius_max): 
-            n_radius_current = n_radius_i * n_step_per_radius
-            n_width = n_radius_current
-            n_height = n_radius_current
+    #     for n_rad_i in range(n_rad_min, n_rad_max): 
+    #         n_rad_i_rev = n_rad_max - n_rad_i
             
-         
-        return a_last_np_frame
+    #         n_rad_current = n_rad_i * n_step_per_rad
+    #         n_width = n_rad_current
+    #         n_height = n_rad_current
+    #         a_last_np_frame_subframe = a_last_np_frame[0:n_width, 0:n_height]
+            
+    #         height, width, x = a_last_np_frame_subframe.shape
+
+    #         a_last_np_frame[0:n_width, 0:n_height] = (
+    #             # matrix transformation scaling
+    #             cv2.resize(a_last_np_frame_subframe, dsize=(height * n_rad_i, width* n_rad_i), interpolation=cv2.INTER_CUBIC)
+    #         )
+                
+    #     return a_last_np_frame
+
+    def loop_scale_test(self, a_np_frames):
+
+        a_last_np_frame = a_np_frames[-1]
+        a_last_np_frame_copy = np.copy(a_last_np_frame)
+        height, width, x = a_last_np_frame.shape
+        n_max = 50
+        
+        for n_i in range(1, n_max):
+            n_width_subframe = width / n_max
+            a_last_np_frame_subframe = a_last_np_frame[int((n_i-1)*n_width_subframe):int(n_i*n_width_subframe)]    
+            
+            # ksize = int( n_i*n_max*0.1 ) | 1
+            # a_last_np_frame_subframe_blurred = cv2.blur(a_last_np_frame_copy, (ksize, ksize))
+
+            a_last_np_frame_subframe_blurred = cv2.resize(
+                a_last_np_frame_copy,
+                dsize=(
+                    int(width*((n_i/10)+1)),
+                    height
+                    ),
+                    interpolation=cv2.INTER_CUBIC
+                )
+
+            a_last_np_frame_copy[int((n_i-1)*n_width_subframe):int(n_i*n_width_subframe), 0:height] = (
+                a_last_np_frame_subframe_blurred[
+                    int((n_i-1)*n_width_subframe):int(n_i*n_width_subframe),
+                    0:height
+                    ]
+            )
+        
+        return a_last_np_frame_copy
+
+    def scale_with_mouse_y_position(self, a_np_frames):
+
+        a_last_np_frame = a_np_frames[-1]
+        height, width, x = a_last_np_frame.shape
+        mouse_pos_y_normalized = (mouse.get_position()[1] / 1080)
+        return cv2.resize(a_last_np_frame, dsize=(int(width*mouse_pos_y_normalized), int(height*mouse_pos_y_normalized) ), interpolation=cv2.INTER_CUBIC)
+
     
     def brightness(self, array_np_arrays):
         #print( (mouse.get_position()[1] / 1080))
@@ -173,14 +223,17 @@ class Frame:
 
     @property 
     def frame_manipulated(self):
+        # fun = funciton
         lenght = len(self.imagemanipulation_functions_object.names)
-        imagemanipulation_function = getattr(
-            self.imagemanipulation_functions_object,
-            self.imagemanipulation_functions_object.names[
+        s_imagemanipulation_fun_name = self.imagemanipulation_functions_object.names[
                 self.active_imagemanipulation_function_index % lenght
             ]
+        print(s_imagemanipulation_fun_name)
+        imagemanipulation_function = getattr(
+            self.imagemanipulation_functions_object,
+            s_imagemanipulation_fun_name
         )
-        print(self.imagemanipulation_functions_object.names)
+        #print(self.imagemanipulation_functions_object.names)
         return imagemanipulation_function(self.array_np_arrays)
     @property
     def data(self):
@@ -200,7 +253,7 @@ class Frame:
         return True
   
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 f = Frame(np.zeros((10,10),np.uint8))
 
@@ -211,7 +264,7 @@ while True:
     cv2.imshow('Input',f.frame_manipulated)
 
     c = cv2.waitKey(1)
-    print(c)
+    # print(c)
 
     if c == 32:#spacebar 27
         f.active_imagemanipulation_function_index += 1
