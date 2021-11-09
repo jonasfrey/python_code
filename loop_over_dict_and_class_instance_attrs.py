@@ -33,13 +33,37 @@ obj_this_is_a_class_instance = Obj_this_is_a_class(
     Obj_this_is_a_class()
 )
 
+print('------------------')
+print('with builtin attrs')
+print('------------------')
 # loop over class instance attrs 
-for str_attr in dir(obj_this_is_a_class_instance):
-    attr = getattr(obj_this_is_a_class_instance, str_attr)
+for s_attr in dir(obj_this_is_a_class_instance):
+    attr = getattr(obj_this_is_a_class_instance, s_attr)
+    print(s_attr)
     print(attr)
-    print(str_attr)
 
 # loop over dict attrs 
-for str_attr, attr in obj_dict.items():
+for s_attr, attr in obj_dict.items():
+    print(s_attr)
     print(attr)
-    print(str_attr)
+
+
+
+print('------------------')
+
+print('only programmer specific attrs')
+
+print('------------------')
+
+# loop over class instance attrs 
+for s_attr in dir(obj_this_is_a_class_instance):
+    if(not s_attr.startswith('_')):
+        attr = getattr(obj_this_is_a_class_instance, s_attr)
+        print(s_attr)
+        print(attr)
+
+# loop over dict attrs 
+for s_attr, attr in obj_dict.items():
+    print(s_attr)
+    print(attr)
+

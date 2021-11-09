@@ -1,5 +1,7 @@
-arr = []
+arr = ['one', 'two']
 
-arr[0] = 1
 
-print(arr)
+
+for (key, value) in enumerate(arr):
+    print(value)
+    print(key)
