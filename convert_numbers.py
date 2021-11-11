@@ -43,11 +43,11 @@ class Polynom:
     def __repr__(self) -> str:
         n_binstrlen = len(str(self._dec_to_base(self.n_decimal, 2)))
         string = ""
-        string += "     binary:"+self._dec_to_base(self.n_decimal, 2).ljust(n_binstrlen)+"\n"
-        string += "     base 4:"+self._dec_to_base(self.n_decimal, 4).ljust(n_binstrlen)+"\n"
-        string += "      octal:"+self._dec_to_base(self.n_decimal, 8).ljust(n_binstrlen)+"\n"
-        string += "    decimal:"+self._dec_to_base(self.n_decimal, 10).ljust(n_binstrlen)+"\n"
-        string += "hexadecimal:"+self._dec_to_base(self.n_decimal, 16).ljust(n_binstrlen)+"\n"
+        string += "     binary:"+self._dec_to_base(self.n_decimal, 2).rjust(n_binstrlen)+"\n"
+        string += "     base 4:"+self._dec_to_base(self.n_decimal, 4).rjust(n_binstrlen)+"\n"
+        string += "      octal:"+self._dec_to_base(self.n_decimal, 8).rjust(n_binstrlen)+"\n"
+        string += "    decimal:"+self._dec_to_base(self.n_decimal, 10).rjust(n_binstrlen)+"\n"
+        string += "hexadecimal:"+self._dec_to_base(self.n_decimal, 16).rjust(n_binstrlen)+"\n"
         
         return string
         pass
