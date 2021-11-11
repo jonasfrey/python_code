@@ -120,9 +120,11 @@ class Polynom:
 class p:
     def __new__(self, *arguments):
         a_arguments = list(arguments)
+        
+        print(len(a_arguments))
 
         if(len(a_arguments) > 2):
-            return multiple_p(arguments)
+            return multiple_p(*arguments)
         
         return single_p(a_arguments[0], a_arguments[1]) 
 
@@ -139,6 +141,7 @@ class multiple_p:
         for s_number in self.a_s_numbers:
             self.ps.append(single_p(s_number, self.n_base))
         
+
 
     def __repr__(self) -> str:
         string = ""
@@ -257,23 +260,24 @@ print( p(2, 4, 8, 16, 32, 128, 243, 10).to_b() )
         pass
 
     # testing 
+    print('--- start testing ---')
     
-    # get all bases
-    print( p(243, 10) )
+    # # get all bases
+    # print( p(243, 10) )
 
-    # get a specific base 
-    print( p(243, 10).to_b() )
-    print( p(243, 10).to_m() )
-    print( p(243, 10).to_o() )
-    print( p(243, 10).to_h() )
+    # # get a specific base 
+    # print( p(243, 10).to_b() )
+    # print( p(243, 10).to_m() )
+    # print( p(243, 10).to_o() )
+    # print( p(243, 10).to_h() )
 
-    # get a specific custom base
-    print( p(243, 10).to_base(13) )
+    # # get a specific custom base
+    # print( p(243, 10).to_base(13) )
 
-    # ps 
-    print(p(123,323,4342,23,1234,10))
+    # # ps 
+    # print(p(123,323,4342,23,1234,10))
     print(p(123,323,4342,23,1234,10).to_b())
-
+    print('--- end testing ---')
 
     while(True):
         string = ("h for help\n")
