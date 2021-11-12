@@ -1,9 +1,17 @@
 try:
     importing_possible = True
     import readline
+    import numpy
 except:
+    importing_possible = False
     pass
-   
+
+try:
+    import sys
+    import_sys = True
+except: 
+    import_sys = False
+
 def rjust(s_string, n_characters, s_character='_'):
     return '{s:{c}>{n}}'.format(s=s_string,n=n_characters,c=s_character)
     # return ('{:>{}}'.format(s_string, n_characters))
@@ -37,13 +45,7 @@ class Polynom:
 
         string += self._get_polynomial_overview_string(self.n_decimal)
 
-        string += "one's complement :"+ "\r\n"
-        string += self._get_polynomial_overview_string(int(self._get_complements_binary_string(), 2))
-
-        string += "two's complement: "+ "\r\n"
-        string += self._get_polynomial_overview_string(int(self._get_complements_binary_string(True), 2))
-
-        string += self.get_decoded_string()
+        string += str(self.get_decoded_string())
 
         return string
 
@@ -54,20 +56,29 @@ class Polynom:
             'utf16' : '',
             'base64' : ''
             }
-        o_charsets_decoded = {}
+        o_charsets_decoded_bigendian = {}
+        o_charsets_decoded_littleendian = {}
         s_charset_detected = 'no charset detected'
         s_decoded_string = ''
 
         for s_key, value in o_charsets.items(): 
             try:
                 s_charset_detected = s_key
-                s_decoded_string = bytes.fromhex(self._dec_to_base(self.n_decimal, 16)).decode(s_key)
-                o_charsets_decoded[s_key] = s_decoded_string
+                n_bytes = int(len(self._dec_to_base(self.n_decimal, 16))/2)
+                a_bytes_bigendian = self.n_decimal.to_bytes(n_bytes, 'big')
+                a_bytes_littleendian = self.n_decimal.to_bytes(n_bytes, 'little')
+                # s_decoded_string = bytes.fromhex(self._dec_to_base(self.n_decimal, 16)).decode(s_key) # only python version 3.5++
+                o_charsets_decoded_bigendian[s_key] = a_bytes_bigendian.decode(s_key)
+                o_charsets_decoded_littleendian[s_key] = a_bytes_littleendian.decode(s_key)
+
             except:
                 continue 
 
-        return 'charsets decoded:' + str(o_charsets_decoded)
+        string = ""
+        string += 'charsets decoded bigendian:' + str(o_charsets_decoded_bigendian) +"\n" 
+        string += 'charsets decoded littleendian:' + str(o_charsets_decoded_littleendian) +"\n"
 
+        return string
         # s_charset_detected + ' decoded :' + s_decoded_string
 
     def _get_complements_binary_string(self, two_complements=False):
@@ -76,6 +87,7 @@ class Polynom:
             n_decimal = abs(self.n_decimal) - 1
 
         n_binary_abs = self._dec_to_base(abs(n_decimal), 2)
+        
         n_next_highest_nibble = int(len(n_binary_abs) / 4) 
         n_next_highest_nibble += (len(n_binary_abs)/4 != 0) * 1
 
@@ -131,24 +143,33 @@ class Polynom:
  
         return rjust(s_for_base, n_rjust)+" : "+ rjust(self._dec_to_base(n_decimal, n_base), n_binstrlen)+"\n"
  
- 
+    def to_complements(self):
+        string = ''
+        string += "one's complement :"+ "\r\n"
+        string += self._get_polynomial_overview_string(int(self._get_complements_binary_string(), 2))
+
+        string += "two's complement: "+ "\r\n"
+        string += self._get_polynomial_overview_string(int(self._get_complements_binary_string(True), 2))
+        
+        print(string)
+
     def to_d(self):
-        return self._to_formatted_string_by_base(10, self.n_decimal)
+        print(self._to_formatted_string_by_base(10, self.n_decimal))
  
     def to_b(self):
-        return self._to_formatted_string_by_base(2, self.n_decimal)
+        print(self._to_formatted_string_by_base(2, self.n_decimal))
  
     def to_m(self):
-        return self._to_formatted_string_by_base(4, self.n_decimal)
+        print(self._to_formatted_string_by_base(4, self.n_decimal))
  
     def to_o(self):
-        return self._to_formatted_string_by_base(8, self.n_decimal)
+        print(self._to_formatted_string_by_base(8, self.n_decimal))
  
     def to_h(self):
-        return self._to_formatted_string_by_base(16, self.n_decimal)
+        print(self._to_formatted_string_by_base(16, self.n_decimal))
      
     def to_base(self, n_base):
-        return self._to_formatted_string_by_base(n_base, self.n_decimal)
+        print(self._to_formatted_string_by_base(n_base, self.n_decimal))
  
     def _to_formatted_string_by_base(self, n_base, n_decimal):
         string = ''
@@ -171,6 +192,10 @@ class Polynom:
  
         # base_num = base_num[::-1] #To reverse the string
         base_num = "".join(reversed(base_num)) #To reverse the string
+
+        if(base_num == ''):
+            base_num = '0'
+
         return base_num
  
     def __add__(self, polynom):
@@ -221,52 +246,45 @@ class multiple_p:
         self.n_base = a_arguments[-1]
         a_arguments.pop(-1)
         self.a_s_numbers = a_arguments
-        self.ps = []
+        self.a_p_instances = []
+
         for s_number in self.a_s_numbers:
-            self.ps.append(single_p(s_number, self.n_base))
- 
+            self.a_p_instances.append(single_p(str(s_number), self.n_base))
+        
     def __repr__(self) -> str:
         string = ""
-        for p in self.ps:
+        for p in self.a_p_instances:
             string += str(p)+"\n"
  
         # print(string)
         return str(string)
  
-    def to_d(self):
-        return self._foreach_to_base(10)
+    def __getattr__(self, s_attr):
+        # print("getattr s_attr is")
+        # print(s_attr)
+        def callback(p):
+            fun = getattr(p, s_attr)
+            if(callable(fun)):
+              print(fun())
+
+        self._foreach_p_callback(callback)
  
-    def to_b(self):
-        return self._foreach_to_base(2)
- 
-    def to_m(self):
-        return self._foreach_to_base(4)
- 
-    def to_o(self):
-        return self._foreach_to_base(8)
- 
-    def to_h(self):
-        return self._foreach_to_base(16)
-     
-    def to_base(self, n_base):
-        return self._foreach_to_base(n_base)
- 
-    def _foreach_to_base(self, n_base):
-        string = ""
-        for p in self.ps:
-            string += p._to_formatted_string_by_base(n_base) + "\n"
- 
-        return string
+    def _foreach_p_callback(self, callback):
+        for p in self.a_p_instances:
+            callback(p)
  
 def help():
     string = ""
     string += "usage: " + "\r\n"
     string += "p(number, base).{ function_name }" + "\n"
+    string += "\n"
     string += "available functions are:" + "\r\n"
+    string += "\n"
     for s_name in dir(Polynom):
         if(not s_name.startswith("_")):
-            string += s_name + "\r\n"
-    return string
+            string +=  "p(number, base)."+ s_name + "\r\n"
+    print(string)
+
 
  
 def multiline_print(arg):
@@ -347,14 +365,21 @@ print(p('c3b666666e656e6465',16))
 ```
 
 """
-if(importing_possible):
-    
-    s_current_file_name = __file__ 
-    s_cur_file_name_no_ext = (s_current_file_name.split('.').pop(0))
-    f = open(s_cur_file_name_no_ext+"_documentation.md", "w")
-    f.write(s_markdown_doc)
-    f.close()
+if(import_sys):
+    print("wälcöm !")
+    print("sys.version")
+    print(sys.version)
+    print("for help enter 'h()'")
 
+if(importing_possible):
+    try:
+        s_current_file_name = __file__ 
+        s_cur_file_name_no_ext = (s_current_file_name.split('.').pop(0))
+        f = open(s_cur_file_name_no_ext+"_documentation.md", "w")
+        f.write(s_markdown_doc)
+        f.close()
+    except:
+        pass
     # testing
     print('--- start testing ---')
         
