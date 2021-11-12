@@ -1,7 +1,8 @@
 try:
-  import readline
+    importing_possible = True
+    import readline
 except:
-  pass
+    pass
    
 def rjust(s_string, n_characters, s_character='_'):
     return '{s:{c}>{n}}'.format(s=s_string,n=n_characters,c=s_character)
@@ -27,7 +28,6 @@ class Polynom:
         string += self._get_formatted_string_by_base(8, n_decimal)
         string += self._get_formatted_string_by_base(10, n_decimal)
         string += self._get_formatted_string_by_base(16, n_decimal)
-        string += self._get_formatted_string_by_base(16, n_decimal)
         
         return string
 
@@ -37,13 +37,38 @@ class Polynom:
 
         string += self._get_polynomial_overview_string(self.n_decimal)
 
-        string += "one's complement:"+ "\r\n"
+        string += "one's complement :"+ "\r\n"
         string += self._get_polynomial_overview_string(int(self._get_complements_binary_string(), 2))
 
-        string += "two's complement:"+ "\r\n"
+        string += "two's complement: "+ "\r\n"
         string += self._get_polynomial_overview_string(int(self._get_complements_binary_string(True), 2))
 
+        string += self.get_decoded_string()
+
         return string
+
+    def get_decoded_string(self):
+        o_charsets = {
+            'latin1' : '',
+            'utf8' : '',
+            'utf16' : '',
+            'base64' : ''
+            }
+        o_charsets_decoded = {}
+        s_charset_detected = 'no charset detected'
+        s_decoded_string = ''
+
+        for s_key, value in o_charsets.items(): 
+            try:
+                s_charset_detected = s_key
+                s_decoded_string = bytes.fromhex(self._dec_to_base(self.n_decimal, 16)).decode(s_key)
+                o_charsets_decoded[s_key] = s_decoded_string
+            except:
+                continue 
+
+        return 'charsets decoded:' + str(o_charsets_decoded)
+
+        # s_charset_detected + ' decoded :' + s_decoded_string
 
     def _get_complements_binary_string(self, two_complements=False):
         n_decimal = self.n_decimal
@@ -86,6 +111,7 @@ class Polynom:
             "10":"decimal",
             "16":"hexadecimal",
         }
+
         longest_s_val_in_s_dict = o_dictmap[next(iter(o_dictmap))]
  
         for s in o_dictmap:
@@ -163,12 +189,18 @@ class Polynom:
     def _operate_with_polynom(self, polynom, operator):
         if(not type(polynom) == single_p):
             raise Exception('second argument has to be type of class p')
-         
-         
-        n_sum_decimal = eval('self.n_decimal '+operator+' polynom.n_decimal')
+        if(operator == "+"):
+            n_sum_decimal = self.n_decimal + polynom.n_decimal
+        if(operator == "-"):
+            n_sum_decimal = self.n_decimal - polynom.n_decimal
+        if(operator == "*"):
+            n_sum_decimal = self.n_decimal * polynom.n_decimal
+        if(operator == "/"):
+            n_sum_decimal = self.n_decimal / polynom.n_decimal
+
+        # n_sum_decimal = eval('self.n_decimal '+operator+' polynom.n_decimal')
  
         return p(n_sum_decimal, 10)
- 
  
 class p:
     def __new__(self, *arguments):
@@ -192,8 +224,6 @@ class multiple_p:
         self.ps = []
         for s_number in self.a_s_numbers:
             self.ps.append(single_p(s_number, self.n_base))
-         
- 
  
     def __repr__(self) -> str:
         string = ""
@@ -229,7 +259,6 @@ class multiple_p:
         return string
  
 def help():
-    # p = Polynom('10', 10)
     string = ""
     string += "usage: " + "\r\n"
     string += "p(number, base).{ function_name }" + "\n"
@@ -238,12 +267,7 @@ def help():
         if(not s_name.startswith("_")):
             string += s_name + "\r\n"
     return string
-    # print(dir(p))
-    # l = []
-    # for key, value in locals().items():
-    # if callable(value) and value.__module__ == name:
-    # l.append(key)
-    # print(l)
+
  
 def multiline_print(arg):
  
@@ -262,26 +286,27 @@ s_markdown_doc = """
 # usage
 ## convert number to all possible bases
 
-python 
+```python 
 # input the number with its base 
-print( p(243, 10) ) 
 
+print( p(243, 10) ) 
+```
 
 ## convert number to only one desired base
 
-python 
+```python 
 # to_b -> 'to binary' 
 # to_m -> 'to marsian/base 4' 
 # to_o -> 'to octal' 
 # to_h -> 'to hexadecimal' 
 print( p(243, 10).to_b() ) 
-
+```
 
 ## convert number to only one custom base
 
-python 
+```python 
 print( p(243, 10).to_base(13) ) 
-
+```
 
 
 ## calculating/operating with numbers
@@ -289,7 +314,7 @@ print( p(243, 10).to_base(13) )
 you can operate with two instances
 
 
-python 
+```python 
 print( p(243, 10) + p(10010, 2) ) 
 
 print( p(243, 10) - p(10010, 2) ) 
@@ -297,75 +322,92 @@ print( p(243, 10) - p(10010, 2) )
 print( p(243, 10) * p(10010, 2) ) 
 
 print( p(243, 10) / p(10010, 2) ) 
-
-
+```
 
 
 since a new p(...) instance is returned you can apply more functions after wrapping the return in round brackets (p(...) + p(...)).to_h()
 
-python 
+```python 
 
 print( ( p(243, 10) + p(10010, 2) ).to_base(13) 
 
-
+```
 
 
 # multiple conversion array/list/batch
 you can convert multiple numbers , by using the p like this
-
-
+```python
 print( p(2, 4, 8, 16, 32, 128, 243, 10).to_b() ) 
+```
 
+# hex to charset 
+you can convert a hexstring, the charset will be detected
+```python
+print(p('c3b666666e656e6465',16))
+```
 
 """
-try:
-    s_current_file_name = file 
+if(importing_possible):
+    
+    s_current_file_name = __file__ 
     s_cur_file_name_no_ext = (s_current_file_name.split('.').pop(0))
-    f = open(s_cur_file_name_no_ext+"_documentation.md", "a")
+    f = open(s_cur_file_name_no_ext+"_documentation.md", "w")
     f.write(s_markdown_doc)
     f.close()
-    
-except:
-    pass
 
-# testing
-print('--- start testing ---')
-    
-# # get all bases
-# print( p(243, 10) )
-
-# # get a specific base
-# print( p(243, 10).to_b() )
-# print( p(243, 10).to_m() )
-# print( p(243, 10).to_o() )
-# print( p(243, 10).to_h() )
-
-# # get a specific custom base
-# print( p(243, 10).to_base(13) )
-
-# # ps
-# print(p(123,323,4342,23,1234,10))
-# print(p(123,323,4342,23,1234,10).to_b())
-
-# print(p(7,10))
-
-print(p(-7,10))
-
-# print(p(-50,10))
-
-
-print('--- end testing ---')
-
-while(True):
-    string = ("h for help\n")
-    string += ("q for quit\n")
-    val = input(string+"enter:")
-
-    if(val == 'q'):
-        break
+    # testing
+    print('--- start testing ---')
         
-    exec('def tmp_fun():\n evaluated_return = '+str(val)+'\n return evaluated_return')
-    evaluated_return = tmp_fun()
-    print("")
-    multiline_print(evaluated_return)
-    print("")
+    # # get all bases
+    # print( p(243, 10) )
+
+    # # get a specific base
+    # print( p(243, 10).to_b() )
+    # print( p(243, 10).to_m() )
+    # print( p(243, 10).to_o() )
+    # print( p(243, 10).to_h() )
+
+    # # get a specific custom base
+    # print( p(243, 10).to_base(13) )
+
+    # # ps
+    # print(p(123,323,4342,23,1234,10))
+    # print(p(123,323,4342,23,1234,10).to_b())
+
+    # print(p(7,10))
+
+    print(p(-7,10))
+
+    # print(p(-50,10))
+
+    # testing utf8 or latin1
+    print(p('f6646c616e646573',16))
+
+    #random number just for fun
+    print(p(4208869,10))
+
+    # from reference test
+    print(p('616d62696775ef74e9',16))
+
+    print(p('f66468656974656e',16))
+
+    print(p('64e96ae0',16))
+
+    print(p('c3b666666e656e6465',16))
+
+    print('--- end testing ---')
+
+    # while(True):
+    #     string = ("h for help\n")
+    #     string += ("q for quit\n")
+    #     val = input(string+"enter:")
+
+    #     if(val == 'q'):
+    #         break
+            
+    #     exec('def tmp_fun():\n evaluated_return = '+str(val)+'\n return evaluated_return')
+    #     evaluated_return = tmp_fun()
+    #     print("")
+    #     multiline_print(evaluated_return)
+    #     print("")
+    
