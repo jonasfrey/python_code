@@ -71,7 +71,8 @@ class Polynom:
                 o_charsets_decoded_bigendian[s_key] = a_bytes_bigendian.decode(s_key)
                 o_charsets_decoded_littleendian[s_key] = a_bytes_littleendian.decode(s_key)
 
-            except:
+            except Exception as e:
+                print(e)
                 continue 
 
         string = ""
