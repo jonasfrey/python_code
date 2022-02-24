@@ -251,7 +251,7 @@ class Pyqt5_layout:
     {
       "typus": "button",
       "syncd_obj": "button1",
-      "on_click": "button1.value = 'holz schnoms'"
+      "on_click": "button1.value = 'hitla'+str(time.time())"
     },
     {
       "typus": "button",
