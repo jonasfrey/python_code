@@ -29,9 +29,9 @@ def make_me_fractal(multiline_string, base_multiline_string):
 # base_shape+= "# #\n"
 # base_shape+= "###"
 
-base_shape = " # \n"
-base_shape+= "#-#\n"
-base_shape+= " # "
+base_shape = "###\n"
+base_shape+= "# #\n"
+base_shape+= "###"
 
 iterations = 4
 

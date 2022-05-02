@@ -12,7 +12,7 @@ import copy
 import types
 
 
-import cv2
+
 
 def rsetattr(obj, attr, val):
     pre, _, post = attr.rpartition('.')
@@ -61,7 +61,7 @@ class Gui_object():
         self._max = 0
         self._step = 1
         self._value = value
-        self.sync_obj_path = 
+        
         # self.on_click = None
         if(len(additional_properties) > 0):
             for key, value in additional_properties.items():
@@ -119,12 +119,7 @@ class Gui_object():
         q_object.resize(self.width, self.height)
 
     def convert_cv_to_pixmap(self, cv_img):
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.width, self.height, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(p)
+      return false
 
     def get_q_object(self, value):
         # print('creating object fwith val'+str(value))
