@@ -5,19 +5,19 @@ from astropy.coordinates import AltAz
 
 import sys
 
-if(len(sys.argv) != 5 or " ".join(sys.argv).lower().find("-h") != -1):
+if(len(sys.argv) < 5 or " ".join(sys.argv).lower().find("-h") != -1):
     print(
         "please call the script like this: 'python3 scriptname.py target_ra_deg target_dec_deg observation_time_ymd observation_time_hms'\n"+
         "example: 'python3 scriptname.py 206.88515734206297 49.31326672942533 2022-02-25 04:28:00'"
     )
     sys.exit(0)
 
+# print(sys.argv)
 target_ra_deg = sys.argv[1] # for example 206.88515734206297(alkaid)
-target_dec_deg = sys.argv[2] # for example  (alkaid)
+target_dec_deg = sys.argv[2] # for example 49.31326672942533 (alkaid)
 observation_time_ymd = sys.argv[3] # for example '2022-02-25'
 observation_time_hms = sys.argv[4] # for example '04:28:00'
 
-print(sys.argv)
 # alkaid_ra_deg = 206.88515734206297
 # alkaid_dec_deg = 49.31326672942533
 # 13 47 32.43776 +49 18 47.7602
@@ -30,9 +30,9 @@ print(sys.argv)
 
 gorgergrat_observatory_code      = 'K29'
 # gorgergrat_observatory_latitude  = '45:59:00' #45.983361 NORD
-gorgergrat_observatory_latitude  = '45.983361' #45.983361 NORD
+gorgergrat_observatory_latitude  = 45.983361 #45.983361 NORD
 # gorgergrat_observatory_longitude = '7:47:06' # 7.78361 EAST oder -7.78361 oder 352.21639 WEST
-gorgergrat_observatory_longitude = '-7.78361' # 7.78361 EAST oder -7.78361 oder 352.21639 WEST
+gorgergrat_observatory_longitude = 7.78361 # 7.78361 EAST oder -7.78361 oder 352.21639 WEST
 gorgergrat_observatory_altitude  = 3135
 
 observing_location = EarthLocation(
