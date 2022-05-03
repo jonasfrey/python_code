@@ -1,0 +1,2 @@
+# problem 
+i want to take astro images but the preview on the sony a 7 mirrorless camera is so bad because not enough light makes it to the sensor for the sony internal software to detect it as 'important' enought to show it. But i know there is data, now i just want to extremly amplify it so i can see the stars in the preview. if i see the stars i can orientate the camera in real time, plus i can focus in real time. 

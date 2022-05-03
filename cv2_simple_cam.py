@@ -253,7 +253,7 @@ class Frame:
         return True
   
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 f = Frame(np.zeros((10,10),np.uint8))
 

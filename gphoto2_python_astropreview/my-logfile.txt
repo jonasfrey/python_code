@@ -1,0 +1,411 @@
+0.000011 main                        (2): ALWAYS INCLUDE THE FOLLOWING LINES WHEN SENDING DEBUG MESSAGES TO THE MAILING LIST:
+0.000062 main                        (2): gphoto2 2.5.23
+0.000071 main                        (2): gphoto2 has been compiled with the following options:
+0.000078 main                        (2):  + gcc (C compiler used)
+0.000085 main                        (2):  + popt (mandatory, for handling command-line parameters)
+0.000091 main                        (2):  + exif (for displaying EXIF information)
+0.000097 main                        (2):  + cdk (for accessing configuration options)
+0.000103 main                        (2):  + aa (for displaying live previews)
+0.000109 main                        (2):  + jpeg (for displaying live previews in JPEG format)
+0.000116 main                        (2):  + readline (for easy navigation in the shell)
+0.000126 main                        (2): libgphoto2 2.5.25
+0.000133 main                        (2): libgphoto2 has been compiled with the following options:
+0.000140 main                        (2):  + standard camlib set SKIPPING SOME (ax203 canon digigr8 dimagev directory jl2005a jl2005c kodak_dc240 mars pentax ptp2 ricoh_g3 sierra sonix sq905 st2205 topfield tp6801 SKIPPING lumix)
+0.000146 main                        (2):  + gcc (C compiler used)
+0.000151 main                        (2):  + ltdl (for portable loading of camlibs)
+0.000158 main                        (2):  + EXIF (for special handling of EXIF files)
+0.000167 main                        (2): libgphoto2_port 0.12.0
+0.000174 main                        (2): libgphoto2_port has been compiled with the following options:
+0.000179 main                        (2):  + iolibs: disk ptpip serial usb1 usbdiskdirect usbscsi
+0.000185 main                        (2):  + gcc (C compiler used)
+0.000191 main                        (2):  + ltdl (for portable loading of iolibs)
+0.000197 main                        (2):  + EXIF (for vusb)
+0.000204 main                        (2):  + USB (libusb1, for USB cameras)
+0.000210 main                        (2):  + serial (for serial cameras)
+0.000215 main                        (2):  + no resmgr (serial port access and locking)
+0.000221 main                        (2):  + no ttylock (serial port locking)
+0.000228 main                        (2):  + no lockdev (serial port locking)
+0.000234 main                        (2): CAMLIBS env var not set, using compile-time default instead
+0.000239 main                        (2): IOLIBS env var not set, using compile-time default instead
+0.000245 main                        (2): invoked with following arguments:
+0.000252 main                        (2):   --debug
+0.000258 main                        (2):   --debug-logfile=my-logfile.txt
+0.000264 main                        (2):   --capture-preview
+0.000287 load_settings               (2): Creating gphoto config directory ('/home/ubuntuuser/.gphoto')
+0.000337 load_settings               (2): Loading settings from file '/home/ubuntuuser/.gphoto/settings'.
+0.000397 main                        (2): The user has not specified both a model and a port. Try to figure them out.
+0.000409 gp_port_info_list_load      (2): Using ltdl to load io-drivers from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0'...
+0.000510 foreach_func                (2): Called for filename '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/disk'.
+0.000733 gp_port_library_list        (2): found fstab fsname UUID=a1e8fada-fae9-42b7-8f93-026aa837d220
+0.000768 gp_port_library_list        (2): found fstab fsname UUID=F811-88B9
+0.000782 gp_port_library_list        (2): found fstab fsname /swapfile
+0.000892 gp_port_library_list        (2): found mtab fsname sysfs
+0.000911 gp_port_library_list        (2): found mtab fsname proc
+0.000920 gp_port_library_list        (2): found mtab fsname udev
+0.000939 gp_port_library_list        (2): found mtab fsname devpts
+0.000948 gp_port_library_list        (2): found mtab fsname tmpfs
+0.000964 gp_port_library_list        (2): found mtab fsname /dev/nvme0n1p5
+0.000976 gp_port_library_list        (2): found mtab fsname securityfs
+0.001001 gp_port_library_list        (2): found mtab fsname tmpfs
+0.001016 gp_port_library_list        (2): found mtab fsname tmpfs
+0.001030 gp_port_library_list        (2): found mtab fsname tmpfs
+0.001048 gp_port_library_list        (2): found mtab fsname cgroup2
+0.001057 gp_port_library_list        (2): found mtab fsname cgroup
+0.001064 gp_port_library_list        (2): found mtab fsname pstore
+0.001079 gp_port_library_list        (2): found mtab fsname efivarfs
+0.001136 gp_port_library_list        (2): found mtab fsname none
+0.001178 gp_port_library_list        (2): found mtab fsname cgroup
+0.001185 gp_port_library_list        (2): found mtab fsname cgroup
+0.001193 gp_port_library_list        (2): found mtab fsname cgroup
+0.001201 gp_port_library_list        (2): found mtab fsname cgroup
+0.001208 gp_port_library_list        (2): found mtab fsname cgroup
+0.001216 gp_port_library_list        (2): found mtab fsname cgroup
+0.001224 gp_port_library_list        (2): found mtab fsname cgroup
+0.001232 gp_port_library_list        (2): found mtab fsname cgroup
+0.001239 gp_port_library_list        (2): found mtab fsname cgroup
+0.001247 gp_port_library_list        (2): found mtab fsname cgroup
+0.001254 gp_port_library_list        (2): found mtab fsname cgroup
+0.001301 gp_port_library_list        (2): found mtab fsname cgroup
+0.001315 gp_port_library_list        (2): found mtab fsname systemd-1
+0.001324 gp_port_library_list        (2): found mtab fsname mqueue
+0.001333 gp_port_library_list        (2): found mtab fsname hugetlbfs
+0.001353 gp_port_library_list        (2): found mtab fsname debugfs
+0.001369 gp_port_library_list        (2): found mtab fsname tracefs
+0.001385 gp_port_library_list        (2): found mtab fsname fusectl
+0.001393 gp_port_library_list        (2): found mtab fsname configfs
+0.001413 gp_port_library_list        (2): found mtab fsname /dev/loop0
+0.001429 gp_port_library_list        (2): found mtab fsname /dev/loop1
+0.001446 gp_port_library_list        (2): found mtab fsname /dev/loop6
+0.001458 gp_port_library_list        (2): found mtab fsname /dev/loop5
+0.001472 gp_port_library_list        (2): found mtab fsname /dev/loop4
+0.001485 gp_port_library_list        (2): found mtab fsname /dev/loop3
+0.001498 gp_port_library_list        (2): found mtab fsname /dev/loop2
+0.001545 gp_port_library_list        (2): found mtab fsname /dev/loop7
+0.001561 gp_port_library_list        (2): found mtab fsname /dev/loop8
+0.001575 gp_port_library_list        (2): found mtab fsname /dev/loop9
+0.001589 gp_port_library_list        (2): found mtab fsname /dev/loop10
+0.001602 gp_port_library_list        (2): found mtab fsname /dev/loop11
+0.001615 gp_port_library_list        (2): found mtab fsname /dev/loop12
+0.001633 gp_port_library_list        (2): found mtab fsname /dev/nvme0n1p1
+0.001647 gp_port_library_list        (2): found mtab fsname /dev/loop13
+0.001660 gp_port_library_list        (2): found mtab fsname /dev/loop14
+0.001674 gp_port_library_list        (2): found mtab fsname /dev/loop15
+0.001686 gp_port_library_list        (2): found mtab fsname /dev/loop16
+0.001701 gp_port_library_list        (2): found mtab fsname /dev/loop17
+0.001714 gp_port_library_list        (2): found mtab fsname /dev/loop18
+0.001727 gp_port_library_list        (2): found mtab fsname /dev/loop19
+0.001743 gp_port_library_list        (2): found mtab fsname /dev/loop20
+0.001795 gp_port_library_list        (2): found mtab fsname /dev/loop21
+0.001812 gp_port_library_list        (2): found mtab fsname tmpfs
+0.001831 gp_port_library_list        (2): found mtab fsname gvfsd-fuse
+0.001859 gp_port_library_list        (2): found mtab fsname overlay
+0.001878 gp_port_library_list        (2): found mtab fsname shm
+0.001891 gp_port_library_list        (2): found mtab fsname nsfs
+0.001904 gp_port_library_list        (2): found mtab fsname /dev/fuse
+0.001912 gp_port_library_list        (2): found mtab fsname tmpfs
+0.001930 gp_port_library_list        (2): found mtab fsname nsfs
+0.002001 foreach_func                (2): Loaded '' ('^disk:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/disk'.
+0.002024 foreach_func                (2): Called for filename '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/ptpip'.
+0.002189 foreach_func                (2): Loaded 'PTP/IP Connection' ('ptpip:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/ptpip'.
+0.002205 foreach_func                (2): Loaded '' ('^ptpip:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/ptpip'.
+0.002214 foreach_func                (2): Loaded 'IP Connection' ('ip:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/ptpip'.
+0.002221 foreach_func                (2): Loaded '' ('^ip:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/ptpip'.
+0.002228 foreach_func                (2): Called for filename '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002503 foreach_func                (2): Loaded 'Serial Port 0' ('serial:/dev/ttyS0') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002519 foreach_func                (2): Loaded 'Serial Port 1' ('serial:/dev/ttyS1') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002528 foreach_func                (2): Loaded 'Serial Port 2' ('serial:/dev/ttyS2') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002535 foreach_func                (2): Loaded 'Serial Port 3' ('serial:/dev/ttyS3') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002543 foreach_func                (2): Loaded 'Serial Port 4' ('serial:/dev/ttyS4') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002550 foreach_func                (2): Loaded 'Serial Port 5' ('serial:/dev/ttyS5') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002558 foreach_func                (2): Loaded 'Serial Port 6' ('serial:/dev/ttyS6') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002566 foreach_func                (2): Loaded 'Serial Port 7' ('serial:/dev/ttyS7') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002573 foreach_func                (2): Loaded 'Serial Port 8' ('serial:/dev/ttyS8') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002579 foreach_func                (2): Loaded 'Serial Port 9' ('serial:/dev/ttyS9') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002586 foreach_func                (2): Loaded 'Serial Port 10' ('serial:/dev/ttyS10') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002594 foreach_func                (2): Loaded 'Serial Port 11' ('serial:/dev/ttyS11') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002601 foreach_func                (2): Loaded 'Serial Port 12' ('serial:/dev/ttyS12') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002609 foreach_func                (2): Loaded 'Serial Port 13' ('serial:/dev/ttyS13') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002617 foreach_func                (2): Loaded 'Serial Port 14' ('serial:/dev/ttyS14') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002625 foreach_func                (2): Loaded 'Serial Port 15' ('serial:/dev/ttyS15') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002632 foreach_func                (2): Loaded 'Serial Port 16' ('serial:/dev/ttyS16') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002639 foreach_func                (2): Loaded 'Serial Port 17' ('serial:/dev/ttyS17') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002647 foreach_func                (2): Loaded 'Serial Port 18' ('serial:/dev/ttyS18') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002654 foreach_func                (2): Loaded 'Serial Port 19' ('serial:/dev/ttyS19') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002662 foreach_func                (2): Loaded 'Serial Port 20' ('serial:/dev/ttyS20') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002669 foreach_func                (2): Loaded 'Serial Port 21' ('serial:/dev/ttyS21') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002687 foreach_func                (2): Loaded 'Serial Port 22' ('serial:/dev/ttyS22') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002696 foreach_func                (2): Loaded 'Serial Port 23' ('serial:/dev/ttyS23') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002703 foreach_func                (2): Loaded 'Serial Port 24' ('serial:/dev/ttyS24') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002711 foreach_func                (2): Loaded 'Serial Port 25' ('serial:/dev/ttyS25') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002719 foreach_func                (2): Loaded 'Serial Port 26' ('serial:/dev/ttyS26') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002726 foreach_func                (2): Loaded 'Serial Port 27' ('serial:/dev/ttyS27') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002734 foreach_func                (2): Loaded 'Serial Port 28' ('serial:/dev/ttyS28') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002742 foreach_func                (2): Loaded 'Serial Port 29' ('serial:/dev/ttyS29') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002749 foreach_func                (2): Loaded 'Serial Port 30' ('serial:/dev/ttyS30') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002757 foreach_func                (2): Loaded 'Serial Port 31' ('serial:/dev/ttyS31') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002764 foreach_func                (2): Loaded 'Serial Port Device' ('serial:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002772 foreach_func                (2): Loaded '' ('^serial:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/serial'.
+0.002779 foreach_func                (2): Called for filename '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usb1'.
+0.008907 foreach_func                (2): Loaded '' ('^usb:') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usb1'.
+0.008938 foreach_func                (2): Loaded 'Universal Serial Bus' ('usb:003,003') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usb1'.
+0.008946 foreach_func                (2): Loaded 'Universal Serial Bus' ('usb:003,002') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usb1'.
+0.008952 foreach_func                (2): Loaded 'Universal Serial Bus' ('usb:001,002') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usb1'.
+0.008958 foreach_func                (2): Loaded 'Universal Serial Bus' ('usb:001,013') from '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usb1'.
+0.008964 foreach_func                (2): Called for filename '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usbdiskdirect'.
+0.009139 foreach_func                (2): Called for filename '/usr/lib/x86_64-linux-gnu/libgphoto2_port/0.12.0/usbscsi'.
+0.009280 gp_port_info_list_count     (2): Counting entries (44 available)...
+0.009294 gp_port_info_list_count     (2): 39 regular entries available.
+0.009311 gp_abilities_list_load_dir  (2): Using ltdl to load camera libraries from '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25'...
+0.009374 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/ax203'.
+0.009383 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/canon'.
+0.009389 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/digigr8'.
+0.009395 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/dimagev'.
+0.009401 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/directory'.
+0.009406 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/jl2005a'.
+0.009411 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/jl2005c'.
+0.009417 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/kodak_dc240'.
+0.009436 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/mars'.
+0.009441 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/pentax'.
+0.009447 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/ptp2'.
+0.009453 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/ricoh_g3'.
+0.009459 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/sierra'.
+0.009464 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/sonix'.
+0.009470 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/sq905'.
+0.009475 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/st2205'.
+0.009480 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/topfield'.
+0.009485 foreach_func                (2): Found '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/tp6801'.
+0.009492 gp_abilities_list_load_dir  (2): Found 18 camera drivers.
+0.018982 gp_port_info_list_count     (2): Counting entries (44 available)...
+0.019023 gp_port_info_list_count     (2): 39 regular entries available.
+0.019027 gp_port_new                 (2): Creating new device...
+0.019034 gp_port_info_list_get_info  (2): Getting info of entry 0 (44 available)...
+0.019168 gp_port_set_settings        (2): Setting settings...
+0.019177 gp_port_info_list_get_info  (2): Getting info of entry 1 (44 available)...
+0.019217 gp_port_set_settings        (2): Setting settings...
+0.019222 gp_port_info_list_get_info  (2): Getting info of entry 2 (44 available)...
+0.019272 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019276 gp_port_set_settings        (2): Setting settings...
+0.019280 gp_port_info_list_get_info  (2): Getting info of entry 3 (44 available)...
+0.019315 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019320 gp_port_set_settings        (2): Setting settings...
+0.019323 gp_port_info_list_get_info  (2): Getting info of entry 4 (44 available)...
+0.019356 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019361 gp_port_set_settings        (2): Setting settings...
+0.019364 gp_port_info_list_get_info  (2): Getting info of entry 5 (44 available)...
+0.019398 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019403 gp_port_set_settings        (2): Setting settings...
+0.019406 gp_port_info_list_get_info  (2): Getting info of entry 6 (44 available)...
+0.019456 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019461 gp_port_set_settings        (2): Setting settings...
+0.019464 gp_port_info_list_get_info  (2): Getting info of entry 7 (44 available)...
+0.019497 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019502 gp_port_set_settings        (2): Setting settings...
+0.019504 gp_port_info_list_get_info  (2): Getting info of entry 8 (44 available)...
+0.019537 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019541 gp_port_set_settings        (2): Setting settings...
+0.019544 gp_port_info_list_get_info  (2): Getting info of entry 9 (44 available)...
+0.019577 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019581 gp_port_set_settings        (2): Setting settings...
+0.019584 gp_port_info_list_get_info  (2): Getting info of entry 10 (44 available)...
+0.019616 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019620 gp_port_set_settings        (2): Setting settings...
+0.019623 gp_port_info_list_get_info  (2): Getting info of entry 11 (44 available)...
+0.019656 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019662 gp_port_set_settings        (2): Setting settings...
+0.019669 gp_port_info_list_get_info  (2): Getting info of entry 12 (44 available)...
+0.019811 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019836 gp_port_set_settings        (2): Setting settings...
+0.019856 gp_port_info_list_get_info  (2): Getting info of entry 13 (44 available)...
+0.019904 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019911 gp_port_set_settings        (2): Setting settings...
+0.019914 gp_port_info_list_get_info  (2): Getting info of entry 14 (44 available)...
+0.019946 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019952 gp_port_set_settings        (2): Setting settings...
+0.019954 gp_port_info_list_get_info  (2): Getting info of entry 15 (44 available)...
+0.019986 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.019990 gp_port_set_settings        (2): Setting settings...
+0.019993 gp_port_info_list_get_info  (2): Getting info of entry 16 (44 available)...
+0.020025 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020030 gp_port_set_settings        (2): Setting settings...
+0.020033 gp_port_info_list_get_info  (2): Getting info of entry 17 (44 available)...
+0.020067 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020071 gp_port_set_settings        (2): Setting settings...
+0.020075 gp_port_info_list_get_info  (2): Getting info of entry 18 (44 available)...
+0.020109 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020113 gp_port_set_settings        (2): Setting settings...
+0.020117 gp_port_info_list_get_info  (2): Getting info of entry 19 (44 available)...
+0.020149 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020153 gp_port_set_settings        (2): Setting settings...
+0.020156 gp_port_info_list_get_info  (2): Getting info of entry 20 (44 available)...
+0.020188 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020193 gp_port_set_settings        (2): Setting settings...
+0.020196 gp_port_info_list_get_info  (2): Getting info of entry 21 (44 available)...
+0.020229 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020235 gp_port_set_settings        (2): Setting settings...
+0.020237 gp_port_info_list_get_info  (2): Getting info of entry 22 (44 available)...
+0.020271 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020276 gp_port_set_settings        (2): Setting settings...
+0.020279 gp_port_info_list_get_info  (2): Getting info of entry 23 (44 available)...
+0.020317 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020322 gp_port_set_settings        (2): Setting settings...
+0.020324 gp_port_info_list_get_info  (2): Getting info of entry 24 (44 available)...
+0.020357 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020362 gp_port_set_settings        (2): Setting settings...
+0.020365 gp_port_info_list_get_info  (2): Getting info of entry 25 (44 available)...
+0.020398 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020402 gp_port_set_settings        (2): Setting settings...
+0.020404 gp_port_info_list_get_info  (2): Getting info of entry 26 (44 available)...
+0.020436 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020441 gp_port_set_settings        (2): Setting settings...
+0.020443 gp_port_info_list_get_info  (2): Getting info of entry 27 (44 available)...
+0.020474 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020480 gp_port_set_settings        (2): Setting settings...
+0.020482 gp_port_info_list_get_info  (2): Getting info of entry 28 (44 available)...
+0.020515 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020521 gp_port_set_settings        (2): Setting settings...
+0.020524 gp_port_info_list_get_info  (2): Getting info of entry 29 (44 available)...
+0.020556 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020562 gp_port_set_settings        (2): Setting settings...
+0.020565 gp_port_info_list_get_info  (2): Getting info of entry 30 (44 available)...
+0.020598 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020606 gp_port_set_settings        (2): Setting settings...
+0.020609 gp_port_info_list_get_info  (2): Getting info of entry 31 (44 available)...
+0.020642 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020646 gp_port_set_settings        (2): Setting settings...
+0.020649 gp_port_info_list_get_info  (2): Getting info of entry 32 (44 available)...
+0.020682 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020687 gp_port_set_settings        (2): Setting settings...
+0.020689 gp_port_info_list_get_info  (2): Getting info of entry 33 (44 available)...
+0.020722 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020727 gp_port_set_settings        (2): Setting settings...
+0.020729 gp_port_info_list_get_info  (2): Getting info of entry 34 (44 available)...
+0.020763 gp_port_set_timeout         (2): Setting port timeout to 500 milliseconds.
+0.020767 gp_port_set_settings        (2): Setting settings...
+0.020770 gp_port_info_list_get_info  (2): Getting info of entry 35 (44 available)...
+0.023194 gp_port_set_timeout         (2): Setting port timeout to 5000 milliseconds.
+0.023205 gp_port_set_settings        (2): Setting settings...
+0.023211 gp_libusb1_update           (2): (old int=0, conf=-1, alt=-1) port usb:003,003, (new int=0, conf=-1, alt=-1) port usb:003,003
+0.023214 gp_libusb1_update           (2): lowlevel libusb1 port not yet opened, no need for libusb changes
+0.023217 gp_abilities_list_detect_usb(2): Auto-detecting USB cameras...
+0.023460 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x29a, subclass, 0xffffffff, protocol 0xffffffff)...
+0.023639 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x6, subclass, 0x1, protocol 0x1)...
+0.023659 gp_port_info_list_get_info  (2): Getting info of entry 36 (44 available)...
+0.026117 gp_port_set_timeout         (2): Setting port timeout to 5000 milliseconds.
+0.026138 gp_port_set_settings        (2): Setting settings...
+0.026148 gp_libusb1_update           (2): (old int=0, conf=-1, alt=-1) port usb:003,002, (new int=0, conf=-1, alt=-1) port usb:003,002
+0.026151 gp_libusb1_update           (2): lowlevel libusb1 port not yet opened, no need for libusb changes
+0.026155 gp_abilities_list_detect_usb(2): Auto-detecting USB cameras...
+0.026389 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x29a, subclass, 0xffffffff, protocol 0xffffffff)...
+0.026564 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x6, subclass, 0x1, protocol 0x1)...
+0.026583 gp_port_info_list_get_info  (2): Getting info of entry 37 (44 available)...
+0.029134 gp_port_set_timeout         (2): Setting port timeout to 5000 milliseconds.
+0.029155 gp_port_set_settings        (2): Setting settings...
+0.029164 gp_libusb1_update           (2): (old int=0, conf=-1, alt=-1) port usb:001,002, (new int=0, conf=-1, alt=-1) port usb:001,002
+0.029166 gp_libusb1_update           (2): lowlevel libusb1 port not yet opened, no need for libusb changes
+0.029171 gp_abilities_list_detect_usb(2): Auto-detecting USB cameras...
+0.029408 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x29a, subclass, 0xffffffff, protocol 0xffffffff)...
+0.029580 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x6, subclass, 0x1, protocol 0x1)...
+0.029613 gp_port_info_list_get_info  (2): Getting info of entry 38 (44 available)...
+0.032133 gp_port_set_timeout         (2): Setting port timeout to 5000 milliseconds.
+0.032159 gp_port_set_settings        (2): Setting settings...
+0.032173 gp_libusb1_update           (2): (old int=0, conf=-1, alt=-1) port usb:001,013, (new int=0, conf=-1, alt=-1) port usb:001,013
+0.032177 gp_libusb1_update           (2): lowlevel libusb1 port not yet opened, no need for libusb changes
+0.032181 gp_abilities_list_detect_usb(2): Auto-detecting USB cameras...
+0.032431 gp_libusb1_find_device_by_class_lib(2): Looking for USB device (class 0x29a, subclass, 0xffffffff, protocol 0xffffffff)...
+0.032535 gp_libusb1_find_device_lib  (2): Looking for USB device (vendor 0x54c, product 0x94c)... found.
+0.032595 gp_libusb1_find_device_lib  (2): Detected defaults: config 1, interface 0, altsetting 0, inep 81, outep 02, intep 83, class 06, subclass 01
+0.032602 gp_abilities_list_detect_usb(2): Found 'Sony Alpha-A7 (Control)' (0x54c,0x94c)
+0.032646 gp_port_free                (2): Freeing port...
+0.032650 gp_port_close               (2): Closing port...
+0.032999 gp_camera_set_abilities     (2): Setting abilities ('Sony Alpha-A7 (Control)')...
+0.033018 gp_setting_set              (2): Setting key 'model' to value 'Sony Alpha-A7 (Control)' (gphoto2)
+0.033023 save_settings               (2): Saving 5 setting(s) to file "/home/ubuntuuser/.gphoto/settings"
+0.033107 gp_port_info_list_lookup_path(2): Looking for path 'usb:001,013' (44 entries available)...
+0.033113 gp_port_info_list_get_info  (2): Getting info of entry 38 (44 available)...
+0.033117 gp_camera_set_port_info     (2): Setting port info for port 'Universal Serial Bus' at 'usb:001,013'...
+0.035944 gp_port_set_timeout         (2): Setting port timeout to 5000 milliseconds.
+0.035967 gp_port_set_settings        (2): Setting settings...
+0.035976 gp_libusb1_update           (2): (old int=0, conf=-1, alt=-1) port usb:001,013, (new int=0, conf=-1, alt=-1) port usb:001,013
+0.035979 gp_libusb1_update           (2): lowlevel libusb1 port not yet opened, no need for libusb changes
+0.035984 gp_setting_set              (2): Setting key 'port' to value 'usb:001,013' (gphoto2)
+0.035989 save_settings               (2): Saving 5 setting(s) to file "/home/ubuntuuser/.gphoto/settings"
+0.036210 gp_camera_init              (2): Initializing camera...
+0.036227 gp_libusb1_find_device_lib  (2): Looking for USB device (vendor 0x54c, product 0x94c)... found.
+0.036248 gp_libusb1_find_device_lib  (2): Detected defaults: config 1, interface 0, altsetting 0, inep 81, outep 02, intep 83, class 06, subclass 01
+0.036252 gp_camera_init              (2): Loading '/usr/lib/x86_64-linux-gnu/libgphoto2/2.5.25/ptp2'...
+0.037042 gp_port_open                (2): Opening USB port...
+0.037075 gp_libusb1_open             (2): ()
+0.037117 gp_libusb1_open             (2): claiming interface 0
+0.037243 camera_init                 (2): maxpacketsize 512
+0.037253 gp_port_set_timeout         (2): Setting port timeout to 8000 milliseconds.
+0.037260 ptp                         (2): PTP: Opening session
+0.037266 ptp_usb_sendreq             (2): Sending PTP_OC 0x1002 (Open session) (0x1) request...
+0.037269 gp_port_write               (3): Writing 16 = 0x10 bytes to port...
+0.043618 _cb_irq                     (2): 0x55dc1b2ec290 with status 0
+0.043657 _cb_irq                     (3): interrupt (hexdump of 16 bytes)
+0000  10 00 00 00 04 00 03 c2-ff ff ff ff 04 50 00 00  .............P..
+
+0.044575 _cb_irq                     (2): Requeuing completed transfer 0x55dc1b2ec290
+8.037604 gp_libusb1_write [libusb1.c:600](0): 'libusb_bulk_transfer (port->pl->dh, port->settings.usb.outep, (unsigned char*)bytes, size, &curwritten, port->timeout)' failed: Operation timed out (-7)
+8.037666 gp_port_write [gphoto2-port.c:405](0): Writing 16 = 0x10 bytes to port failed: Timeout reading from or writing to the port (-10)
+8.037679 ptp_usb_sendreq [usb.c:109] (0): PTP_OC 0x1002 sending req failed: Timeout reading from or writing to the port (-10)
+8.037702 camera_init [library.c:8721](0): 'ptp_opensession (params, sessionid)' failed: PTP Timeout (0x02fa)
+8.037710 ptp                         (2): PTP: Opening session
+8.037720 ptp_usb_sendreq             (2): Sending PTP_OC 0x1002 (Open session) (0x1) request...
+8.037727 gp_port_write               (3): Writing 16 = 0x10 bytes to port...
+16.038048 gp_libusb1_write [libusb1.c:600](0): 'libusb_bulk_transfer (port->pl->dh, port->settings.usb.outep, (unsigned char*)bytes, size, &curwritten, port->timeout)' failed: Operation timed out (-7)
+16.038111 gp_port_write [gphoto2-port.c:405](0): Writing 16 = 0x10 bytes to port failed: Timeout reading from or writing to the port (-10)
+16.038123 ptp_usb_sendreq [usb.c:109] (0): PTP_OC 0x1002 sending req failed: Timeout reading from or writing to the port (-10)
+16.038154 camera_init [library.c:8721](0): 'ptp_opensession (params, sessionid)' failed: PTP Timeout (0x02fa)
+16.038162 ptp                         (2): PTP: Opening session
+16.038171 ptp_usb_sendreq             (2): Sending PTP_OC 0x1002 (Open session) (0x1) request...
+16.038179 gp_port_write               (3): Writing 16 = 0x10 bytes to port...
+24.038370 gp_libusb1_write [libusb1.c:600](0): 'libusb_bulk_transfer (port->pl->dh, port->settings.usb.outep, (unsigned char*)bytes, size, &curwritten, port->timeout)' failed: Operation timed out (-7)
+24.038430 gp_port_write [gphoto2-port.c:405](0): Writing 16 = 0x10 bytes to port failed: Timeout reading from or writing to the port (-10)
+24.038443 ptp_usb_sendreq [usb.c:109] (0): PTP_OC 0x1002 sending req failed: Timeout reading from or writing to the port (-10)
+24.038454 camera_init [library.c:8721](0): 'ptp_opensession (params, sessionid)' failed: PTP Timeout (0x02fa)
+24.038463 camera_init [library.c:8749](0): 'ret' failed: 'PTP Timeout' (0x02fa)
+24.038471 gp_context_error            (0): PTP Timeout
+24.038500 gp_port_close               (2): Closing port...
+24.039604 _close_async_interrupts     (2): canceling transfer 0:0x55dc1b2ec290 (status 0)
+24.039742 _close_async_interrupts     (2): canceling transfer 1:0x55dc1b2b0380 (status 0)
+24.039889 _close_async_interrupts     (2): canceling transfer 2:0x55dc1b2ebd30 (status 0)
+24.040060 _close_async_interrupts     (2): canceling transfer 3:0x55dc1b2c2c10 (status 0)
+24.040162 _close_async_interrupts     (2): canceling transfer 4:0x55dc1b2eb690 (status 0)
+24.040295 _close_async_interrupts     (2): canceling transfer 5:0x55dc1b2bc520 (status 0)
+24.040424 _close_async_interrupts     (2): canceling transfer 6:0x55dc1b2cacb0 (status 0)
+24.040508 _close_async_interrupts     (2): canceling transfer 7:0x55dc1b2c0dc0 (status 0)
+24.040587 _close_async_interrupts     (2): canceling transfer 8:0x55dc1b2b9d00 (status 0)
+24.040665 _close_async_interrupts     (2): canceling transfer 9:0x55dc1b2cb510 (status 0)
+24.040757 _cb_irq                     (2): 0x55dc1b2ec290 with status 3
+24.040768 _cb_irq                     (2): Transfer 0x55dc1b2ec290 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040779 _cb_irq                     (2): 0x55dc1b2b0380 with status 3
+24.040786 _cb_irq                     (2): Transfer 0x55dc1b2b0380 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040794 _cb_irq                     (2): 0x55dc1b2ebd30 with status 3
+24.040801 _cb_irq                     (2): Transfer 0x55dc1b2ebd30 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040809 _cb_irq                     (2): 0x55dc1b2c2c10 with status 3
+24.040816 _cb_irq                     (2): Transfer 0x55dc1b2c2c10 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040824 _cb_irq                     (2): 0x55dc1b2eb690 with status 3
+24.040831 _cb_irq                     (2): Transfer 0x55dc1b2eb690 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040838 _cb_irq                     (2): 0x55dc1b2bc520 with status 3
+24.040845 _cb_irq                     (2): Transfer 0x55dc1b2bc520 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040853 _cb_irq                     (2): 0x55dc1b2cacb0 with status 3
+24.040860 _cb_irq                     (2): Transfer 0x55dc1b2cacb0 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040869 _cb_irq                     (2): 0x55dc1b2c0dc0 with status 3
+24.040875 _cb_irq                     (2): Transfer 0x55dc1b2c0dc0 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040883 _cb_irq                     (2): 0x55dc1b2b9d00 with status 3
+24.040890 _cb_irq                     (2): Transfer 0x55dc1b2b9d00 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.040898 _cb_irq                     (2): 0x55dc1b2cb510 with status 3
+24.040904 _cb_irq                     (2): Transfer 0x55dc1b2cb510 should be in LIBUSB_TRANSFER_COMPLETED, but is 3!
+24.041235 gp_context_error            (0): An error occurred in the io-library ('Timeout reading from or writing to the port'): No error description available
+24.041974 gp_camera_free              (2): Freeing camera...
+24.041996 gp_port_free                (2): Freeing port...
+24.042003 gp_port_close               (2): Closing port...
+24.042242 gp_filesystem_reset         (2): resetting filesystem
+24.042279 gp_filesystem_lru_clear     (2): Clearing fscache LRU list...
+24.042286 gp_filesystem_lru_clear     (2): fscache LRU list already empty
+24.042293 delete_all_folders          (2): Internally deleting all folders from '/'...
+24.042300 lookup_folder               (2): Lookup folder '/'...
+24.042307 lookup_folder               (2): Found! / is 0x55dc1b2a5890
+24.042314 recurse_delete_folder       (2): Recurse delete folder 0x55dc1b2a5890//
+24.042321 delete_all_files            (2): Delete all files in folder 0x55dc1b2a5890//
