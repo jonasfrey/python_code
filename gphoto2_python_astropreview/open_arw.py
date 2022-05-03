@@ -1,8 +1,10 @@
+from re import I
 import rawpy 
 import cv2
 import numpy
 import pyautogui
 import keyboard
+from matplotlib import pyplot as plt
 # from pynput.mouse import Listener
 
 
@@ -31,18 +33,18 @@ n_screen_height = a_screen_size[1]
 
 s_path_file_name = "./tmp.arw"
 o_img_raw = rawpy.imread(s_path_file_name)
-n_bit_depth = o_img_raw.raw_image.dtype
-dt = numpy.dtype(o_img_raw.raw_image.dtype)
+o_img_8bit = (o_img_raw.raw_image/256).astype(numpy.uint8)
+dt = numpy.dtype(o_img_8bit.dtype)
 n_bytes = dt.itemsize
 n_bits = n_bytes * 8
 n_value_max = pow(2, n_bits)-1
 print(n_value_max)
 n_resize_factor = 0.2
 o_img_raw_resized = cv2.resize(
-    o_img_raw.raw_image,
+    o_img_8bit,
     (
-        int(o_img_raw.raw_image.shape[1]*n_resize_factor),
-        int(o_img_raw.raw_image.shape[0]*n_resize_factor)
+        int(o_img_8bit.shape[1]*n_resize_factor),
+        int(o_img_8bit.shape[0]*n_resize_factor)
         ), 
     interpolation= cv2.INTER_LINEAR
     )
@@ -56,10 +58,16 @@ keyCode = cv2.waitKey(1)
 # o_img_raw_resized = cv2.cvtColor(o_img_raw_resized,cv2.COLOR_GRAY2RGB)
 # o_img_raw_resized = cv2.merge([o_img_raw_resized,o_img_raw_resized,o_img_raw_resized])
 
+s_menu_option_brightness = "0|brightness"
+s_menu_option_gamma = "0|gamma"
+s_menu_option_contrast = "0|contrast"
+
 a_s_menu_option = [
-    "0|brightness", 
-    "0|gamma"
+    s_menu_option_brightness,
+    s_menu_option_gamma,
+    s_menu_option_contrast,
 ]
+
 n_index_a_s_menu_option = 0
 
 def f_cv2_put_text(
@@ -125,16 +133,55 @@ s_window_name = "o_img_raw_resized"
 
 b_space_down = False 
 b_space_down_last = False
+s_menu_option = a_s_menu_option[n_index_a_s_menu_option]
+
+# plt.hist(o_img_raw_resized.ravel(),n_value_max,[0,n_value_max]); plt.show()
+
+
+cv2.imwrite( "o_img_raw_resized.jpg", o_img_raw_resized)
+
+
+def f_a_img_histogram(
+    a_img
+):
+    n_value_max = 255
+    histogram = cv2.calcHist([a_img], [0], None, [n_value_max], [0, n_value_max])
+    n_histogram_max = numpy.max(histogram)
+    n_height_img_histogram = 100
+    n_width_img_histogram = n_value_max
+    a_img_histogram = numpy.zeros([n_height_img_histogram, n_width_img_histogram],dtype=numpy.uint8)
+    # print(n_histogram_max)
+    # print(histogram)
+    for n_index, n_value in enumerate(histogram):
+        a_img_histogram[
+            n_height_img_histogram-int((n_value/n_histogram_max)*n_height_img_histogram): n_height_img_histogram, 
+            n_index:n_index+1
+            ] = n_value_max
+
+    return a_img_histogram
+
+
+
+# cv2.imwrite( "histogram.jpg", f_a_img_histogram(o_img_raw_resized))
+# keyCode = cv2.waitKey(1)
+
+
+
+
+# exit()
 while True: 
 
 
     if keyboard.is_pressed("space"):  # if key 'q' is pressed 
         b_space_down = True
+    else:
+        b_space_down = False
 
     o_img_raw_copy = o_img_raw_resized.copy()
 
     if(b_space_down and b_space_down_last == False):
         n_index_a_s_menu_option = (n_index_a_s_menu_option+1)%len(a_s_menu_option)
+        s_menu_option = a_s_menu_option[n_index_a_s_menu_option]
 
     a_pos_mouse = pyautogui.position()
 
@@ -142,17 +189,38 @@ while True:
     n_mouse_y_normalized = a_pos_mouse[1] / n_screen_height
 
     a_s_line = []
-    a_s_line.append('\033[1mYOUR_STRING\033[0m')
-    a_s_line.append('not bold')
+    a_s_line_menu_options = a_s_menu_option.copy()
+    a_s_line_menu_options[n_index_a_s_menu_option] = "["+a_s_line_menu_options[n_index_a_s_menu_option]+"]"
+
+    a_s_line.append(' '.join(a_s_line_menu_options))
     a_s_line.append('x:'+str(n_mouse_x_normalized))
     a_s_line.append('y:'+str(n_mouse_y_normalized))
 
-    o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
+    if(s_menu_option == s_menu_option_brightness):
+        o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
+    if(s_menu_option == s_menu_option_contrast):
+        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
+        o_img_raw_copy = (o_img_raw_copy * 2 * n_mouse_y_normalized).astype(numpy.uint8)
+        print(type(o_img_raw_copy))
+        # o_img_raw_copy = numpy.multiply(o_img_raw_copy, [1.01])
+    # if(s_menu_option == s_menu_option_gamma):
+    #     o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
 
     # o_img_raw_resized = cv2.cvtColor(o_img_raw_resized,cv2.COLOR_GRAY2RGB)
+    a_histogram = f_a_img_histogram(o_img_raw_copy)
+    cv2.imshow( "histogram", a_histogram)
 
     f_cv2_put_text(a_s_line, o_img_raw_copy)
     # o_img_raw_resized = cv2.cvtColor(o_img_raw_resized,cv2.COLOR_GRAY2RGB)
+
+    print(o_img_raw_copy.shape)
+    print(a_histogram.shape)
+
+    # o_img_raw_copy = cv2.addWeighted(o_img_raw_copy,0.4,a_histogram,0.1,0)
+    o_img_raw_copy[
+        o_img_raw_copy.shape[0]-a_histogram.shape[0]:o_img_raw_copy.shape[0],
+        o_img_raw_copy.shape[1]-a_histogram.shape[1]:o_img_raw_copy.shape[1]
+        ] = a_histogram
 
     cv2.imshow(s_window_name, o_img_raw_copy)
     keyCode = cv2.waitKey(1)
