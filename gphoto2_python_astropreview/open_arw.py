@@ -1,16 +1,18 @@
+from dataclasses import dataclass
+
+
 import rawpy 
 import cv2
 import numpy
 import pyautogui
 import keyboard
-from matplotlib import pyplot as plt
 # from pynput.mouse import Listener
-
 import subprocess
 import time
 import os
 import rawpy
 import cv2
+
 
 
 def adjust_gamma(image, gamma=1.0):
@@ -144,33 +146,37 @@ def f_o_img_resized(s_path_file_name):
 # o_img_raw_resized = cv2.merge([o_img_raw_resized,o_img_raw_resized,o_img_raw_resized])
 
 
-
+@dataclass
 class O_menu_option:
+    s_identification_string: str
     s_name: str
-    a_value_n_index: list
-    a_value_s_name: list
-    n_value: int # will be used as index for a_value
+    a_n_index_value: list
+    a_s_name_value: list
+    s_value: str
+    n_mouse_x_normalized: float
+    n_mouse_y_normalized: float
 
 a_o_menu_option = [
     O_menu_option(
+        "gamma", 
         "0|gamma", 
         [],
         [],
-        0, 
+        "not initialized",
+        0.0,
+        0.0 
     ),
     O_menu_option(
+        "brightness",
         "0|brightness", 
         [],
         [],
-        0, 
-    ),
-    O_menu_option(
-        "0|brightness", 
-        [],
-        [],
-        0, 
+        "not initialized",
+        0.0,
+        0.0 
     ), 
     O_menu_option(
+        "shutter_speed", 
         "0|shutter speed", 
         [0,1,2],
         [
@@ -178,68 +184,36 @@ a_o_menu_option = [
             "2s", 
             "10s"
         ],
-        0, 
+        "not initialized",
+        0.0,
+        0.0 
     ), 
     O_menu_option(
+        "iso",
         "0|iso", 
         [0,1,2],
         [
-            "1/10s", 
-            "2s", 
-            "10s"
+            "50", 
+            "6400", 
+            "25600"
         ],
-        0, 
+        "not initialized",
+        0.0,
+        0.0 
     ), 
     O_menu_option(
-        "0|loop_capture", 
+        "loop_capture",
+        "0|loop capture", 
         [0,1],
         [
             "off", 
             "on"
         ],
-        0, 
+        "not initialized",
+        0.0,
+        0.0 
     )
 ]
-
-    
-
-o_array_string_options = {
-    "o_shutter_speed": {
-        "s_menu_option_name": "0|shutter speed", 
-        "n_index": 0, 
-        "a_n_index": [0,1,2], 
-        "a_s_name": [
-                "1/10s", 
-                "2s", 
-                "10s"
-            ]
-    },
-    "o_iso": {
-       "s_menu_option_name": "0|iso", 
-       "n_index": 0, 
-       "a_n_index": [0,1,2], 
-       "a_s_name": [
-            "50", 
-             "6400", 
-            "25600"
-        ]
-   },
-    "o_loop_capture": {
-       "s_menu_option_name": "0|loop capture", 
-       "n_index": 0, 
-       "a_n_index": [0,1], 
-       "a_s_name": [
-            "off", 
-            "on", 
-        ]
-   } 
-}
-
-
-
-a_s_menu_option_values = []
-for n in a_s_menu_option:
-    a_s_menu_option_values.append("null")
 
 def f_cv2_put_text(
     a_s_line,
@@ -362,6 +336,9 @@ o_keyboard_keys = {
     },
 }   
 # exit()
+
+o_menu_option = a_o_menu_option[0]
+
 o_img_raw_resized = f_o_img_resized(s_path_file_name)
 n_frame_id = 0
 while True: 
@@ -387,6 +364,7 @@ while True:
 
     if(o_keyboard_keys["space"]["b_down_oneshot"]):
         n_index_a_o_menu_option = (n_index_a_o_menu_option+1)%len(a_o_menu_option)
+        
         o_menu_option = a_o_menu_option[n_index_a_o_menu_option]
 
     if(o_keyboard_keys["enter"]["b_down_oneshot"]):
@@ -395,59 +373,56 @@ while True:
     # if(n_frame_id == 100):
     #     f_capture_and_download(s_path_file_name)
     #     o_img_raw_resized = f_o_img_resized(s_path_file_name)
-    
     a_pos_mouse = pyautogui.position()
 
-    n_mouse_x_normalized = a_pos_mouse[0] / n_screen_width
-    n_mouse_y_normalized = a_pos_mouse[1] / n_screen_height
-
-    a_s_line = [if() o.s_name for o in a_o_menu_option]
-
-    a_s_line_menu_options = a_s_menu_option.copy()
-    a_s_line_menu_options[n_index_a_s_menu_option] = "["+a_s_line_menu_options[n_index_a_s_menu_option]+"]"
-    # a_s_line.append(' '.join(a_s_line_menu_options))
-    a_s_line.append('x|y'+str(format(n_mouse_x_normalized, ".3f"))+"|"+str(format(n_mouse_y_normalized, ".3f")))
-
-    for n_index, value in enumerate(a_s_menu_option):
-        s_value = value + a_s_menu_option_values[n_index]
-        if(n_index == n_index_a_s_menu_option): 
-            s_value = "["+s_value+"]"
-        
-        a_s_line.append(s_value)
-
-    if(s_menu_option == s_menu_option_brightness):
-        o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
-        a_s_menu_option_values[n_index_a_s_menu_option] = str(int(n_value_max*n_mouse_y_normalized))
-
-    if(s_menu_option == s_menu_option_contrast):
-        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
-        o_img_raw_copy = (o_img_raw_copy * 2 * n_mouse_y_normalized).astype(numpy.uint8)
-        # print(type(o_img_raw_copy))
-        a_s_menu_option_values[n_index_a_s_menu_option] = str(int(2 * n_mouse_y_normalized))
-    if(s_menu_option == s_menu_option_gamma):
-
-        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
-        o_img_raw_copy = adjust_gamma(o_img_raw_copy, 5 * n_mouse_y_normalized)
+    n_mouse_x_normalized = float(a_pos_mouse[0] / n_screen_width)
+    n_mouse_y_normalized = float(a_pos_mouse[1] / n_screen_height)
 
     if(
         a_pos_mouse[0] != a_pos_mouse_last[0]
         or
         a_pos_mouse[1] != a_pos_mouse_last[1]
     ):
-        # allow toggling the values without changing them when mouse has no new position 
+        # o_menu_option.n_mouse_x_normalized = n_mouse_x_normalized
+        # o_menu_option.n_mouse_y_normalized = n_mouse_y_normalized
+        o_menu_option.n_mouse_x_normalized = float(format(n_mouse_x_normalized, ".3f"))
+        o_menu_option.n_mouse_y_normalized = float(format(n_mouse_y_normalized, ".3f"))
 
-        for s_prop in o_array_string_options:
-            o_array_string_option = o_array_string_options[s_prop]
-            # print(o_array_string_option)
-            if(s_menu_option == o_array_string_option["s_menu_option_name"]):
-                o_array_string_option["n_index"] = int(n_mouse_y_normalized * len(o_array_string_option["a_n_index"]))
-                # a_s_line.append(o_array_string_option["s_menu_option_name"]+':'+str(o_array_string_option["a_s_name"][o_array_string_option["n_index"]]))
-                a_s_menu_option_values[n_index_a_s_menu_option] = str(o_array_string_option["a_s_name"][o_array_string_option["n_index"]])
+    print(o_menu_option.n_mouse_y_normalized)
+
+    a_s_line = ["["+o.s_name+"]"+":"+o.s_value if(o == o_menu_option) else o.s_name + ":" + o.s_value for o in a_o_menu_option]
+
+    # a_s_line.append(' '.join(a_s_line_menu_options))
+    a_s_line.append('x|y'+str(format(n_mouse_x_normalized, ".3f"))+"|"+str(format(n_mouse_y_normalized, ".3f")))
+
+    if(o_menu_option.s_identification_string == "brightness" ):
+        o_menu_option.s_value = str(int(n_value_max*o_menu_option.n_mouse_y_normalized))
+        o_img_raw_copy = o_img_raw_copy + int(n_value_max*o_menu_option.n_mouse_y_normalized)
+
+    if(o_menu_option.s_identification_string == "contrast" ):
+        o_menu_option.s_value = str(2 * o_menu_option.n_mouse_y_normalized)
+        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
+        o_img_raw_copy = (o_img_raw_copy * 2 * o_menu_option.n_mouse_y_normalized).astype(numpy.uint8)
+
+        # print(type(o_img_raw_copy))
+    if(o_menu_option.s_identification_string == "gamma" ):
+        o_menu_option.s_value = str(5 * o_menu_option.n_mouse_y_normalized)
+        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
+        n_prevent_zero_devision = 0.00001
+        o_img_raw_copy = adjust_gamma(o_img_raw_copy, (5 * o_menu_option.n_mouse_y_normalized) + n_prevent_zero_devision)
 
 
-            # o_img_raw_copy = numpy.multiply(o_img_raw_copy, [1.01])
-        # if(s_menu_option == s_menu_option_gamma):
-        #     o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
+    if( o_menu_option.s_identification_string in ["shutter_speed", "iso"]):
+        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_n_index_value)-1)) 
+        n_index_value = o_menu_option.a_n_index_value[n_index]
+        s_name_value = o_menu_option.a_s_name_value[n_index]
+        o_menu_option.s_value = s_name_value
+
+    if( o_menu_option.s_identification_string in ["loop_capture"]):
+        n_index = int(o_menu_option.n_mouse_y_normalized > 0.5)
+        n_index_value = o_menu_option.a_n_index_value[n_index]
+        s_name_value = o_menu_option.a_s_name_value[n_index]
+        o_menu_option.s_value = s_name_value
 
     # o_img_raw_resized = cv2.cvtColor(o_img_raw_resized,cv2.COLOR_GRAY2RGB)
     a_histogram = f_a_img_histogram(o_img_raw_copy)
