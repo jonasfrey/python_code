@@ -12,6 +12,16 @@ import os
 import rawpy
 import cv2
 
+
+def adjust_gamma(image, gamma=1.0):
+	# build a lookup table mapping the pixel values [0, 255] to
+	# their adjusted gamma values
+	invGamma = 1.0 / gamma
+	table = numpy.array([((i / 255.0) ** invGamma) * 255
+		for i in numpy.arange(0, 256)]).astype("uint8")
+	# apply gamma correction using the lookup table
+	return cv2.LUT(image, table)
+
 def f_run_bash_command(a_binary_and_arguments, b_output_is_text = False):
     print("running bash command:")
     print(" ".join(a_binary_and_arguments))
@@ -78,25 +88,6 @@ def f_n_ts_ms():
     return round(time.time() * 1000)
 
 
-# # This function will be called when any key of mouse is pressed
-# def on_click(*args):
-#     # see what argument is passed.
-#     print(args)
-#     if args[-1]:
-#         # Do something when the mouse key is pressed.
-#         print('The "{}" mouse key has held down'.format(args[-2].name))
-
-#     elif not args[-1]:
-#         # Do something when the mouse key is released.
-#         # Do something when the mouse key is released.
-#         print('The "{}" mouse key is released'.format(args[-2].name))
-
-# with Listener(on_click=on_click) as listener:
-#     # Listen to the mouse key presses
-#     listener.join()
-
-
-
 a_screen_size = pyautogui.size()
 n_screen_width = a_screen_size[0]
 n_screen_height = a_screen_size[1]
@@ -152,10 +143,65 @@ def f_o_img_resized(s_path_file_name):
 # o_img_raw_resized = cv2.cvtColor(o_img_raw_resized,cv2.COLOR_GRAY2RGB)
 # o_img_raw_resized = cv2.merge([o_img_raw_resized,o_img_raw_resized,o_img_raw_resized])
 
-s_menu_option_brightness = "0|brightness"
-s_menu_option_gamma = "0|gamma"
-s_menu_option_contrast = "0|contrast"
 
+
+class O_menu_option:
+    s_name: str
+    a_value_n_index: list
+    a_value_s_name: list
+    n_value: int # will be used as index for a_value
+
+a_o_menu_option = [
+    O_menu_option(
+        "0|gamma", 
+        [],
+        [],
+        0, 
+    ),
+    O_menu_option(
+        "0|brightness", 
+        [],
+        [],
+        0, 
+    ),
+    O_menu_option(
+        "0|brightness", 
+        [],
+        [],
+        0, 
+    ), 
+    O_menu_option(
+        "0|shutter speed", 
+        [0,1,2],
+        [
+            "1/10s", 
+            "2s", 
+            "10s"
+        ],
+        0, 
+    ), 
+    O_menu_option(
+        "0|iso", 
+        [0,1,2],
+        [
+            "1/10s", 
+            "2s", 
+            "10s"
+        ],
+        0, 
+    ), 
+    O_menu_option(
+        "0|loop_capture", 
+        [0,1],
+        [
+            "off", 
+            "on"
+        ],
+        0, 
+    )
+]
+
+    
 
 o_array_string_options = {
     "o_shutter_speed": {
@@ -174,7 +220,7 @@ o_array_string_options = {
        "a_n_index": [0,1,2], 
        "a_s_name": [
             "50", 
-            "6400", 
+             "6400", 
             "25600"
         ]
    },
@@ -190,16 +236,6 @@ o_array_string_options = {
 }
 
 
-a_s_menu_option = [
-    s_menu_option_brightness,
-    s_menu_option_gamma,
-    s_menu_option_contrast,
-]
-for s_prop in o_array_string_options: 
-    o_array_string_option = o_array_string_options[s_prop]
-    a_s_menu_option.append(o_array_string_option["s_menu_option_name"])
-
-n_index_a_s_menu_option = 0
 
 a_s_menu_option_values = []
 for n in a_s_menu_option:
@@ -268,9 +304,9 @@ def f_cv2_put_text(
 n_factor = 2
 s_window_name = "o_img_raw_resized"
 
-b_space_down = False 
-b_space_down_last = False
-s_menu_option = a_s_menu_option[n_index_a_s_menu_option]
+n_index_a_o_menu_option = 0
+
+s_menu_option = a_o_menu_option[n_index_a_o_menu_option]
 
 # plt.hist(o_img_raw_resized.ravel(),n_value_max,[0,n_value_max]); plt.show()
 
@@ -335,7 +371,6 @@ while True:
 
     for s_prop in o_keyboard_keys: 
         o_keyboard_key = o_keyboard_keys[s_prop]
-        
         if keyboard.is_pressed(o_keyboard_key["s_is_pressed_name"]):  # if key 'q' is pressed 
             o_keyboard_key["b_down"] = True
         else:
@@ -351,11 +386,10 @@ while True:
     o_img_raw_copy = o_img_raw_resized.copy()
 
     if(o_keyboard_keys["space"]["b_down_oneshot"]):
-        n_index_a_s_menu_option = (n_index_a_s_menu_option+1)%len(a_s_menu_option)
-        s_menu_option = a_s_menu_option[n_index_a_s_menu_option]
+        n_index_a_o_menu_option = (n_index_a_o_menu_option+1)%len(a_o_menu_option)
+        o_menu_option = a_o_menu_option[n_index_a_o_menu_option]
 
     if(o_keyboard_keys["enter"]["b_down_oneshot"]):
-        print("here")
         f_capture_and_download(s_path_file_name)
         o_img_raw_resized = f_o_img_resized(s_path_file_name)
     # if(n_frame_id == 100):
@@ -367,7 +401,8 @@ while True:
     n_mouse_x_normalized = a_pos_mouse[0] / n_screen_width
     n_mouse_y_normalized = a_pos_mouse[1] / n_screen_height
 
-    a_s_line = []
+    a_s_line = [if() o.s_name for o in a_o_menu_option]
+
     a_s_line_menu_options = a_s_menu_option.copy()
     a_s_line_menu_options[n_index_a_s_menu_option] = "["+a_s_line_menu_options[n_index_a_s_menu_option]+"]"
     # a_s_line.append(' '.join(a_s_line_menu_options))
@@ -380,23 +415,26 @@ while True:
         
         a_s_line.append(s_value)
 
+    if(s_menu_option == s_menu_option_brightness):
+        o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
+        a_s_menu_option_values[n_index_a_s_menu_option] = str(int(n_value_max*n_mouse_y_normalized))
+
+    if(s_menu_option == s_menu_option_contrast):
+        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
+        o_img_raw_copy = (o_img_raw_copy * 2 * n_mouse_y_normalized).astype(numpy.uint8)
+        # print(type(o_img_raw_copy))
+        a_s_menu_option_values[n_index_a_s_menu_option] = str(int(2 * n_mouse_y_normalized))
+    if(s_menu_option == s_menu_option_gamma):
+
+        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
+        o_img_raw_copy = adjust_gamma(o_img_raw_copy, 5 * n_mouse_y_normalized)
+
     if(
         a_pos_mouse[0] != a_pos_mouse_last[0]
         or
         a_pos_mouse[1] != a_pos_mouse_last[1]
     ):
         # allow toggling the values without changing them when mouse has no new position 
-
-        if(s_menu_option == s_menu_option_brightness):
-            o_img_raw_copy = o_img_raw_copy + int(n_value_max*n_mouse_y_normalized)
-            a_s_menu_option_values[n_index_a_s_menu_option] = str(int(n_value_max*n_mouse_y_normalized))
-
-        if(s_menu_option == s_menu_option_contrast):
-            # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
-            o_img_raw_copy = (o_img_raw_copy * 2 * n_mouse_y_normalized).astype(numpy.uint8)
-            # print(type(o_img_raw_copy))
-            a_s_menu_option_values[n_index_a_s_menu_option] = str(int(2 * n_mouse_y_normalized))
-
 
         for s_prop in o_array_string_options:
             o_array_string_option = o_array_string_options[s_prop]
