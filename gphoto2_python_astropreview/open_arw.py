@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import paramiko
 
 
 import rawpy 
@@ -14,11 +15,22 @@ import rawpy
 import cv2
 
 
+def f_n_video_device_number(s_video_device):
+    s = s_video_device
+    n_video_device = int(s.split('/').pop().split("video").pop())
+    return n_video_device
 
-def f_a_n_video_devices_numbers():
+def f_a_s_video_device_path():
 
-    s_test = f_run_bash_command(["ls","/dev/video*"], True)
-    print(s_test)
+    a_s_video_device_path = os.popen("ls /dev/video*").read().split("\n")
+    # print(a_s_video_device_path)
+    a_s_video_device_path = [s for s in a_s_video_device_path if 'video' in s]
+    # exit()
+    # a_s_video_device = os.execvp("ls /dev/video*")
+    # print(a_n_video_device)
+    return a_s_video_device_path
+    # s_test = f_run_bash_command(["ls","/dev/video*"], True)
+    # print(s_test)
 
 def adjust_gamma(image, gamma=1.0):
 	# build a lookup table mapping the pixel values [0, 255] to
@@ -155,8 +167,9 @@ def f_o_img_resized(s_path_file_name):
 class O_menu_option:
     s_identification_string: str
     s_name: str
-    a_n_index_value: list
+    # a_n_index_value: list # index neede for gphoto, because values have to be set via index, 
     a_s_name_value: list
+    n_value: str
     s_value: str
     n_mouse_x_normalized: float
     n_mouse_y_normalized: float
@@ -166,7 +179,7 @@ a_o_menu_option = [
         "gamma", 
         "0|gamma", 
         [],
-        [],
+        0.0,
         "not initialized",
         0.0,
         0.0 
@@ -175,7 +188,16 @@ a_o_menu_option = [
         "brightness",
         "0|brightness", 
         [],
+        0.0,
+        "not initialized",
+        0.0,
+        0.0 
+    ), 
+    O_menu_option(
+        "contrast",
+        "0|contrast", 
         [],
+        0.0,
         "not initialized",
         0.0,
         0.0 
@@ -183,12 +205,12 @@ a_o_menu_option = [
     O_menu_option(
         "shutter_speed", 
         "0|shutter speed", 
-        [0,1,2],
         [
             "1/10s", 
             "2s", 
             "10s"
         ],
+        0.0,
         "not initialized",
         0.0,
         0.0 
@@ -196,12 +218,12 @@ a_o_menu_option = [
     O_menu_option(
         "iso",
         "0|iso", 
-        [0,1,2],
         [
             "50", 
             "6400", 
             "25600"
         ],
+        0.0,
         "not initialized",
         0.0,
         0.0 
@@ -209,29 +231,58 @@ a_o_menu_option = [
     O_menu_option(
         "loop_capture",
         "0|loop capture", 
-        [0,1],
         [
             "off", 
             "on"
         ],
+        0.0,
         "not initialized",
         0.0,
         0.0 
     )
 ]
-o_menu_option = O_menu_option(
+o_menu_option_camera = O_menu_option(
         "camera",
         "0|camera", 
         [],
-        [],
+        0.0,
         "not initialized",
         0.0,
         0.0 
     )
 
-a_n_video_devices_numbers = f_a_n_video_devices_numbers()
-print(a_n_video_devices_numbers)
-exit()
+a_s_video_device_path = f_a_s_video_device_path()
+# print(a_n_video_devices_numbers)
+# exit()
+
+class O_cv2_video_capture:
+  def __init__(self, s_device_path, cv2_capture):
+    self.s_device_path = s_device_path
+    self.cv2_capture = cv2_capture
+
+
+a_o_cv2_video_capture =[]
+for s in a_s_video_device_path: 
+    print(s)
+    n = f_n_video_device_number(s)
+    cap = cv2.VideoCapture(n)
+
+    # Check if the webcam is opened correctly
+    if not cap.isOpened():
+        print("cannot open webcam")
+        # raise IOError("Cannot open webcam")
+    else: 
+        o_menu_option_camera.a_s_name_value.append(s)
+        a_o_cv2_video_capture.append(O_cv2_video_capture(s, cap))
+# exit()
+
+
+o_menu_option_camera.a_s_name_value.append("gphoto2_camera")
+
+
+a_o_menu_option.append(o_menu_option_camera)
+
+# print(o_menu_option_camera)
 def f_cv2_put_text(
     a_s_line,
     a_img, 
@@ -387,6 +438,21 @@ while True:
     if(o_keyboard_keys["enter"]["b_down_oneshot"]):
         f_capture_and_download(s_path_file_name)
         o_img_raw_resized = f_o_img_resized(s_path_file_name)
+
+    o_menu_option_camera = [o for o in a_o_menu_option if o.s_identification_string == "camera"][0]
+    if("video" in o_menu_option_camera.s_value): 
+        print(o_menu_option_camera.s_value)
+        # n = f_n_video_device_number(o_menu_option_camera.s_value)
+        o_cv2_video_capture = [ o for o in a_o_cv2_video_capture if o.s_device_path == o_menu_option_camera.s_value][0]
+        
+        print("capture!!!!!!!")
+        ret, frame = o_cv2_video_capture.cv2_capture.read()
+        a_frame_grayscale = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # o_img_raw_resized = cv2.resize(a_frame_grayscale, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_AREA)
+        o_img_raw_resized = a_frame_grayscale
+
+
     # if(n_frame_id == 100):
     #     f_capture_and_download(s_path_file_name)
     #     o_img_raw_resized = f_o_img_resized(s_path_file_name)
@@ -413,27 +479,34 @@ while True:
     a_s_line.append('x|y'+str(format(n_mouse_x_normalized, ".3f"))+"|"+str(format(n_mouse_y_normalized, ".3f")))
 
     if(o_menu_option.s_identification_string == "brightness" ):
-        o_menu_option.s_value = str(int(n_value_max*o_menu_option.n_mouse_y_normalized))
-        o_img_raw_copy = o_img_raw_copy + int(n_value_max*o_menu_option.n_mouse_y_normalized)
+        o_menu_option.n_value = (int(n_value_max*o_menu_option.n_mouse_y_normalized))
+        o_menu_option.s_value = str(o_menu_option.n_value)
 
     if(o_menu_option.s_identification_string == "contrast" ):
-        o_menu_option.s_value = str(2 * o_menu_option.n_mouse_y_normalized)
+        o_menu_option.n_value = (2 * o_menu_option.n_mouse_y_normalized)
+        o_menu_option.s_value = str(o_menu_option.n_value)
         # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
-        o_img_raw_copy = (o_img_raw_copy * 2 * o_menu_option.n_mouse_y_normalized).astype(numpy.uint8)
 
         # print(type(o_img_raw_copy))
     if(o_menu_option.s_identification_string == "gamma" ):
-        o_menu_option.s_value = str(5 * o_menu_option.n_mouse_y_normalized)
-        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
         n_prevent_zero_devision = 0.00001
-        o_img_raw_copy = adjust_gamma(o_img_raw_copy, (5 * o_menu_option.n_mouse_y_normalized) + n_prevent_zero_devision)
+        o_menu_option.n_value = (5 * o_menu_option.n_mouse_y_normalized + n_prevent_zero_devision)
+        o_menu_option.s_value = str(o_menu_option.n_value)
+        # o_img_raw_copy = o_img_raw_copy * 2*n_mouse_y_normalized
 
-
-    if( o_menu_option.s_identification_string in ["shutter_speed", "iso", "loop_capture"]):
-        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_n_index_value))) 
-        n_index_value = o_menu_option.a_n_index_value[n_index]
+    if( o_menu_option.s_identification_string in ["shutter_speed", "iso", "loop_capture", "camera"]):
+        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_s_name_value)-0.00001)) 
+        # n_index_value = o_menu_option.a_n_index_value[n_index]
         s_name_value = o_menu_option.a_s_name_value[n_index]
-        o_menu_option.s_value = s_name_value
+        o_menu_option.s_value = str(s_name_value)
+
+    o_menu_option_brightness = [o for o in a_o_menu_option if o.s_identification_string == "brightness"][0]
+    o_menu_option_contrast = [o for o in a_o_menu_option if o.s_identification_string == "contrast"][0]
+    o_menu_option_gamma = [o for o in a_o_menu_option if o.s_identification_string == "gamma"][0]
+
+    o_img_raw_copy = o_img_raw_copy + int(o_menu_option_brightness.n_value)
+    o_img_raw_copy = (o_img_raw_copy * float(o_menu_option_contrast.n_value)).astype(numpy.uint8)
+    o_img_raw_copy = adjust_gamma(o_img_raw_copy, float(o_menu_option_gamma.n_value))
 
     # if( o_menu_option.s_identification_string in ["loop_capture"]):
     #     n_index = int(o_menu_option.n_mouse_y_normalized > 0.5)
