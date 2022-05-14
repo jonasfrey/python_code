@@ -15,6 +15,11 @@ import cv2
 
 
 
+def f_a_n_video_devices_numbers():
+
+    s_test = f_run_bash_command(["ls","/dev/video*"], True)
+    print(s_test)
+
 def adjust_gamma(image, gamma=1.0):
 	# build a lookup table mapping the pixel values [0, 255] to
 	# their adjusted gamma values
@@ -214,7 +219,19 @@ a_o_menu_option = [
         0.0 
     )
 ]
+o_menu_option = O_menu_option(
+        "camera",
+        "0|camera", 
+        [],
+        [],
+        "not initialized",
+        0.0,
+        0.0 
+    )
 
+a_n_video_devices_numbers = f_a_n_video_devices_numbers()
+print(a_n_video_devices_numbers)
+exit()
 def f_cv2_put_text(
     a_s_line,
     a_img, 
@@ -412,17 +429,17 @@ while True:
         o_img_raw_copy = adjust_gamma(o_img_raw_copy, (5 * o_menu_option.n_mouse_y_normalized) + n_prevent_zero_devision)
 
 
-    if( o_menu_option.s_identification_string in ["shutter_speed", "iso"]):
-        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_n_index_value)-1)) 
+    if( o_menu_option.s_identification_string in ["shutter_speed", "iso", "loop_capture"]):
+        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_n_index_value))) 
         n_index_value = o_menu_option.a_n_index_value[n_index]
         s_name_value = o_menu_option.a_s_name_value[n_index]
         o_menu_option.s_value = s_name_value
 
-    if( o_menu_option.s_identification_string in ["loop_capture"]):
-        n_index = int(o_menu_option.n_mouse_y_normalized > 0.5)
-        n_index_value = o_menu_option.a_n_index_value[n_index]
-        s_name_value = o_menu_option.a_s_name_value[n_index]
-        o_menu_option.s_value = s_name_value
+    # if( o_menu_option.s_identification_string in ["loop_capture"]):
+    #     n_index = int(o_menu_option.n_mouse_y_normalized > 0.5)
+    #     n_index_value = o_menu_option.a_n_index_value[n_index]
+    #     s_name_value = o_menu_option.a_s_name_value[n_index]
+    #     o_menu_option.s_value = s_name_value
 
     # o_img_raw_resized = cv2.cvtColor(o_img_raw_resized,cv2.COLOR_GRAY2RGB)
     a_histogram = f_a_img_histogram(o_img_raw_copy)
