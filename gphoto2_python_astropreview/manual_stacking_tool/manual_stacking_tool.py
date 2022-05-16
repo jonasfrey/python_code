@@ -127,7 +127,13 @@ class O_image:
         # a_img: numpy.ndarray
         ) -> None:
         self.s_path_file = s_path_file
-        self.a_image = cv2.imread(self.s_path_file)
+        # reading the image as grayscale is much faster since debayering does not have to be done
+        self.a_image = cv2.imread(self.s_path_file, cv2.IMREAD_GRAYSCALE) 
+        self.dt = self.a_image.dtype
+        self.n_bytes = self.dt.itemsize
+        self.n_bits = self.n_bytes * 8
+        self.n_value_max = pow(2, self.n_bits)-1
+        self.a_image = (self.a_image / self.n_value_max).astype(numpy.float32)
         self.n_transformation_translation_x = 0
         self.n_transformation_translation_y = 0
         self.n_transformation_rotation = 0
@@ -209,6 +215,45 @@ o_menu_option_transform_scale = O_menu_option(
 )
 a_o_menu_option.append(o_menu_option_transform_scale)
 
+o_menu_option_difference_factor = O_menu_option(
+    "difference_factor",
+    "0|difference_factor", 
+    [],
+    0.0,
+    "not initialized",
+    0.0,
+    0.0 
+)
+a_o_menu_option.append(o_menu_option_difference_factor)
+
+o_menu_option_aligning_mode = O_menu_option(
+    "aligning_mode",
+    "0|aligning_mode", 
+    [
+        "difference_factor", 
+        "color_channels_r_and_b"
+    ],
+    0.0,
+    "not initialized",
+    0.0,
+    0.0 
+)
+a_o_menu_option.append(o_menu_option_aligning_mode)
+
+o_menu_option_color_channels_contrast = O_menu_option(
+    "color_channels_contrast",
+    "0|color_channels_contrast", 
+    [
+        "difference_factor", 
+        "color_channels_r_and_b"
+    ],
+    0.0,
+    "not initialized",
+    0.0,
+    0.0 
+)
+a_o_menu_option.append(o_menu_option_color_channels_contrast)
+
 
 a_pos_mouse = pyautogui.position()
 a_pos_mouse_last = pyautogui.position()
@@ -257,18 +302,18 @@ o_window = sg.Window(
 o_window.read(timeout=1)
 
 
-def f_pass():
-    pass
 
-for o in a_o_menu_option: 
 
-    # cv2.createButton("Back",f_pass,None,cv2.QT_PUSH_BUTTON,1)
-    cv2.createTrackbar(o.s_name.ljust(200, " "), s_window_name, 0, 1, f_pass)
+a_color_channel_img = numpy.zeros(
 
-o_test = cv2.createTrackbar("o_test".ljust(100, " "), s_window_name, 0, 1, f_pass)
-# cv2.setTrackbarPos("o_test", 50)
-# print(o_test)
-# exit()
+    [
+        a_o_image[0].a_image.shape[0],
+        a_o_image[0].a_image.shape[1],
+        3
+    ],
+    dtype=numpy.float32
+    )
+
 while True: 
     # print("n_frame_id")
     # print(n_frame_id)
@@ -335,12 +380,25 @@ while True:
 
     # print(o_menu_option.n_mouse_y_normalized)
 
+    if(
+        o_menu_option == o_menu_option_aligning_mode ): 
+        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_s_name_value)-0.00001)) 
+        # n_index_value = o_menu_option.a_n_index_value[n_index]
+        s_name_value = o_menu_option.a_s_name_value[n_index]
+        o_menu_option.s_value = str(s_name_value)
+
+    if(o_menu_option == o_menu_option_color_channels_contrast): 
+        o_menu_option_color_channels_contrast.n_value = o_menu_option_color_channels_contrast.n_mouse_y_normalized * 10
+        o_menu_option_color_channels_contrast.s_value = str(o_menu_option_color_channels_contrast.n_value)
+
     if(o_menu_option.s_identification_string == "transform_translate" ):
         if(o_keyboard_keys["enter"]["b_down"]):
             o_image.n_transformation_translation_x = o_image.n_transformation_translation_x - (o_menu_option.n_mouse_x_normalized_delta*100)
             o_image.n_transformation_translation_y = o_image.n_transformation_translation_y - (o_menu_option.n_mouse_y_normalized_delta*100)
 
-        
+    if(o_menu_option == o_menu_option_difference_factor): 
+        o_menu_option_difference_factor.n_value = o_menu_option_difference_factor.n_mouse_y_normalized * 10
+        o_menu_option_difference_factor.s_value = str(o_menu_option_difference_factor.n_value)
 
     if( o_menu_option.s_identification_string in ["image", "image_reference"]):
         n_index = int(o_menu_option.n_mouse_y_normalized_frozen * (len(o_menu_option.a_s_name_value)-0.00001)) 
@@ -367,15 +425,11 @@ while True:
 
     
     if(o_keyboard_keys["p"]["b_down_oneshot"]):
-        dt = a_o_image[0].a_image.dtype
-        n_bytes = dt.itemsize
-        n_bits = n_bytes * 8
-        n_value_max = pow(2, n_bits)-1
-        a_sum_image_normalized = (a_o_image[0].a_image / n_value_max).astype(numpy.float32)
+
         n_i = 1
         while(n_i < len(a_o_image)):
 
-            a_sum_image_normalized_n_i = (a_o_image[n_i].a_image / n_value_max).astype(numpy.float32)
+            a_sum_image_normalized_n_i = a_o_image[n_i].a_image.copy()
             n_width = a_sum_image_normalized_n_i.shape[1]
             n_height = a_sum_image_normalized_n_i.shape[0]
             a_transformation_matrix = numpy.float32([[1,0,a_o_image[n_i].n_transformation_translation_x],[0,1,a_o_image[n_i].n_transformation_translation_y]])
@@ -386,20 +440,37 @@ while True:
 
         a_sum_image_normalized_arithmetic_medium = a_sum_image_normalized / len(a_o_image)
 
-        a_sum_image_unnormalized_arithmetic_medium = a_sum_image_normalized_arithmetic_medium * n_value_max
-        cv2.imwrite("a_sum_image_unnormalized_arithmetic_medium.png", a_sum_image_unnormalized_arithmetic_medium)
+        # a_sum_image_unnormalized_arithmetic_medium = a_sum_image_normalized_arithmetic_medium * n_value_max
+        cv2.imwrite("a_sum_image_unnormalized_arithmetic_medium.png", a_sum_image_normalized_arithmetic_medium)
         print("image saved!")
 
     n_width = o_image_a_image_copy.shape[1]
     n_height = o_image_a_image_copy.shape[0]
 
+
+    
     a_transformation_matrix = numpy.float32([[1,0,o_image.n_transformation_translation_x],[0,1,o_image.n_transformation_translation_y]])
     a_img_original_transformed = cv2.warpAffine(o_image_a_image_copy,a_transformation_matrix,(n_width,n_height))
+    # o_image_reference_a_image_normalized = (o_image_reference.a_image / n_value_max).astype(numpy.float32)
+    # a_img_original_transformed_normalized = (a_img_original_transformed / n_value_max).astype(numpy.float32)
+    # a_img_abs_difference = abs(o_image_reference_a_image_normalized - a_img_original_transformed_normalized)
+    if(o_menu_option_aligning_mode.s_value == "difference_factor"):
+        a_img_abs_difference = abs(a_img_original_transformed - o_image_reference.a_image) * o_menu_option_difference_factor.n_value
+        cv2.imshow(s_window_name, a_img_abs_difference)
 
-    a_img_difference = o_image_reference.a_image - a_img_original_transformed
+    if(o_menu_option_aligning_mode.s_value == "color_channels_r_and_b"):
 
+        # a_color_channel_img = a_color_channel_img * o_menu_option_color_channels_contrast.n_value
 
-    cv2.imshow(s_window_name, a_img_difference)
+        a_color_channel_img[:, :, 1] = o_image_reference.a_image * o_menu_option_color_channels_contrast.n_value
+        a_color_channel_img[:, :, 2] = a_img_original_transformed
+
+        # increase contrast for better differentiation of separate images 
+        # a_color_channel_img = a_color_channel_img * o_menu_option_color_channels_contrast.n_value
+        cv2.imshow(s_window_name, a_color_channel_img)
+    
+    
+
     keyCode = cv2.waitKey(1)
 
     if event == sg.WIN_CLOSED:
