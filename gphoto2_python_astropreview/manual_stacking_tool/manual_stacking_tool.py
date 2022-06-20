@@ -427,6 +427,14 @@ while True:
     if(o_keyboard_keys["p"]["b_down_oneshot"]):
 
         n_i = 1
+        a_sum_image_normalized  = numpy.zeros(
+            [
+                a_o_image[0].a_image.shape[0],
+                a_o_image[0].a_image.shape[1],
+                1
+            ],
+            dtype=numpy.float32
+            )
         while(n_i < len(a_o_image)):
 
             a_sum_image_normalized_n_i = a_o_image[n_i].a_image.copy()
