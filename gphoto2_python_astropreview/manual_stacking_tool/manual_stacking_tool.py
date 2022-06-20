@@ -7,8 +7,25 @@ import os
 from dataclasses import dataclass
 import keyboard
 import PySimpleGUI as sg
+import rawpy
 
 
+def f_a_auto_stretch_normalized_numpy_image(a_np_img):
+    n_min = numpy.amin(a_np_img)
+    n_max = numpy.amax(a_np_img)
+    # print("before f_a_auto_stretch_normalized_numpy_image")
+    # print("n_max:"+str(n_max))
+    # print("n_min:"+str(n_min))
+
+    a_np_img = a_np_img - n_min; 
+    a_np_img = a_np_img / (n_max-n_min)
+
+    n_min = numpy.amin(a_np_img)
+    n_max = numpy.amax(a_np_img)
+    # print("after f_a_auto_stretch_normalized_numpy_image")
+    # print("n_max:"+str(n_max))
+    # print("n_min:"+str(n_min))
+    return a_np_img
 
 # print(o_menu_option_camera)
 def f_cv2_put_text(
@@ -124,16 +141,21 @@ class O_image:
     def __init__(
         self,
         s_path_file: str, 
-        # a_img: numpy.ndarray
+        # a_img: numpy.ndarray = numpy.ndarray()
         ) -> None:
         self.s_path_file = s_path_file
         # reading the image as grayscale is much faster since debayering does not have to be done
-        self.a_image = cv2.imread(self.s_path_file, cv2.IMREAD_GRAYSCALE) 
+        # self.a_image = cv2.imread(self.s_path_file, cv2.IMREAD_GRAYSCALE)  
+        self.a_image = rawpy.imread(self.s_path_file).raw_image
+        # o_img_raw = rawpy.imread(s_path_file_name)
+        # cv2.imshow('image',o_img_raw.raw_image) 
+        # exit()
         self.dt = self.a_image.dtype
         self.n_bytes = self.dt.itemsize
         self.n_bits = self.n_bytes * 8
         self.n_value_max = pow(2, self.n_bits)-1
         self.a_image = (self.a_image / self.n_value_max).astype(numpy.float32)
+        self.a_image = f_a_auto_stretch_normalized_numpy_image(self.a_image)
         self.n_transformation_translation_x = 0
         self.n_transformation_translation_y = 0
         self.n_transformation_rotation = 0
@@ -145,8 +167,9 @@ a_o_image = []
 s_path_images = './images/'
 for s_file in os.listdir(s_path_images):
     s_file_path = os.path.join(s_path_images, s_file)
-    print(s_file_path)
     if os.path.isfile(s_file_path):
+        print("opening file :"+s_file_path)
+
         a_o_image.append(
             O_image(
                 s_file_path
@@ -288,18 +311,20 @@ cv2.namedWindow(s_window_name, cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty(s_window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
 a_layout = []
+s_font_not_active = 'Arial 12'
+s_font_active = 'Arial 12 bold'
 for o in a_o_menu_option:
     a_layout.append(
-        [sg.Text(o.s_name, key=o.s_identification_string)]
+        [sg.Text(o.s_name, key=o.s_identification_string, font=s_font_not_active)]
     )
-o_window = sg.Window(
+o_simplegui_window = sg.Window(
     keep_on_top=True, 
     title=s_window_name,
     layout=a_layout,
     margins=(100, 50),
     finalize=True
     )
-o_window.read(timeout=1)
+o_simplegui_window.read(timeout=1)
 
 
 
@@ -382,7 +407,7 @@ while True:
 
     if(
         o_menu_option == o_menu_option_aligning_mode ): 
-        n_index = int(o_menu_option.n_mouse_y_normalized * (len(o_menu_option.a_s_name_value)-0.00001)) 
+        n_index = int(o_menu_option.n_mouse_y_normalized_frozen * (len(o_menu_option.a_s_name_value)-0.00001)) 
         # n_index_value = o_menu_option.a_n_index_value[n_index]
         s_name_value = o_menu_option.a_s_name_value[n_index]
         o_menu_option.s_value = str(s_name_value)
@@ -411,12 +436,18 @@ while True:
     # f_cv2_put_text(a_s_line, o_image_a_image_copy)
     for o in a_o_menu_option: 
         s = o.s_name + ":" + str(o.s_value)
+        s_font = s_font_not_active
         if(o == o_menu_option):
             s = "["+ s +"]"
+            s_font = s_font_active
 
-        o_window[o.s_identification_string].update(s)
+        o_new_element = sg.Text(s, key=o.s_identification_string, font=s_font)
+        o_simplegui_window[o.s_identification_string].update(s)
+        o_simplegui_window[o.s_identification_string].update(
+            font = s_font
+        )
     
-    event, values = o_window.read(timeout=1)
+    event, values = o_simplegui_window.read(timeout=1)
 
 
     for s_prop in o_keyboard_keys: 
@@ -426,30 +457,35 @@ while True:
     
     if(o_keyboard_keys["p"]["b_down_oneshot"]):
 
-        n_i = 1
-        a_sum_image_normalized  = numpy.zeros(
-            [
-                a_o_image[0].a_image.shape[0],
-                a_o_image[0].a_image.shape[1],
-                1
-            ],
-            dtype=numpy.float32
-            )
-        while(n_i < len(a_o_image)):
+        n_i = 0
+        a_sum_image_normalized = numpy.zeros(
 
+        [
+            a_o_image[0].a_image.shape[0],
+            a_o_image[0].a_image.shape[1]
+        ],
+        dtype=numpy.float32
+        )
+        while(n_i < len(a_o_image)):
+            print("processing image ")
             a_sum_image_normalized_n_i = a_o_image[n_i].a_image.copy()
             n_width = a_sum_image_normalized_n_i.shape[1]
             n_height = a_sum_image_normalized_n_i.shape[0]
+            
             a_transformation_matrix = numpy.float32([[1,0,a_o_image[n_i].n_transformation_translation_x],[0,1,a_o_image[n_i].n_transformation_translation_y]])
             a_sum_image_normalized_n_i_transformed = cv2.warpAffine(a_sum_image_normalized_n_i,a_transformation_matrix,(n_width,n_height))
-
             a_sum_image_normalized = a_sum_image_normalized + a_sum_image_normalized_n_i_transformed
+
             n_i = n_i + 1
-
+            
         a_sum_image_normalized_arithmetic_medium = a_sum_image_normalized / len(a_o_image)
+        a_sum_image_normalized_arithmetic_medium_autostretched = f_a_auto_stretch_normalized_numpy_image(a_sum_image_normalized_arithmetic_medium);
+        a_sum_image_normalized_arithmetic_medium_autostretched_unnormalized = (a_sum_image_normalized_arithmetic_medium_autostretched*255).astype(numpy.uint8)
+        a_sum_image_normalized_arithmetic_medium_autostretched_unnormalized_debayered = cv2.cvtColor(a_sum_image_normalized_arithmetic_medium_autostretched_unnormalized, cv2.COLOR_BayerRG2BGR)
 
+        # print(a_sum_image_normalized_arithmetic_medium_autostretched)
         # a_sum_image_unnormalized_arithmetic_medium = a_sum_image_normalized_arithmetic_medium * n_value_max
-        cv2.imwrite("a_sum_image_unnormalized_arithmetic_medium.png", a_sum_image_normalized_arithmetic_medium)
+        cv2.imwrite("a_sum_image_normalized_arithmetic_medium_autostretched_debayered.png", a_sum_image_normalized_arithmetic_medium_autostretched_unnormalized_debayered)
         print("image saved!")
 
     n_width = o_image_a_image_copy.shape[1]
