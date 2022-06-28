@@ -4,7 +4,10 @@
 import subprocess
 import pyautogui
 import cv2
-from scipy.fft import next_fast_len
+
+## requirements 
+# sudo apt install python3-opencv
+# pip3 install pyautogui
 
 # s_command = "chromium-browser https://www.crackedthecode.co/how-to-use-your-dslr-as-a-webcam-in-linux/";
 # list_dir = subprocess.Popen(s_command.split(" "));
