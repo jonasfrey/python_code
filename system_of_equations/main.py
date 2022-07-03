@@ -16,7 +16,8 @@ class O_polynom:
         for o in self.a_o_coefficient:
             if(o.n_factor>=0):
                 s_equation+="+"
-            s_equation+=str(o.n_factor)
+            # s_equation+=str(o.n_factor)
+            s_equation+="{:g}".format(float(o.n_factor)) # 3.0 -> 3 , 3.440 -> 3.44
             s_equation+=str(o.s_variable_char)
         return s_equation
             
@@ -105,6 +106,38 @@ class O_polynom:
             self.s_name
         )
 
+    def f_o_substite_coefficient(
+        self,
+        s_variable_char, 
+        n_value
+    ):
+        o_polynom = self.f_o_simplified()
+        o_coefficient = [
+            o for o in o_polynom.a_o_coefficient
+            if o.s_variable_char == s_variable_char
+        ][0]
+        a_o_coefficient = [
+            o for o in o_polynom.a_o_coefficient
+            if o.s_variable_char != s_variable_char
+        ]
+        a_o_coefficient.append(
+            O_coefficient(
+                "", 
+                eval(str(o_coefficient.n_factor) +"*"+ str(n_value))
+            )
+        )
+        # n_result_number = eval(str(o_polynom.n_result_number) + "+" + str(o_coefficient.n_factor) +"*"+ str(n_value))
+        s_name = f"{o_polynom.s_name} substituted {s_variable_char} with {n_value}"
+        o_polynom_substitued = O_polynom(
+            o_polynom.n_result_number, 
+            a_o_coefficient,
+            s_name
+        )
+        print(o_polynom_substitued.s_name)
+        print(o_polynom_substitued)
+        o_polynom_substitued_simplified = o_polynom_substitued.f_o_simplified()
+        return o_polynom_substitued_simplified
+
     def __str__(self):
         # print(self)
         return self.f_s_equation()
@@ -178,7 +211,7 @@ class O_polynom:
         o_polynom_operation_result = O_polynom(
             n_result_number,
             a_o_coefficient, 
-            self.s_name + s_operator + o_polynom.s_name 
+            f"({self.s_name}) {s_operator} ({o_polynom.s_name})" 
         )
 
         return o_polynom_operation_result
@@ -215,7 +248,8 @@ class O_polynom:
         return o_polynom
 
 def f_o_polynom_by_equation_string(
-    s_string
+    s_string, 
+    s_name = ""
 ): 
     s_equation_no_double_operators = s_string.replace("+-", "-")
     s_equation_no_double_operators = s_equation_no_double_operators.replace("-+", "-")
@@ -274,7 +308,7 @@ def f_o_polynom_by_equation_string(
     o_polynom = O_polynom(
             n_result_number, 
             a_o_coefficient, 
-            ""
+            s_name
         )
     return o_polynom
 
@@ -304,9 +338,10 @@ def f_solve_system_of_equations(
     n_index = 0
     for s_equation in a_s_equations: 
     
-        o_polynom = f_o_polynom_by_equation_string(s_equation)
+        s_name = a_s_roman_numeral[n_index]
+        o_polynom = f_o_polynom_by_equation_string(s_equation, s_name)
         o_polynom = o_polynom.f_o_simplified() # example => 5 = 3x+2y+2x+5z-3 -> 2 = 5x+2y+5z
-        o_polynom.s_name = a_s_roman_numeral[n_index]
+    
 
         a_o_polynom.append(
             o_polynom
@@ -330,58 +365,7 @@ def f_solve_system_of_equations(
         a_a_o_polynom_result.append(a_o_polynom_result)
     
     print(a_o_polynom_result[0].f_s_equation_solved_for_one_coefficient())
-
     exit()
-
-    # for o_coefficient in a_o_polynom[0].a_o_coefficient:
-        # s_variable_char_to_eliminate
-    # exit()
-    o_polynom_first = a_o_polynom[0]
-    o_coefficient_first = o_polynom_first.a_o_coefficient[0]
-    o_polynom_second = a_o_polynom[1]
-
-    s_variable_char_to_eliminate = o_coefficient_first.s_variable_char
-    o_polynom_operation_result_iv = f_o_polynom_eliminate_variable(
-        o_polynom_first=o_polynom_first, 
-        o_polynom_second=o_polynom_second, 
-        s_variable_char_to_eliminate=s_variable_char_to_eliminate
-    )
-    for o_polynom in a_o_polynom: 
-        print(o_polynom.s_name)
-        print(o_polynom)
-    
-
-    o_polynom_first = a_o_polynom[0]
-    o_coefficient_first = o_polynom_first.a_o_coefficient[0]
-    o_polynom_second = a_o_polynom[2]
-
-    s_variable_char_to_eliminate = o_coefficient_first.s_variable_char
-    o_polynom_operation_result_v = f_o_polynom_eliminate_variable(
-        o_polynom_first=o_polynom_first, 
-        o_polynom_second=o_polynom_second, 
-        s_variable_char_to_eliminate=s_variable_char_to_eliminate
-    )
-
-    # exit()
-    s_variable_char_to_eliminate_second = [o_coefficient for o_coefficient in o_polynom_operation_result_iv.a_o_coefficient if (o_coefficient.s_variable_char.lower() == s_variable_char_to_eliminate) == False][0].s_variable_char
-    o_polynom_operation_result_vi = f_o_polynom_eliminate_variable(
-        o_polynom_first=o_polynom_operation_result_iv, 
-        o_polynom_second=o_polynom_operation_result_v, 
-        s_variable_char_to_eliminate=s_variable_char_to_eliminate_second
-    )
-
-    o_coefficient_third = [
-        o for o in o_polynom_operation_result_vi.a_o_coefficient
-        if (
-            o.s_variable_char != s_variable_char_to_eliminate
-            and
-            o.s_variable_char != s_variable_char_to_eliminate_second
-        )][0]
-    s_variable_char_to_eliminate_third = o_coefficient_third.s_variable_char
-
-    # print(f"{s_variable_char_to_eliminate_third} = {o_polynom_operation_result_vi.n_result_number/o_coefficient_third.n_factor}")
-
-    # eliminate second coefficient
 
 
     return False
@@ -424,8 +408,8 @@ def f_o_polynom_eliminate_variable(
     # s_factor_operation_suffix = f"*({o_coefficient_first.n_factor}/{o_coefficient_second.n_factor})"
     # print(s_factor_operation_suffix)
     # gemeinsames vielfaches !
-    s_factor_operation_suffix_first = str(o_coefficient_second.n_factor)
-    s_factor_operation_suffix_second = str(o_coefficient_first.n_factor)
+    s_factor_operation_suffix_first = "{:g}".format(float(o_coefficient_second.n_factor)) # -2.0 -> -2, 4.400 -> 4.4
+    s_factor_operation_suffix_second = "{:g}".format(float(o_coefficient_first.n_factor))
     
 
     o_polynom_for_operation_first = o_polynom_second * s_factor_operation_suffix_second
@@ -501,8 +485,8 @@ def f_test_equation_solving():
     ]
         
     # f_solve_system_of_equations(a_s_equations_2x2)
-    # f_solve_system_of_equations(a_s_equations_3x3)
-    f_solve_system_of_equations(a_s_equations_4x4)
+    f_solve_system_of_equations(a_s_equations_3x3)
+    # f_solve_system_of_equations(a_s_equations_4x4)
 
 def f_test_solving_of_one_coefficient():
     s_polynom = "12 = 6x + 12x + 0y + 0y + 12 + 6x"
@@ -520,7 +504,25 @@ def f_test_polynom():
     print(o_polynom)
     print(o_polynom_simplified)
 
+def f_test_substitution():
+    s_polynom = "12 = 3x + 5y + 2z"
+    s_polynom_expected = "20 = 3x + 5y" # z = 4 
+    o_polynom = f_o_polynom_by_equation_string(s_polynom, "I")
+    o_polynom_substituted = o_polynom.f_o_substite_coefficient(
+        "z", 
+        4
+    )
+
+    print(o_polynom.s_name)
+    print(o_polynom)
+    print("---")
+    print(o_polynom_substituted.s_name)
+    print(o_polynom_substituted)
+    print("---")
+
 
 # f_test_solving_of_one_coefficient()
 
-f_test_equation_solving()
+# f_test_equation_solving()
+
+f_test_substitution()
