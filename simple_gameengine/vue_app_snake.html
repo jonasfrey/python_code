@@ -1,0 +1,323 @@
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<script src="https://cdn.space.unibe.ch/Fontawesome.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
+
+<div id="app">
+</div>
+
+<style>
+    .grid{
+        aspect-ratio: 1/1;
+        width:100vmin;
+    }
+    .grid {
+        display: flex;
+        flex-flow: column nowrap;
+    }
+    .row{
+        flex-flow: row nowrap;
+        display:flex; 
+        flex-direction: row;
+    }
+    .row{
+        flex: 1 1 auto
+    }
+    .cell{
+        flex:1 1 auto
+    }
+    .cell{ 
+        border: 1px solid black; 
+        border-radius: 1px;
+    }
+    .snake{
+        border-color: red;
+        background:black;
+    }
+    .food{
+        border-color: red;
+        background:green;  
+    }
+
+</style>
+
+<script type="module">
+    import O_json_to_html from "https://unpkg.com/o_json_to_html@1.0.6/o_json_to_html.module.js"
+
+    var o_json_to_html = new O_json_to_html()
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        document.getElementById("app").append(
+            o_json_to_html.f_json_to_html(
+                {
+                    s_t:"div",
+                    class: "content", 
+                    a_c:[
+                        {
+                        s_t:"div",
+                        class: "grid", 
+                        a_c:[
+                            {
+                                "class": "row",
+                                "v-for": "n_y in Array(o_grid.n_height).keys()", 
+                                "a_c":[
+                                    {
+                                        "class": "col",
+                                        "v-for":  "n_x in Array(o_grid.n_width).keys()", 
+                                        ":class": "(f_a_o_game_object(n_x, n_y).length > 0)? 'cell '+f_a_o_game_object(n_x, n_y)[0].s_name : 'cell'", 
+                                    }
+                                ]
+                            }
+                        ]},
+                        
+                    ]
+                }, 
+            )
+        );
+
+
+        window.vueObject = new Vue({
+            el: '#app',
+            data: {
+                b_bool: true, 
+                o_grid: {
+                    n_width: 30, 
+                    n_height: 30, 
+                },
+                a_o_collision_map_object:[], 
+                o_collision_map: {},
+                o_collision_map_with_collisions: {},
+                a_o_game_object: [],
+                b_keydown_once: false,
+            },
+            updated: function(){
+            },
+            mounted: function () {
+                var self = this;
+                var o_snake = new O_game_object(
+                    "snake",
+                    0,
+                    0,
+                    function(){
+                        var n_i_reversed = this.a_o_object_2d.length -1
+                        while(n_i_reversed > 0){
+                            if(n_i_reversed > 0){
+                                var o_object_2d_1 =  this.a_o_object_2d[n_i_reversed]
+                                var o_object_2d_2 =  this.a_o_object_2d[n_i_reversed-1]
+                                o_object_2d_1.o_point_2d_translation.n_x = o_object_2d_2.o_point_2d_translation.n_x
+                                o_object_2d_1.o_point_2d_translation.n_y = o_object_2d_2.o_point_2d_translation.n_y
+                            }
+                            n_i_reversed-=1;
+                        }
+                    }, 
+                    function(o_collision_map_object){
+                        var a_o_game_object_food = o_collision_map_object.a_o_collision_object.filter(
+                            o=>o.o_game_object.s_name == "food"
+                        )
+                        console.log(a_o_game_object_food)
+                        if(a_o_game_object_food.length > 0){
+                            // add limb
+                            this.a_o_object_2d.push(
+                                new O_object_2d(
+                                    this.a_o_object_2d[this.a_o_object_2d.length-1].o_point_2d_translation.n_x,
+                                    this.a_o_object_2d[this.a_o_object_2d.length-1].o_point_2d_translation.n_y
+                                    )
+                            )
+                        }
+                    }
+                )
+                this.a_o_game_object.push(o_snake)
+                var f_create_food = function(){
+
+                    var o_food = new O_game_object(
+                        "food",
+                        parseInt(Math.random()*self.o_grid.n_width),
+                        parseInt(Math.random()*self.o_grid.n_height), 
+                        function(){}, 
+                        function(o_collision_map_object){
+                            var a_o_game_object_snake = o_collision_map_object.a_o_collision_object.filter(
+                                o=>o.o_game_object.s_name == "snake"
+                            )
+                            console.log(a_o_game_object_snake)
+                            if(a_o_game_object_snake.length > 0){
+                                // add limb
+                                const n_index = self.a_o_game_object.indexOf(this);
+                                if (n_index > -1) { // only splice array when item is found
+                                    self.a_o_game_object.splice(n_index, 1); // 2nd parameter means remove one item only
+                                }
+                                f_create_food()
+                            }
+                        }
+                    )
+                    self.a_o_game_object.push(o_food)
+                }
+
+                f_create_food()
+
+                window.setInterval(function(){
+                    self.a_o_collision_map_object = []
+                    self.o_collision_map = {}
+                    for(var n_i in self.a_o_game_object){
+                        var o_game_object = self.a_o_game_object[n_i];
+                        o_game_object.f_render_function()
+                        for(var n_i2 in o_game_object.a_o_object_2d){
+                            var o_object_2d = o_game_object.a_o_object_2d[n_i2]
+
+                            o_object_2d.o_point_2d_velocity.n_x += o_object_2d.o_point_2d_acceleration.n_x
+                            o_object_2d.o_point_2d_velocity.n_y += o_object_2d.o_point_2d_acceleration.n_y
+                            var n_new_x = o_object_2d.o_point_2d_translation.n_x + o_object_2d.o_point_2d_velocity.n_x
+                            var n_new_y = o_object_2d.o_point_2d_translation.n_y + o_object_2d.o_point_2d_velocity.n_y
+                            o_object_2d.o_point_2d_translation.n_x = n_new_x
+                            o_object_2d.o_point_2d_translation.n_y = n_new_y
+                            var o_collision_map_object
+                            var s_prop = `a_${n_new_x}_${n_new_y}`
+                            if(!self.o_collision_map[s_prop]){
+                                var o_collision_map_object = new O_collision_map_object()
+                                self.o_collision_map[s_prop] = o_collision_map_object
+                            }else{
+                                var o_collision_map_object = self.o_collision_map[s_prop]
+                            }
+                            o_collision_map_object.a_o_collision_object.push(
+                                new O_collision_object(
+                                    o_game_object, 
+                                    o_object_2d
+                                )
+                            )
+                            if(o_collision_map_object.a_o_collision_object.length > 1){
+                                self.a_o_collision_map_object.push(o_collision_map_object)
+                            }
+                        }
+                        
+                    }
+                    for(var n_i in self.a_o_collision_map_object){
+                        var o_collision_map_object = self.a_o_collision_map_object[n_i]
+                        for(var n_i2 in o_collision_map_object.a_o_collision_object){
+                            var o_collision_object = o_collision_map_object.a_o_collision_object[n_i2]
+                            o_collision_object.o_game_object.f_collision_function(
+                                o_collision_map_object
+                            )
+                        }
+                    } 
+
+                },100)
+
+                document.addEventListener("keydown", function(e){
+                    if(!self.b_keydown_once){
+                        console.log(e)
+
+                        var o_object_2d_head = o_snake.a_o_object_2d[0]
+
+                        if(e.keyCode == 38){
+                            // up = 38
+                            o_object_2d_head.o_point_2d_velocity.n_x = 0
+                            o_object_2d_head.o_point_2d_velocity.n_y = -1
+                        }
+                        if(e.keyCode == 37){
+                            // left = 37
+                            o_object_2d_head.o_point_2d_velocity.n_x = -1
+                            o_object_2d_head.o_point_2d_velocity.n_y = 0
+                        }
+                        if(e.keyCode == 40){
+                        // down = 40
+                            o_object_2d_head.o_point_2d_velocity.n_x = 0
+                            o_object_2d_head.o_point_2d_velocity.n_y = 1    
+                        }
+                        if(e.keyCode == 39){
+                        // right = 39
+                            o_object_2d_head.o_point_2d_velocity.n_x = 1
+                            o_object_2d_head.o_point_2d_velocity.n_y = 0
+                        }
+                        
+
+                    }
+                    self.b_keydown_once = true
+                })
+                document.addEventListener("keyup", function(e){
+                    self.b_keydown_once = false
+                })
+
+            },
+            watch: {
+            },
+            methods: {
+                f_a_o_game_object: function(
+                    n_x, 
+                    n_y
+                ){
+
+                    var s_prop = `a_${n_x}_${n_y}`
+                    var o_collision_map_object = this.o_collision_map[s_prop]
+                    if(!o_collision_map_object){
+                        return []
+                    }
+                    return o_collision_map_object.a_o_collision_object.map(
+                        o => o.o_game_object
+                    )
+                }
+            },
+            computed: {
+            }
+        })
+        
+    });
+
+    class O_point_2d{
+        constructor(
+            n_x, 
+            n_y
+        ){
+            this.n_x = n_x
+            this.n_y = n_y
+        }
+    }
+    class O_object_2d{
+        constructor(
+            n_x_translation,
+            n_y_translation
+        ){
+            this.o_point_2d_translation = new O_point_2d(n_x_translation,n_y_translation)
+            this.o_point_2d_velocity = new O_point_2d(0,0)
+            this.o_point_2d_acceleration =new  O_point_2d(0,0)
+        }
+    }
+    class O_game_object{
+        constructor(
+            s_name, 
+            n_x, 
+            n_y,
+            f_render_function = function(){}, 
+            f_collision_function = function(){}, 
+
+        ){
+            this.s_name = s_name
+            this.a_o_object_2d = [
+                new O_object_2d(
+                    n_x, n_y
+                )
+            ] 
+            this.f_render_function = f_render_function
+            this.f_collision_function = f_collision_function
+        }
+    }
+    class O_collision_map_object{
+        constructor(
+        ){
+            this.a_o_collision_object = []
+        }
+    }
+    class O_collision_object{
+        constructor(
+            o_game_object,
+            o_object_2d, 
+        ){
+            this.o_game_object = o_game_object
+            this.o_object_2d = o_object_2d
+        }
+    }
+
+
+
+</script>
