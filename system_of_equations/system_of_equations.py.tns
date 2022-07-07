@@ -1,5 +1,6 @@
 
 
+n_max_char_per_line_ti_nspire = 36
 class O_polynom:
     def __init__(
         self, 
@@ -21,7 +22,7 @@ class O_polynom:
             s_equation+=str(o.s_variable_char)
         return s_equation
             
-    def f_s_equation_solved_for_one_coefficient(
+    def f_o_solved_for_one_coefficient(
         self
     ):
         o_polynom_simplified = self.f_o_simplified()
@@ -37,8 +38,19 @@ class O_polynom:
             a_s_line.append(f"{o_polynom_simplified.f_s_equation()} | : {o_coefficient.n_factor}")
             a_s_line.append(f"{o_polynom_simplified.n_result_number / o_coefficient.n_factor} = {1}{o_coefficient.s_variable_char}")
         else: 
+            raise Exception(f"cannot solve for one variable since multiple variables have a factor of not zero!,equation is : {a_s_line[0]}")
             return f"cannot solve for one variable since multiple variables have a factor of not zero!,equation is : {a_s_line[0]}"
-        return "\n".join(a_s_line)
+        print(
+        "\n".join(a_s_line)
+        )
+        return O_polynom(
+            o_polynom_simplified.n_result_number / o_coefficient.n_factor, 
+            [O_coefficient(
+                o_coefficient.s_variable_char, 
+                1
+            )], 
+            o_polynom_simplified.s_name
+        ) 
 
     def f_o_simplified(self):
         a_o_coefficient = []
@@ -211,7 +223,7 @@ class O_polynom:
         o_polynom_operation_result = O_polynom(
             n_result_number,
             a_o_coefficient, 
-            f"({self.s_name}) {s_operator} ({o_polynom.s_name})" 
+            f"({self.s_name}){s_operator}({o_polynom.s_name})" 
         )
 
         return o_polynom_operation_result
@@ -342,11 +354,12 @@ def f_solve_system_of_equations(
         o_polynom = f_o_polynom_by_equation_string(s_equation, s_name)
         o_polynom = o_polynom.f_o_simplified() # example => 5 = 3x+2y+2x+5z-3 -> 2 = 5x+2y+5z
     
-
         a_o_polynom.append(
             o_polynom
         )
         n_index+=1
+
+        print(f"{o_polynom.s_name} {o_polynom}".rjust(n_max_char_per_line_ti_nspire, " "))
 
     n_number_of_equations = len(a_s_equations)
     for o_polynom in a_o_polynom:
@@ -364,10 +377,33 @@ def f_solve_system_of_equations(
         a_o_polynom_result = f_a_o_eliminate_variable(a_o_polynom_result)
         a_a_o_polynom_result.append(a_o_polynom_result)
     
-    print(a_o_polynom_result[0].f_s_equation_solved_for_one_coefficient())
-    exit()
 
+    # exit()
+    o_polynom_solved = a_o_polynom_result[0].f_o_solved_for_one_coefficient()
 
+    # for o_polynom_result in a_o_polynom_result:
+    #     print(o_polynom_result)
+    a_o_polynom_solved = []
+    a_o_polynom_solved.append(o_polynom_solved)
+    for n_i in range(1, len(a_a_o_polynom_result)):
+        n_i_reversed = len(a_a_o_polynom_result) - n_i
+        o_polynom = a_a_o_polynom_result[n_i_reversed][0]
+        o_polynom_substitued = o_polynom.f_o_substite_coefficient(
+            o_polynom_solved.a_o_coefficient[0].s_variable_char, 
+            o_polynom_solved.a_o_coefficient[0].n_factor, 
+        )
+        o_polynom_solved = o_polynom_substitued.f_o_solved_for_one_coefficient()
+        a_o_polynom_solved.append(o_polynom_solved)
+
+    print(a_o_polynom_solved)    
+    o_polynom_first_substitued = o_polynom_first
+    for o_polynom_solved in a_o_polynom_solved:
+        o_polynom_first_substitued = o_polynom_first_substitued.f_o_substite_coefficient(
+            o_polynom_solved.a_o_coefficient[0].s_variable_char, 
+            o_polynom_solved.a_o_coefficient[0].n_factor, 
+        )
+
+    print(o_polynom_first_substitued)
     return False
 
 
@@ -452,13 +488,19 @@ def f_o_polynom_eliminate_variable(
     a_o_polynom.append(o_polynom_for_operation_second)
     a_o_polynom.append(o_polynom_operation_result)
     
-    print(o_polynom_for_operation_first)
-    print(o_polynom_for_operation_first.s_name)
-    print(o_polynom_for_operation_second)
-    print(o_polynom_for_operation_second.s_name)
-    print(o_polynom_operation_result)
+    # print(f"{o_polynom_for_operation_first}" +f"| ={o_polynom_for_operation_first.s_name}".rjust(n_max_char_per_line_ti_nspire, " "))
+    # print(f"{o_polynom_for_operation_second}" +f"| ={o_polynom_for_operation_second.s_name}".rjust(n_max_char_per_line_ti_nspire, " "))
+    # print(f"{o_polynom_operation_result}" +f"| ={o_polynom_operation_result.s_name}".rjust(n_max_char_per_line_ti_nspire, " "))
+    print(o_polynom_first.s_name)
+    print(o_polynom_first)
+    print("")
+    print(o_polynom_second.s_name)
+    print(o_polynom_second)
+    print("")
     print(o_polynom_operation_result.s_name)
-    
+    print(o_polynom_operation_result)
+    print("")
+
     return o_polynom_operation_result
 
 
@@ -492,7 +534,8 @@ def f_test_solving_of_one_coefficient():
     s_polynom = "12 = 6x + 12x + 0y + 0y + 12 + 6x"
     o_polynom = f_o_polynom_by_equation_string(s_polynom)
     print(o_polynom)
-    print(o_polynom.f_s_equation_solved_for_one_coefficient())
+    o_polynom_solved = o_polynom.f_o_solved_for_one_coefficient()
+    print(o_polynom_solved)
 
 def f_test_polynom():
     s_polynom = "12 = 2 + 3x + 6y - 3 + 2 + 2x +2y + 12"
@@ -523,6 +566,6 @@ def f_test_substitution():
 
 # f_test_solving_of_one_coefficient()
 
-# f_test_equation_solving()
+f_test_equation_solving()
 
-f_test_substitution()
+# f_test_substitution()
