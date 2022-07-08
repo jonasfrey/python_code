@@ -48,14 +48,12 @@ import time
 import os
 
 
-
 class O_point_2d:
     def __init__( self, 
         n_x, 
         n_y
     ):
-        self.n_x = n_x
-        self.n_y = n_y
+        self.n_x, self.n_y = n_x, n_y # single line multi assignment should be faster
 
 class O_object_2d:
     def __init__( self, 
@@ -71,8 +69,8 @@ class O_game_object:
         s_name, 
         n_x, 
         n_y,
-        f_render_function = lambda self, o_game: True, 
-        f_collision_function = lambda o_game_object, o_collision_map_object: True, 
+        f_render_function = None, 
+        f_collision_function = None, 
     ):
         self.s_name = s_name
         self.a_o_object_2d = [
@@ -174,8 +172,8 @@ class O_grid:
         n_y, 
         b
     ): 
-        n_x = self.n_scale_x * n_x
-        n_y = self.n_scale_y * n_y
+        n_x = int(self.n_scale_x) * int(n_x)
+        n_y = int(self.n_scale_y) * int(n_y)
         for n_y_2 in range(0, self.n_scale_y):
             for n_x_2 in range(0, self.n_scale_x):
                 if(b_thumby):
@@ -243,25 +241,27 @@ class O_game:
             o_game
         ):
             o_object_2d_head = self.a_o_object_2d[0]
-
+            n_velocity = 0.1
+            
             if(o_game.f_b_button_pressed("up")):
                 o_object_2d_head.o_point_2d_velocity.n_x = 0
-                o_object_2d_head.o_point_2d_velocity.n_y = -1
+                o_object_2d_head.o_point_2d_velocity.n_y = -n_velocity
             
             if(o_game.f_b_button_pressed("left")):
-                o_object_2d_head.o_point_2d_velocity.n_x = -1
+                o_object_2d_head.o_point_2d_velocity.n_x = -n_velocity
                 o_object_2d_head.o_point_2d_velocity.n_y = 0
             
             if(o_game.f_b_button_pressed("down")):
                 o_object_2d_head.o_point_2d_velocity.n_x = 0
-                o_object_2d_head.o_point_2d_velocity.n_y = 1    
+                o_object_2d_head.o_point_2d_velocity.n_y = n_velocity    
             
             if(o_game.f_b_button_pressed("right")):
-                o_object_2d_head.o_point_2d_velocity.n_x = 1
+                o_object_2d_head.o_point_2d_velocity.n_x = n_velocity
                 o_object_2d_head.o_point_2d_velocity.n_y = 0
 
             n_i_reversed = len(self.a_o_object_2d) -1
             while(n_i_reversed > 0):
+                # since the snake speed is slower than 1 ( 0.1) the translation will only change every 10th render function
                 if(n_i_reversed > 0):
                     o_object_2d_1 =  self.a_o_object_2d[n_i_reversed]
                     o_object_2d_2 =  self.a_o_object_2d[n_i_reversed-1]
@@ -326,14 +326,17 @@ class O_game:
         f_create_food()
 
     def f_render(self):
-        while(True):
+        while(1):# while(1) should be faster than while(True)
+            self.o_grid.f_clear()
+
             # print("f_render called")
             self.a_o_collision_map_object = []
             self.o_collision_map = {}
 
             # print(self.a_o_game_object)
             for o_game_object in self.a_o_game_object:
-                o_game_object.f_render_function(o_game_object, self)
+                if o_game_object.f_render_function != None:
+                    o_game_object.f_render_function(o_game_object, self)
                 for o_object_2d in o_game_object.a_o_object_2d:
 
                     o_object_2d.o_point_2d_velocity.n_x += o_object_2d.o_point_2d_acceleration.n_x
@@ -342,7 +345,12 @@ class O_game:
                     n_new_y = o_object_2d.o_point_2d_translation.n_y + o_object_2d.o_point_2d_velocity.n_y
                     o_object_2d.o_point_2d_translation.n_x = n_new_x
                     o_object_2d.o_point_2d_translation.n_y = n_new_y
-                    s_prop = f"a_{n_new_x}_{n_new_y}"
+                    self.o_grid.f_set_cell(
+                        o_object_2d.o_point_2d_translation.n_x,
+                        o_object_2d.o_point_2d_translation.n_y,
+                        True
+                    )
+                    s_prop = f"a_{int(n_new_x)}_{int(n_new_y)}"
                     if s_prop not in self.o_collision_map:
                         o_collision_map_object = O_collision_map_object()
                         self.o_collision_map[s_prop] = o_collision_map_object
@@ -362,26 +370,31 @@ class O_game:
                 
             for o_collision_map_object in self.a_o_collision_map_object:
                 for o_collision_object in o_collision_map_object.a_o_collision_object:
-                    o_collision_object.o_game_object.f_collision_function(
-                        o_collision_object.o_game_object,
-                        o_collision_map_object
-                    )
+                    # print(o_collision_object.o_game_object.f_collision_function)
+                    # exit()
+                    if(o_collision_object.o_game_object.f_collision_function != None):
+                        o_collision_object.o_game_object.f_collision_function(
+                            o_collision_object.o_game_object,
+                            o_collision_map_object
+                        )
                 
             
-            self.o_grid.f_clear()
 
             if(self.b_thumby == False):
                 # print("render")
                 # for n_i in range(0, 10):
                     # print("a")
                 os.system('cls' if os.name == 'nt' else 'clear')
-            for o_game_object in self.a_o_game_object:
-                for o_object_2d in o_game_object.a_o_object_2d:
-                    self.o_grid.f_set_cell(
-                        o_object_2d.o_point_2d_translation.n_x,
-                        o_object_2d.o_point_2d_translation.n_y, 
-                        True
-                    )
+
+            # this is better for the game logic since the translation can be changed in the render or collision function
+            # before it is "rendered" but to improve speed for thumby i set the cell right after the calculation of translation
+            # for o_game_object in self.a_o_game_object:
+            #     for o_object_2d in o_game_object.a_o_object_2d:
+            #         self.o_grid.f_set_cell(
+            #             o_object_2d.o_point_2d_translation.n_x,
+            #             o_object_2d.o_point_2d_translation.n_y, 
+            #             True
+            #         )
 
             self.o_grid.f_render()
         
