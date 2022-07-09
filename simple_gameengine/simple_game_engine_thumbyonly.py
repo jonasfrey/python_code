@@ -30,22 +30,12 @@
 #     }
 # }
 import random
-try: 
-    import keyboard
-    import cv2
-    import numpy
-except:
-    print("module 'keyboard' not found, try installing it with: 'pip3 install keyboard'")
-try: 
-    import thumby
-    b_thumby = True
-except:
-    b_thumby = False
-    print("module 'thumby' not found, use the web IDE to develop for thumby!: https://code.thumby.us/'")
+
+import thumby
+b_thumby = True
 
 import time
 
-import os
 
 class O_point_2d:
     def __init__( self, 
@@ -324,11 +314,6 @@ class O_game:
             
             self.o_grid.f_clear()
 
-            if(self.b_thumby == False):
-                # print("render")
-                # for n_i in range(0, 10):
-                    # print("a")
-                os.system('cls' if os.name == 'nt' else 'clear')
             for o_game_object in self.a_o_game_object:
                 for o_object_2d in o_game_object.a_o_object_2d:
                     self.o_grid.f_set_cell(o_object_2d.o_point_2d_translation.n_x, o_object_2d.o_point_2d_translation.n_y)

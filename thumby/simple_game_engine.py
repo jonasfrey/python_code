@@ -58,7 +58,7 @@ class O_point_2d:
 class O_object_2d:
     def __init__( self, 
         n_x_translation,
-        n_y_translation
+        n_y_translation, 
     ):
         self.o_point_2d_translation = O_point_2d(n_x_translation,n_y_translation)
         self.o_point_2d_velocity = O_point_2d(0,0)
@@ -82,11 +82,11 @@ class O_game_object:
         self.f_render_function = f_render_function
         self.f_collision_function = f_collision_function
 
-class O_collision_map_object:
-    def __init__( 
-        self, 
-    ):
-        self.a_o_collision_object = []
+# class O_collision_map_object:
+#     def __init__( 
+#         self, 
+#     ):
+#         self.a_o_collision_object = []
 
 
 class O_collision_object:
@@ -125,29 +125,27 @@ class O_grid:
         n_y, 
         b_value
         ):
-        # if(
-        #     n_x > thumby.display.width
-        #     or 
-        #     n_x < 0
-        #     or 
-        #     n_y > thumby.display.height
-        #     or 
-        #     n_y < 0 
-        # ): 
-        #     return False
-        try:
-            n = int(n_y / 8) * 72
-            n_bit = n_y % 8
-            n_index = n + n_x
-            n_byte_with_bit_set = 1 << n_bit
-            if(b_value):
-                n_byte = self.a_n_byte[n_index] | n_byte_with_bit_set
-            else: 
-                n_byte = self.a_n_byte[n_index] & ~(n_byte_with_bit_set)
-                
-            self.a_n_byte[n_index] = n_byte
-        except:
-            pass
+        if(
+            n_x > thumby.display.width
+            or 
+            n_x < 0
+            or 
+            n_y > thumby.display.height
+            or 
+            n_y < 0 
+        ): 
+            return False
+        
+        n = int(n_y / 8) * 72
+        n_bit = n_y % 8
+        n_index = n + n_x
+        n_byte_with_bit_set = 1 << n_bit
+        if(b_value):
+            n_byte = self.a_n_byte[n_index] | n_byte_with_bit_set
+        else: 
+            n_byte = self.a_n_byte[n_index] & ~(n_byte_with_bit_set)
+            
+        self.a_n_byte[n_index] = n_byte
 
     def f_a_a_b(self):
         a_a_b = []
@@ -224,14 +222,14 @@ class O_game:
     def __init__(
         self
     ): 
-        self.n_fps = 60
+        self.n_fps = 30
         self.o_grid = O_grid(
             72, 
             40
         )
-        self.a_o_collision_map_object = [] 
-        self.o_collision_map = {}
-        self.o_collision_map_with_collisions = {}
+        # self.a_o_collision_map_object = [] 
+        # self.o_collision_map = {}
+        # self.o_collision_map_with_collisions = {}
         self.a_o_game_object = []
         self.b_keydown_once = False
         self.b_thumby = True
@@ -241,7 +239,7 @@ class O_game:
             o_game
         ):
             o_object_2d_head = self.a_o_object_2d[0]
-            n_velocity = 0.1
+            n_velocity = 1
             
             if(o_game.f_b_button_pressed("up")):
                 o_object_2d_head.o_point_2d_velocity.n_x = 0
@@ -270,23 +268,23 @@ class O_game:
                 
                 n_i_reversed-=1
         
-        def f_collision_function_o_snake(
-            o_game_object,
-            o_collision_map_object
-            ):
-                a_o_game_object_food = [
-                    o for o in o_collision_map_object.a_o_collision_object
-                    if (o.o_game_object.s_name == "food")
-                ]
+        # def f_collision_function_o_snake(
+        #     o_game_object,
+        #     o_collision_map_object
+        #     ):
+        #         a_o_game_object_food = [
+        #             o for o in o_collision_map_object.a_o_collision_object
+        #             if (o.o_game_object.s_name == "food")
+        #         ]
 
-                if(len(a_o_game_object_food) > 0):
-                    # add limb
-                    o_game_object.a_o_object_2d.append(
-                        O_object_2d(
-                            o_game_object.a_o_object_2d[len(o_game_object.a_o_object_2d)-1].o_point_2d_translation.n_x,
-                            o_game_object.a_o_object_2d[len(o_game_object.a_o_object_2d)-1].o_point_2d_translation.n_y
-                        )
-                    )
+        #         if(len(a_o_game_object_food) > 0):
+        #             # add limb
+        #             o_game_object.a_o_object_2d.append(
+        #                 O_object_2d(
+        #                     o_game_object.a_o_object_2d[len(o_game_object.a_o_object_2d)-1].o_point_2d_translation.n_x,
+        #                     o_game_object.a_o_object_2d[len(o_game_object.a_o_object_2d)-1].o_point_2d_translation.n_y
+        #                 )
+        #             )
 
                 
         o_snake = O_game_object(
@@ -294,31 +292,37 @@ class O_game:
             10,
             10,
             f_render_function_o_snake, 
-            f_collision_function_o_snake
+            # f_collision_function_o_snake
         )
 
+        for n in range(0,50):
+            o_snake.a_o_object_2d.append(
+                O_object_2d(
+                    0,0
+                )
+            )
         self.a_o_game_object.append(o_snake)
 
         def f_create_food():
-            def f_collision_function_o_food(o_game_object, o_collision_map_object):
-                a_o_game_object_snake = [
-                    o for o in o_collision_map_object.a_o_collision_object
-                    if (o.o_game_object.s_name == "snake")
-                ]
-                # console.log(a_o_game_object_snake)
-                if(len(a_o_game_object_snake) > 0):
-                    n_index = self.a_o_game_object.index(o_game_object)
-                    if (n_index > -1): #// only splice array when item is found
-                        self.a_o_game_object.pop(n_index); #// 2nd parameter means remove one item only
-                    f_create_food()
+            # def f_collision_function_o_food(o_game_object, o_collision_map_object):
+            #     a_o_game_object_snake = [
+            #         o for o in o_collision_map_object.a_o_collision_object
+            #         if (o.o_game_object.s_name == "snake")
+            #     ]
+            #     # console.log(a_o_game_object_snake)
+            #     if(len(a_o_game_object_snake) > 0):
+            #         n_index = self.a_o_game_object.index(o_game_object)
+            #         if (n_index > -1): #// only splice array when item is found
+            #             self.a_o_game_object.pop(n_index); #// 2nd parameter means remove one item only
+            #         f_create_food()
                 
                 
             o_food = O_game_object(
                 "food",
                 int(random.uniform(0, 1)*self.o_grid.n_width),
                 int(random.uniform(0, 1)*self.o_grid.n_height), 
-                lambda self, o_game: True, 
-                f_collision_function_o_food
+                # lambda self, o_game: True, 
+                # f_collision_function_o_food
             )
             self.a_o_game_object.append(o_food)
         
@@ -330,8 +334,8 @@ class O_game:
             self.o_grid.f_clear()
 
             # print("f_render called")
-            self.a_o_collision_map_object = []
-            self.o_collision_map = {}
+            # self.a_o_collision_map_object = []
+            # self.o_collision_map = {}
 
             # print(self.a_o_game_object)
             for o_game_object in self.a_o_game_object:
@@ -350,33 +354,73 @@ class O_game:
                         o_object_2d.o_point_2d_translation.n_y,
                         True
                     )
-                    s_prop = f"a_{int(n_new_x)}_{int(n_new_y)}"
-                    if s_prop not in self.o_collision_map:
-                        o_collision_map_object = O_collision_map_object()
-                        self.o_collision_map[s_prop] = o_collision_map_object
-                        # setattr(self.o_collision_map, s_prop, o_collision_map_object)
-                    else:
-                        o_collision_map_object = self.o_collision_map[s_prop]
+                    # s_prop = f"a_{int(n_new_x)}_{int(n_new_y)}"
+                    # if s_prop not in self.o_collision_map:
+                    #     o_collision_map_object = O_collision_map_object()
+                    #     self.o_collision_map[s_prop] = o_collision_map_object
+                    #     # setattr(self.o_collision_map, s_prop, o_collision_map_object)
+                    # else:
+                    #     o_collision_map_object = self.o_collision_map[s_prop]
                     
-                    o_collision_map_object.a_o_collision_object.append(
-                        O_collision_object(
-                            o_game_object, 
-                            o_object_2d
+                    # o_collision_map_object.a_o_collision_object.append(
+                    #     O_collision_object(
+                    #         o_game_object, 
+                    #         o_object_2d
+                    #     )
+                    # )
+                    # if(len(o_collision_map_object.a_o_collision_object) > 1):
+                    #     self.a_o_collision_map_object.append(o_collision_map_object)
+            
+            a_o_object_2d_treated = []
+            a_a_o_object_2d_collsions = []
+
+            for o_game_object in self.a_o_game_object:
+                for o_object_2d in o_game_object.a_o_object_2d:
+                    if o_object_2d in a_o_object_2d_treated:
+                        continue
+
+                    n_x = o_object_2d.o_point_2d_translation.n_x
+                    n_y = o_object_2d.o_point_2d_translation.n_y
+
+                    a_o_object_2d_same_translation = [
+                        [
+                                o_o2d for o_o2d in ogo.a_o_object_2d 
+                                if(
+                                    int(o_o2d.o_point_2d_translation.n_x) == n_new_x
+                                    and
+                                    int(o_o2d.o_point_2d_translation.n_y) == n_new_y
+                                )
+                            ]
+                        for ogo in self.a_o_game_object
+                        if(
+                            len([
+                                o_o2d for o_o2d in ogo.a_o_object_2d 
+                                if(
+                                    int(o_o2d.o_point_2d_translation.n_x) == n_new_x
+                                    and
+                                    int(o_o2d.o_point_2d_translation.n_y) == n_new_y
+                                )
+                            ]) > 0
                         )
-                    )
-                    if(len(o_collision_map_object.a_o_collision_object) > 1):
-                        self.a_o_collision_map_object.append(o_collision_map_object)
-                    
-                
-            for o_collision_map_object in self.a_o_collision_map_object:
-                for o_collision_object in o_collision_map_object.a_o_collision_object:
-                    # print(o_collision_object.o_game_object.f_collision_function)
+                    ]
+                    a_o_object_2d_same_translation_flattend = [x for xs in a_o_object_2d_same_translation for x in xs]
+                    # print(a_o_object_2d_same_translation)
                     # exit()
-                    if(o_collision_object.o_game_object.f_collision_function != None):
-                        o_collision_object.o_game_object.f_collision_function(
-                            o_collision_object.o_game_object,
-                            o_collision_map_object
-                        )
+                    a_o_object_2d_treated  = a_o_object_2d_treated + a_o_object_2d_same_translation_flattend
+                    if(len(a_o_object_2d_same_translation) > 1):
+                        a_a_o_object_2d_collsions.append(a_o_object_2d_same_translation_flattend)
+                        print(a_o_object_2d_same_translation)
+                        exit()
+                
+            # for o_collision_map_object in self.a_o_collision_map_object:
+            #     for o_collision_object in o_collision_map_object.a_o_collision_object:
+            #         # print(o_collision_object.o_game_object.f_collision_function)
+            #         # exit()
+            #         if(o_collision_object.o_game_object.f_collision_function != None):
+            #             o_collision_object.o_game_object.f_collision_function(
+            #                 o_collision_object.o_game_object,
+            #                 o_collision_map_object
+            #             )
                 
             
 

@@ -143,7 +143,6 @@
                             )
                             console.log(a_o_game_object_snake)
                             if(a_o_game_object_snake.length > 0){
-                                // add limb
                                 const n_index = self.a_o_game_object.indexOf(this);
                                 if (n_index > -1) { // only splice array when item is found
                                     self.a_o_game_object.splice(n_index, 1); // 2nd parameter means remove one item only
@@ -319,5 +318,33 @@
     }
 
 
-
+    var o_keymap = {
+        "w":"up", 
+        "a":"left",
+        "s":"down", 
+        "d":"right",
+        "ArrowUp":"up", 
+        "ArrowLeft":"left",
+        "ArrowDown":"down", 
+        "ArrowRight":"right", 
+    }
+    document.addEventListener("keydown", function (e) {
+        console.log(e.key)
+        var s_direction = o_keymap[e.key]
+        console.log(s_direction)
+        var o = document.querySelector(".emulator_dpad_" + s_direction + "_btn")
+        eventFire(o, "mousedown")
+        window.setTimeout(function(){
+            eventFire(o, "mouseup")
+        }, 100)
+    })
+    function eventFire(el, etype){
+        if (el.fireEvent) {
+            el.fireEvent('on' + etype);
+        } else {
+            var evObj = document.createEvent('Events');
+            evObj.initEvent(etype, true, false);
+            el.dispatchEvent(evObj);
+        }
+    }
 </script>
