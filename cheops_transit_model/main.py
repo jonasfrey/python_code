@@ -1,4 +1,5 @@
 from copyreg import constructor
+from curses import A_COLOR
 import cv2
 import numpy
 import keyboard
@@ -8,6 +9,8 @@ import math
 import time
 import random
 
+
+
 def f_n_normalized_average_in_torus(
     n_circles_center_x, 
     n_circles_center_y,
@@ -15,23 +18,106 @@ def f_n_normalized_average_in_torus(
     n_circle_radius_inner,
     a_frame
 ):
-    n_normalized_average_outer = f_n_normalized_average_in_circle(
+    a_masked_with_torus = f_a_masked_with_torus(
         n_circles_center_x, 
         n_circles_center_y,
         n_circle_radius_outer, 
+        n_circle_radius_inner,
         a_frame
     )
-    n_normalized_average_inner = f_n_normalized_average_in_circle(
-        n_circles_center_x, 
-        n_circles_center_y,
-        n_circle_radius_inner, 
-        a_frame
+    cv2.imshow("a_masked_with_torus", a_masked_with_torus)
+    n_pixels_in_circle_outer = int(pow(n_circle_radius_outer,2) * math.pi)
+    n_pixels_in_circle_inner = int(pow(n_circle_radius_inner,2) * math.pi)
+    n_number_of_pixels_in_torus = n_pixels_in_circle_outer - n_pixels_in_circle_inner
+    n_sum_a_masked_with_torus = numpy.sum(a_masked_with_torus)
+    n_average = n_sum_a_masked_with_torus / n_number_of_pixels_in_torus
+    n_max_value = numpy.iinfo(a_frame.dtype).max
+    n_normalized = n_average / n_max_value
+
+    a_color = (255,0,0)
+
+    cv2.circle(
+        a_frame,
+        (n_circles_center_x,n_circles_center_y),
+        n_circle_radius_outer,
+        a_color,
     )
-    n_normalized_average_torus = n_normalized_average_outer - n_normalized_average_inner
-    return n_normalized_average_torus
+    cv2.circle(
+        a_frame,
+        (n_circles_center_x,n_circles_center_y),
+        n_circle_radius_inner,
+        a_color,
+    )
+    cv2.putText(
+            a_frame, 
+            f"avg n: {n_normalized:.2f}",
+            (n_circles_center_x-n_circle_radius_outer,n_circles_center_y-n_circle_radius_outer),
+            cv2.FONT_HERSHEY_COMPLEX, 
+            0.8,
+            a_color,
+            1
+    )
+    return n_normalized
+    # cv2.imshow("ro", a_masked_with_torus)
+    # return 0
+    #  a_color = (0,255,0)
+    # a_masked_with_circle_outer = f_a_masked_with_circle(
+    #     n_circles_center_x, 
+    #     n_circles_center_y,
+    #     n_circle_radius_outer, 
+    #     a_frame
+    # )
+    # a_masked_with_circle_inner = f_a_masked_with_circle(
+    #     n_circles_center_x, 
+    #     n_circles_center_y,
+    #     n_circle_radius_inner, 
+    #     a_frame
+    # )
+    # n_sum_pixels_in_outer = numpy.sum(a_masked_with_circle_outer)
+    # n_sum_pixels_in_inner = numpy.sum(a_masked_with_circle_inner)
+    # n_sum_pixels_in_torus = n_sum_pixels_in_outer = n_sum_pixels_in_inner
+
+    # n_average = n_sum_pixels_in_torus / n_pixels_in_torus
+    # n_max_value = numpy.iinfo(a_frame.dtype).max
+    # n_normalized = n_average / n_max_value
+
+    # n_normalized_average_torus = n_normalized
+    # cv2.putText(
+    #         a_frame, 
+    #         f"avg: {n_normalized_average_torus:.2f}",
+    #         (n_circles_center_x+n_circle_radius_outer,n_circles_center_y+n_circle_radius_outer),
+    #         cv2.FONT_HERSHEY_COMPLEX, 
+    #         0.8,
+    #         a_color,
+    #         1
+    # )
+    # return n_normalized_average_torus
 
 
-def f_n_normalized_average_in_circle(
+def f_a_masked_with_torus(
+    n_circle_center_x, 
+    n_circle_center_y,
+    n_circle_radius_outer,
+    n_circle_radius_inner,
+    a_frame
+):
+    a_masked_with_circle = f_a_masked_with_circle(
+        n_circle_center_x, 
+        n_circle_center_y,
+        n_circle_radius_outer,
+        a_frame 
+    )
+    cv2.circle(
+        a_masked_with_circle,
+        (n_circle_center_x,n_circle_center_y),
+        n_circle_radius_inner,
+        0,
+        -1
+    )
+    a_masked_with_torus = a_masked_with_circle
+    return a_masked_with_torus
+
+def f_a_masked_with_circle(
     n_circle_center_x, 
     n_circle_center_y,
     n_circle_radius,
@@ -45,26 +131,24 @@ def f_n_normalized_average_in_circle(
         255,
         -1
     )
-    cv2.circle(
-        a_frame,
-        (n_circle_center_x,n_circle_center_y),
-        n_circle_radius,
-        (0,255,0),
-    )
     a_masked = cv2.bitwise_and(a_frame, a_frame, mask=a_mask)
     # cv2.imshow("f_n_normalized_average_in_circle a_masked", a_masked)
+    return a_masked
+    # n_number_of_pixels_in_circle = int(n_circle_radius * n_circle_radius * (math.pi))
+    # n_average = numpy.sum(a_masked) / n_number_of_pixels_in_circle
+    # n_average_subframe_max_value = numpy.iinfo(a_frame.dtype).max
+    # n_average_subframe_normalized = n_average / n_average_subframe_max_value
 
-    n_number_of_pixels_in_circle = int(n_circle_radius * n_circle_radius * (math.pi))
-    n_normalized = numpy.sum(a_masked) / n_number_of_pixels_in_circle
-    return n_normalized 
+    return n_average_subframe_normalized 
 
 def f_n_normalized_average_in_square(
-    n_center_x, 
+    n_center_x,
     n_center_y,
     n_width,
     n_height,
     a_frame
 ):
+    a_color = (0,255,0)
     n_x = n_center_x - int(n_width/2)
     n_y = n_center_y - int(n_height/2)
 
@@ -77,9 +161,19 @@ def f_n_normalized_average_in_square(
         a_frame,
         (n_x, n_y),
         (n_x+n_subframe_width, n_y+n_subframe_height),
-        (0,255,0),
+        a_color,
         1
     )
+    cv2.putText(
+            a_frame, 
+            f"avg: {n_average_subframe_normalized:.2f}",
+            (n_x,n_y),
+            cv2.FONT_HERSHEY_COMPLEX, 
+            0.8,
+            a_color,
+            1
+    )
+
     return n_average_subframe_normalized 
 
 def change_brightness(img, value=30):
@@ -158,12 +252,13 @@ def f_detect_round_shapes(a_frame):
         for i in circles[0,:]:
             cv2.circle(a_frame_singlechannel_blurred, (i[0], i[1]), i[2], (0, 255, 0), 2)
 
+
 # the camera wont always be on the same port number
 # try one of the following numbers
 # n_port_number = 1
 # n_port_number = 2
 # n_port_number = 3
-n_port_number = 5
+n_port_number = 1
 o_camera = cv2.VideoCapture(n_port_number)
 codec = 0x47504A4D  # MJPG
 o_camera.set(cv2.CAP_PROP_FPS, 30.0)
@@ -200,11 +295,11 @@ n_seconds_before_refresh = 30
 n_width_datapoints_plot = n_seconds_before_refresh * n_measurements_per_second
 n_ts_sec_delta_max = 1/n_measurements_per_second
 
-matplotlib.pyplot.axis([0, n_width_datapoints_plot, 0, 1])
-matplotlib.pyplot.title('Lightcurve')
-matplotlib.pyplot.xlabel(f"Time [1/{n_measurements_per_second} seconds]")
-matplotlib.pyplot.ylabel("Flux (quantity of light) [Normalized]")
-matplotlib.pyplot.ioff()
+# matplotlib.pyplot.axis([0, n_width_datapoints_plot, 0, 1])
+# matplotlib.pyplot.title('Lightcurve')
+# matplotlib.pyplot.xlabel(f"Time [1/{n_measurements_per_second} seconds]")
+# matplotlib.pyplot.ylabel("Flux (quantity of light) [Normalized]")
+# matplotlib.pyplot.ioff()
 
 a_plot_points_x = numpy.array(range(0,300))
 a_plot_points_y = numpy.zeros(n_width_datapoints_plot)
@@ -215,7 +310,9 @@ a_frame_shift = cv2.imread("./control_shift_arrows.png", cv2.IMREAD_UNCHANGED)
 a_frame_shift = cv2.resize(a_frame_shift, dsize=(int(a_frame_shift.shape[1]/2), int(a_frame_shift.shape[0]/2)), interpolation=cv2.INTER_CUBIC)
 a_frame_esc = cv2.imread("./control_esc.png", cv2.IMREAD_UNCHANGED)
 a_frame_esc = cv2.resize(a_frame_esc, dsize=(int(a_frame_esc.shape[1]/2), int(a_frame_esc.shape[0]/2)), interpolation=cv2.INTER_CUBIC)
-
+a_frame_arrows = a_frame_arrows+10
+a_frame_esc = a_frame_esc+10
+a_frame_shift = a_frame_shift+10
 a_a_frame_to_blend = [
     a_frame_esc,
     a_frame_arrows, 
@@ -275,13 +372,7 @@ while True:
         #     (0,255,0),
         #     1
         # )
-        cv2.circle(
-            a_frame_graph,
-            (n_a_frame_graph_x, n_a_frame_graph_y),
-            1,
-            (0,255,0),
-            1
-        ) 
+
         cv2.imshow("adsf", a_frame_graph)
 
         # matplotlib.pyplot.scatter(
@@ -348,9 +439,9 @@ while True:
             n_circle_radius_inner,
             a_frame
         )
+
         # print(n_normalized_torus)
         
-        cv2.circle(a_frame, (n_subframe_x,n_subframe_y), n_subframe_width, (0,255,0,1), 1)
         cv2.imshow(s_window_name + " original", a_frame)
         
         # if(keyboard.is_pressed("up")):
