@@ -69,7 +69,7 @@ o_cv2_text = O_cv2_text(
     s=str(time.time()),
     n_font_size= 1,
     n_thickness= 1,
-    n_font_type= cv2.FONT_HERSHEY_COMPLEX
+    n_font_type= cv2.FONT_HERSHEY_SIMPLEX
 )    
 print(o_cv2_text.n_width_px)
 print(o_cv2_text.n_height_px)

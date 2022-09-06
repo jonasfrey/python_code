@@ -2,33 +2,7 @@
 from O_cv2_text import O_cv2_text
 import numpy
 import cv2
-
-class O_graph_datapoint:
-    def __init__(
-        self, 
-        n_x, 
-        n_y,
-        o_cv2_text_x,
-        o_cv2_text_y
-    ):
-        self.n_x = n_x
-        self.n_y = n_y
-        self.o_cv2_text_x = o_cv2_text_x
-        self.o_cv2_text_y = o_cv2_text_y
-        self.n_radius = 1
-        self.n_thickness = 1
-        self.a_color = (0,255,0)
-
-    def f_render_function(self):
-        if(self.n_x % 10 < 5 ):
-            self.a_color = (255,0,0)
-        else: 
-            self.a_color = (0, 255, 0)
-
-        if(self.n_x % 1 == 0):
-            self.o_cv2_text_x.s = str(int(self.n_x))
-        else: 
-            self.o_cv2_text_x.s = ''
+from O_graph_render_object import O_graph_render_object
 
 class O_graph:
     def __init__(
@@ -56,7 +30,7 @@ class O_graph:
         self._n_max_x = n_max_x
         self.n_range_y = self._n_max_y - self._n_min_y
         self.n_range_x = self._n_max_x - self._n_min_x
-        self.a_o_graph_datapoint = []
+        self.a_o_graph_render_object = []
         self.a_frame = []
         self.o_cv2_text_default = O_cv2_text( 
                 a_color=(0,255,0), 
@@ -123,7 +97,7 @@ class O_graph:
         o_graph_datapoint
     ):
 
-        self.a_o_graph_datapoint.append(
+        self.a_o_graph_render_object.append(
             o_graph_datapoint
         )
 
@@ -193,37 +167,45 @@ class O_graph:
             1
         )
 
-        for (n_i, o_graph_datapoint) in enumerate(self.a_o_graph_datapoint):
+        for (n_i, o_graph_render_object) in enumerate(self.a_o_graph_render_object):
             
-            o_graph_datapoint.f_render_function()
+            # a_frame_copy = self.a_frame.copy()
 
-            n_x_px = int(self.n_widthdownscaled_pix_per_value * o_graph_datapoint.n_x) + self.n_x_offset_downscaled_frame
-            n_y_px = int(self.n_heightdownscaled_pix_per_value * o_graph_datapoint.n_y) + self.n_y_offset_downscaled_frame
+            o_graph_render_object.f_render_function(o_graph_render_object)
 
-            cv2.circle(
-                self.a_frame,
-                (n_x_px, n_y_px),
-                o_graph_datapoint.n_radius,
-                o_graph_datapoint.a_color,
-                o_graph_datapoint.n_thickness
-            )
-            if(o_graph_datapoint.o_cv2_text_x.s != ''):
-
-                # n_x = int(n_px_per_marker * n_i) + self.n_x_offset_downscaled_frame
-                n_y = self.n_y_offset_downscaled_frame + self.n_height_downscaled_px
-                self.o_cv2_text_default.s = str(o_graph_datapoint.o_cv2_text_x.s)
-                
+            n_x_px = int(int(self.n_widthdownscaled_pix_per_value * o_graph_render_object.n_x) + self.n_x_offset_downscaled_frame)
+            n_y_px = int(int(self.n_heightdownscaled_pix_per_value * (self.n_max_y - o_graph_render_object.n_y)) + self.n_y_offset_downscaled_frame)
+            if(o_graph_render_object.s_type == "circle"): 
+                cv2.ellipse(
+                    self.a_frame,
+                    (n_x_px, n_y_px),
+                    (int(o_graph_render_object.n_size_x), int(o_graph_render_object.n_size_y)),
+                    0,
+                    0, 
+                    360,
+                    o_graph_render_object.a_color,
+                    o_graph_render_object.n_thickness
+                )
+            if(o_graph_render_object.s_type == "text"):     
                 cv2.putText(
-                        self.a_frame,
-                        o_graph_datapoint.o_cv2_text_x.s,
-                        (n_x_px, n_y),
-                        o_graph_datapoint.o_cv2_text_x.n_font_type, 
-                        o_graph_datapoint.o_cv2_text_x.n_font_size,
-                        o_graph_datapoint.o_cv2_text_x.a_color,
-                        o_graph_datapoint.o_cv2_text_x.n_thickness
+                        self.a_frame, 
+                        o_graph_render_object.s_text,
+                        (n_x_px, n_y_px),
+                        cv2.FONT_HERSHEY_SIMPLEX, 
+                        o_graph_render_object.n_size_x,
+                        o_graph_render_object.a_color,
+                        o_graph_render_object.n_thickness
+                )
+            if(o_graph_render_object.s_type == "rectangle"):
+                cv2.rectangle(
+                    self.a_frame,
+                   (n_x_px, n_y_px),
+                    (int(o_graph_render_object.n_size_x), int(o_graph_render_object.n_size_y)),
+                    o_graph_render_object.a_color,
+                    o_graph_render_object.n_thickness
                 )
 
-        
+        # self.a_frame = cv2.addWeighted(a_frame_copy, o_graph_render_object.n_alpha, self.a_frame, 1 - o_graph_render_object.n_alpha, 0)
         # n_px_per_marker = self.n_width_downscaled_px / self.n_markers_axis_x
 
         # n_marker_val_per_index = self.n_range_x / self.n_markers_axis_x
