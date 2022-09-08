@@ -170,8 +170,8 @@ class O_graph:
         for (n_i, o_graph_render_object) in enumerate(self.a_o_graph_render_object):
             
             # a_frame_copy = self.a_frame.copy()
-
-            o_graph_render_object.f_render_function(o_graph_render_object)
+            if(o_graph_render_object.f_render_function):
+                o_graph_render_object.f_render_function(o_graph_render_object)
 
             n_x_px = int(int(self.n_widthdownscaled_pix_per_value * o_graph_render_object.n_x) + self.n_x_offset_downscaled_frame)
             n_y_px = int(int(self.n_heightdownscaled_pix_per_value * (self.n_max_y - o_graph_render_object.n_y)) + self.n_y_offset_downscaled_frame)

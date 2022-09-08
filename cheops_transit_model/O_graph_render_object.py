@@ -9,7 +9,8 @@ class O_graph_render_object:
         n_y,
         n_thickness,
         s_text,
-        a_color
+        a_color,
+        s_name = ""
         # n_alpha
     ):
         self.s_type = s_type # rectangle circle text
@@ -20,9 +21,10 @@ class O_graph_render_object:
         self.n_thickness = n_thickness
         self.s_text = s_text
         self.a_color = a_color
+        self.s_name = s_name
         # self.n_alpha = n_alpha
 
-    def f_render_function(self):
+    def f_render_function(self, o_object):
         pass
         # example below
         # if(self.n_x % 10 < 5 ):

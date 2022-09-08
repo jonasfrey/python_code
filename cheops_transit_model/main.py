@@ -15,6 +15,7 @@ from O_graph import O_graph
 from O_cv2_text import O_cv2_text
 from O_video_device import O_video_device
 from O_graph_render_object import O_graph_render_object
+from O_keyboard_key_state import O_keyboard_key_state
 
 from f_a_o_video_device import f_a_o_video_device
 
@@ -34,7 +35,7 @@ def f_n_normalized_average_in_torus(
         n_circle_radius_inner,
         a_frame
     )
-    cv2.imshow("a_masked_with_torus", a_masked_with_torus)
+    # cv2.imshow("a_masked_with_torus", a_masked_with_torus)
     n_pixels_in_circle_outer = int(pow(n_circle_radius_outer,2) * math.pi)
     n_pixels_in_circle_inner = int(pow(n_circle_radius_inner,2) * math.pi)
     n_number_of_pixels_in_torus = n_pixels_in_circle_outer - n_pixels_in_circle_inner
@@ -43,7 +44,7 @@ def f_n_normalized_average_in_torus(
     n_max_value = numpy.iinfo(a_frame.dtype).max
     n_normalized = n_average / n_max_value
 
-    a_color = (255,0,0)
+    a_color = (0,255,0)
 
     cv2.circle(
         a_frame,
@@ -282,7 +283,7 @@ o_camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 n_threshhold_value = 100
 n_threshhold_max_value = 255
 s_window_name = "CHEOPS Camera"
-cv2.namedWindow(s_window_name)
+# cv2.namedWindow(s_window_name)
 n_lightness_factor = 1
 n_lightness_summand = 0
 a_s_text = [
@@ -377,6 +378,23 @@ o_graph = O_graph(
     n_markers_axis_x = 10 
 )
 
+o_keyboard_key_state_freeze = O_keyboard_key_state(
+    "space"
+)
+
+o_keyboard_key_state_record = O_keyboard_key_state(
+    "r"
+)
+def f_state_toggle_function(self):
+    if(self.b_state_toggle):
+        print("now")
+        o_graph.a_o_graph_render_object = [o for o in o_graph.a_o_graph_render_object if o.s_name != "b_record"]
+
+o_keyboard_key_state_record.f_state_toggle_function = f_state_toggle_function 
+a_o_keyboard_key_state = [
+    o_keyboard_key_state_freeze, 
+    o_keyboard_key_state_record
+]
 n_x = 0
 n_y = 0
 
@@ -384,10 +402,37 @@ n_ts_ms_now = 0
 n_ts_ms_last = 0
 n_ts_ms_delta = 0
 
+o_graph_render_object_freezed = O_graph_render_object(
+        "text",
+        0.5,
+        0.5,
+        0,
+        -0.01,
+        1,
+        "[space] to freeze",
+        (0,255,0)
+        # n_alpha
+    )
+o_graph_render_object_record = O_graph_render_object(
+        "text",
+        0.5,
+        0.5,
+        0,
+        0,
+        1,
+        "[r] to record",
+        (0,255,0)
+        # n_alpha
+)
+o_graph_a_o_graph_render_object_default = [
+    o_graph_render_object_freezed, 
+    o_graph_render_object_record
+]
+
 while 1:
     n_ts_ms_now = int(round(time.time() * 1000))
     n_ts_ms_delta = n_ts_ms_now - n_ts_ms_last
-    print(n_ts_ms_delta)
+    # print(n_ts_ms_delta)
 
     # print(n_ts_sec)
     b_success, a_frame = o_camera.read()
@@ -414,9 +459,9 @@ while 1:
     n_x = int(n_x + (n_ts_ms_delta/30))
     if(n_x >= n_max_x):
         n_x = 0
-        o_graph.a_o_graph_render_object = []
-        o_graph.f_clear()
+        a_o_graph_render_object_filtered_b_record = [o for o in o_graph.a_o_graph_render_object if o.s_name == "b_record"]
 
+        o_graph.a_o_graph_render_object = o_graph_a_o_graph_render_object_default + a_o_graph_render_object_filtered_b_record
 
     o_graph_render_object = O_graph_render_object(
             "circle",
@@ -429,11 +474,23 @@ while 1:
             (0,255,0)
             # n_alpha
         )
-    o_graph_render_object.f_render_function = f_get_darker
-    o_graph.a_o_graph_render_object.append(o_graph_render_object)
-    
-    cv2.imshow('o_graph', o_graph.f_a_rendered())
+    if o_keyboard_key_state_record.b_state_toggle == False: 
+        o_graph_render_object.a_color = (0,255,0)
 
+    else:
+        o_graph_render_object.s_name = "b_record"
+        o_graph_render_object.a_color = (0,0,255)    
+    # o_graph_render_object.f_render_function = f_get_darker
+
+    if o_keyboard_key_state_freeze.b_state_toggle == False: 
+        o_graph.a_o_graph_render_object.append(o_graph_render_object)
+    
+    o_graph_render_object_freezed.s_text = "[space] to "+ ( "un-freeze" if o_keyboard_key_state_freeze.b_state_toggle else "freeze")
+    o_graph_render_object_record.s_text = "[r] to "+ ( "un-record" if o_keyboard_key_state_freeze.b_state_toggle else "record")
+
+
+    cv2.imshow('o_graph', o_graph.f_a_rendered())
+    
     # time.sleep(0.01)
 
 
@@ -479,6 +536,16 @@ while 1:
     #     # n_threshhold_value = (n_threshhold_value - 10) % n_threshhold_max_value
     #     # n_lightness_factor = n_lightness_factor-0.01
     #     n_lightness_summand = n_lightness_summand - 10
+    for o_keyboard_key_state in a_o_keyboard_key_state: 
+        if(keyboard.is_pressed(o_keyboard_key_state.s_key)):
+            if o_keyboard_key_state.b_key_down == False:
+                o_keyboard_key_state.b_state_toggle = not o_keyboard_key_state.b_state_toggle
+                o_keyboard_key_state.f_state_toggle_function(o_keyboard_key_state)
+
+            o_keyboard_key_state.b_key_down = True
+        else:
+            o_keyboard_key_state.b_key_down = False
+
 
     if(keyboard.is_pressed("shift") == False):
         if(keyboard.is_pressed("up")):
