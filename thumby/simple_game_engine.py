@@ -55,15 +55,27 @@ class O_point_2d:
     ):
         self.n_x, self.n_y = n_x, n_y # single line multi assignment should be faster
 
+
+a_o_object2d = []
 class O_object_2d:
     def __init__( self, 
         n_x_translation,
         n_y_translation, 
+        b_auto_calc_translation = False
     ):
-        self.o_point_2d_translation = O_point_2d(n_x_translation,n_y_translation)
-        self.o_point_2d_velocity = O_point_2d(0,0)
-        self.o_point_2d_acceleration = O_point_2d(0,0)
-    
+        self.b_auto_calc_translation = b_auto_calc_translation
+        # self.o_point_2d_translation = O_point_2d(n_x_translation,n_y_translation)
+        # self.o_point_2d_velocity = O_point_2d(0,0)
+        # self.o_point_2d_acceleration = O_point_2d(0,0)
+
+        self.a_point_2d_translation = bytearray([n_x_translation,n_y_translation])
+        self.a_point_2d_velocity = bytearray([0,0])
+        self.a_point_2d_acceleration = bytearray([0,0])
+        # self.a_point_2d_translation = ([n_x_translation,n_y_translation])
+        # self.a_point_2d_velocity = ([0,0])
+        # self.a_point_2d_acceleration = ([0,0])
+
+        a_o_object2d.append(self)
 class O_game_object:
     def __init__( self, 
         s_name, 
@@ -187,7 +199,7 @@ class O_grid:
         # exit()
 
     def f_render(self):
-        print("f_render called")
+        # print("f_render called")
         if(b_thumby):
             a_bytes = bytearray(self.a_n_byte)
             o_sprite = thumby.Sprite(72, 40, a_bytes, 0, 0)
@@ -233,29 +245,31 @@ class O_game:
         self.a_o_game_object = []
         self.b_keydown_once = False
         self.b_thumby = True
-
+        if(b_thumby):
+            thumby.display.setFPS(self.n_fps)
+            
         def f_render_function_o_snake(
             self, 
             o_game
         ):
             o_object_2d_head = self.a_o_object_2d[0]
             n_velocity = 1
-            
+            a_point_2d_velocity = o_object_2d_head.a_point_2d_velocity
             if(o_game.f_b_button_pressed("up")):
-                o_object_2d_head.o_point_2d_velocity.n_x = 0
-                o_object_2d_head.o_point_2d_velocity.n_y = -n_velocity
+                a_point_2d_velocity[0] = 0
+                a_point_2d_velocity[1] = -n_velocity
             
             if(o_game.f_b_button_pressed("left")):
-                o_object_2d_head.o_point_2d_velocity.n_x = -n_velocity
-                o_object_2d_head.o_point_2d_velocity.n_y = 0
+                a_point_2d_velocity[0] = -n_velocity
+                a_point_2d_velocity[1] = 0
             
             if(o_game.f_b_button_pressed("down")):
-                o_object_2d_head.o_point_2d_velocity.n_x = 0
-                o_object_2d_head.o_point_2d_velocity.n_y = n_velocity    
+                a_point_2d_velocity[0] = 0
+                a_point_2d_velocity[1] = n_velocity    
             
             if(o_game.f_b_button_pressed("right")):
-                o_object_2d_head.o_point_2d_velocity.n_x = n_velocity
-                o_object_2d_head.o_point_2d_velocity.n_y = 0
+                a_point_2d_velocity[0] = n_velocity
+                a_point_2d_velocity[1] = 0
 
             n_i_reversed = len(self.a_o_object_2d) -1
             while(n_i_reversed > 0):
@@ -263,8 +277,8 @@ class O_game:
                 if(n_i_reversed > 0):
                     o_object_2d_1 =  self.a_o_object_2d[n_i_reversed]
                     o_object_2d_2 =  self.a_o_object_2d[n_i_reversed-1]
-                    o_object_2d_1.o_point_2d_translation.n_x = o_object_2d_2.o_point_2d_translation.n_x
-                    o_object_2d_1.o_point_2d_translation.n_y = o_object_2d_2.o_point_2d_translation.n_y
+                    o_object_2d_1.a_point_2d_translation[0] = o_object_2d_2.a_point_2d_translation[0]
+                    o_object_2d_1.a_point_2d_translation[1] = o_object_2d_2.a_point_2d_translation[1]
                 
                 n_i_reversed-=1
         
@@ -294,13 +308,14 @@ class O_game:
             f_render_function_o_snake, 
             # f_collision_function_o_snake
         )
-
+        self.o_snake = o_snake
         for n in range(0,50):
             o_snake.a_o_object_2d.append(
                 O_object_2d(
                     0,0
                 )
             )
+        o_snake.a_o_object_2d[0].b_auto_calc_translation = True
         self.a_o_game_object.append(o_snake)
 
         def f_create_food():
@@ -338,22 +353,58 @@ class O_game:
             # self.o_collision_map = {}
 
             # print(self.a_o_game_object)
-            for o_game_object in self.a_o_game_object:
-                if o_game_object.f_render_function != None:
-                    o_game_object.f_render_function(o_game_object, self)
-                for o_object_2d in o_game_object.a_o_object_2d:
+                        
+            for o_object_2d in a_o_object2d:
+                a_point_2d_translation = o_object_2d.a_point_2d_translation
+                if(o_object_2d.b_auto_calc_translation == True):
+                    a_point_2d_velocity = o_object_2d.a_point_2d_velocity
+                    a_point_2d_acceleration = o_object_2d.a_point_2d_acceleration
+                    a_point_2d_velocity[0] += a_point_2d_acceleration[0]
+                    a_point_2d_velocity[1] += a_point_2d_acceleration[1]
+                    n_new_x = a_point_2d_translation[0] + a_point_2d_velocity[0]
+                    n_new_y = a_point_2d_translation[1] + a_point_2d_velocity[1]
+                    a_point_2d_translation[0] = n_new_x
+                    a_point_2d_translation[1] = n_new_y
+                self.o_grid.f_set_cell(
+                    a_point_2d_translation[0],
+                    a_point_2d_translation[1],
+                    True
+                )
 
-                    o_object_2d.o_point_2d_velocity.n_x += o_object_2d.o_point_2d_acceleration.n_x
-                    o_object_2d.o_point_2d_velocity.n_y += o_object_2d.o_point_2d_acceleration.n_y
-                    n_new_x = o_object_2d.o_point_2d_translation.n_x + o_object_2d.o_point_2d_velocity.n_x
-                    n_new_y = o_object_2d.o_point_2d_translation.n_y + o_object_2d.o_point_2d_velocity.n_y
-                    o_object_2d.o_point_2d_translation.n_x = n_new_x
-                    o_object_2d.o_point_2d_translation.n_y = n_new_y
-                    self.o_grid.f_set_cell(
-                        o_object_2d.o_point_2d_translation.n_x,
-                        o_object_2d.o_point_2d_translation.n_y,
-                        True
-                    )
+            o_object_2d_head = self.o_snake.a_o_object_2d[0]
+            n_velocity = 1
+            a_point_2d_velocity = o_object_2d_head.a_point_2d_velocity
+            if(o_game.f_b_button_pressed("up")):
+                a_point_2d_velocity[0] = 0
+                a_point_2d_velocity[1] = -n_velocity
+            
+            if(o_game.f_b_button_pressed("left")):
+                a_point_2d_velocity[0] = -n_velocity
+                a_point_2d_velocity[1] = 0
+            
+            if(o_game.f_b_button_pressed("down")):
+                a_point_2d_velocity[0] = 0
+                a_point_2d_velocity[1] = n_velocity    
+            
+            if(o_game.f_b_button_pressed("right")):
+                a_point_2d_velocity[0] = n_velocity
+                a_point_2d_velocity[1] = 0
+
+            n_i_reversed = len(self.o_snake.a_o_object_2d) -1
+            while(n_i_reversed > 0):
+                # since the snake speed is slower than 1 ( 0.1) the translation will only change every 10th render function
+                if(n_i_reversed > 0):
+                    o_object_2d_1 =  self.o_snake.a_o_object_2d[n_i_reversed]
+                    o_object_2d_2 =  self.o_snake.a_o_object_2d[n_i_reversed-1]
+                    o_object_2d_1.a_point_2d_translation[0] = o_object_2d_2.a_point_2d_translation[0]
+                    o_object_2d_1.a_point_2d_translation[1] = o_object_2d_2.a_point_2d_translation[1]
+                
+                n_i_reversed-=1
+            # for o_game_object in self.a_o_game_object:
+            #     if o_game_object.f_render_function != None:
+            #         o_game_object.f_render_function(o_game_object, self)
+
+
                     # s_prop = f"a_{int(n_new_x)}_{int(n_new_y)}"
                     # if s_prop not in self.o_collision_map:
                     #     o_collision_map_object = O_collision_map_object()
@@ -371,46 +422,46 @@ class O_game:
                     # if(len(o_collision_map_object.a_o_collision_object) > 1):
                     #     self.a_o_collision_map_object.append(o_collision_map_object)
             
-            a_o_object_2d_treated = []
-            a_a_o_object_2d_collsions = []
+            # a_o_object_2d_treated = []
+            # a_a_o_object_2d_collsions = []
 
-            for o_game_object in self.a_o_game_object:
-                for o_object_2d in o_game_object.a_o_object_2d:
-                    if o_object_2d in a_o_object_2d_treated:
-                        continue
+            # for o_game_object in self.a_o_game_object:
+            #     for o_object_2d in o_game_object.a_o_object_2d:
+            #         if o_object_2d in a_o_object_2d_treated:
+            #             continue
 
-                    n_x = o_object_2d.o_point_2d_translation.n_x
-                    n_y = o_object_2d.o_point_2d_translation.n_y
+            #         n_x = o_object_2d.o_point_2d_translation.n_x
+            #         n_y = o_object_2d.o_point_2d_translation.n_y
 
-                    a_o_object_2d_same_translation = [
-                        [
-                                o_o2d for o_o2d in ogo.a_o_object_2d 
-                                if(
-                                    int(o_o2d.o_point_2d_translation.n_x) == n_new_x
-                                    and
-                                    int(o_o2d.o_point_2d_translation.n_y) == n_new_y
-                                )
-                            ]
-                        for ogo in self.a_o_game_object
-                        if(
-                            len([
-                                o_o2d for o_o2d in ogo.a_o_object_2d 
-                                if(
-                                    int(o_o2d.o_point_2d_translation.n_x) == n_new_x
-                                    and
-                                    int(o_o2d.o_point_2d_translation.n_y) == n_new_y
-                                )
-                            ]) > 0
-                        )
-                    ]
-                    a_o_object_2d_same_translation_flattend = [x for xs in a_o_object_2d_same_translation for x in xs]
-                    # print(a_o_object_2d_same_translation)
-                    # exit()
-                    a_o_object_2d_treated  = a_o_object_2d_treated + a_o_object_2d_same_translation_flattend
-                    if(len(a_o_object_2d_same_translation) > 1):
-                        a_a_o_object_2d_collsions.append(a_o_object_2d_same_translation_flattend)
-                        print(a_o_object_2d_same_translation)
-                        exit()
+            #         a_o_object_2d_same_translation = [
+            #             [
+            #                     o_o2d for o_o2d in ogo.a_o_object_2d 
+            #                     if(
+            #                         int(o_o2d.o_point_2d_translation.n_x) == n_new_x
+            #                         and
+            #                         int(o_o2d.o_point_2d_translation.n_y) == n_new_y
+            #                     )
+            #                 ]
+            #             for ogo in self.a_o_game_object
+            #             if(
+            #                 len([
+            #                     o_o2d for o_o2d in ogo.a_o_object_2d 
+            #                     if(
+            #                         int(o_o2d.o_point_2d_translation.n_x) == n_new_x
+            #                         and
+            #                         int(o_o2d.o_point_2d_translation.n_y) == n_new_y
+            #                     )
+            #                 ]) > 0
+            #             )
+            #         ]
+            #         a_o_object_2d_same_translation_flattend = [x for xs in a_o_object_2d_same_translation for x in xs]
+            #         # print(a_o_object_2d_same_translation)
+            #         # exit()
+            #         a_o_object_2d_treated  = a_o_object_2d_treated + a_o_object_2d_same_translation_flattend
+            #         if(len(a_o_object_2d_same_translation) > 1):
+            #             a_a_o_object_2d_collsions.append(a_o_object_2d_same_translation_flattend)
+            #             print(a_o_object_2d_same_translation)
+            #             exit()
                 
             # for o_collision_map_object in self.a_o_collision_map_object:
             #     for o_collision_object in o_collision_map_object.a_o_collision_object:
